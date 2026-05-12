@@ -23,9 +23,57 @@ const geistMono = Geist_Mono({
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('site');
+  const name = t('name');
+  const tagline = t('tagline');
+
   return {
-    title: t('name'),
-    description: t('tagline'),
+    metadataBase: new URL('https://redepa.net'),
+    title: {
+      default: name,
+      template: `%s · ${name}`,
+    },
+    description: tagline,
+    keywords: [
+      'investigación educativa',
+      'América Latina',
+      'directorio de investigadores',
+      'educación',
+      'Evidencias para el Aula',
+      'Red EPA',
+      'investigación en educación',
+      'colaboración académica',
+      'política educativa',
+    ],
+    applicationName: name,
+    authors: [{ name: 'Red EPA' }],
+    creator: 'Red EPA',
+    publisher: 'Red EPA',
+    alternates: {
+      canonical: '/',
+    },
+    openGraph: {
+      type: 'website',
+      locale: 'es_ES',
+      url: 'https://redepa.net',
+      siteName: name,
+      title: name,
+      description: tagline,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: name,
+      description: tagline,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
   };
 }
 
