@@ -78,7 +78,7 @@ export function AdminAddForm({
     setError(null);
 
     const topics = form.research_topics
-      .split(',')
+      .split(/[,;\n]/)
       .map((s) => s.trim())
       .filter(Boolean);
     if (topics.length === 0) {
@@ -336,7 +336,7 @@ export function AdminAddForm({
           placeholder="Ej. políticas educativas, equidad, currículo"
           className={inputClass}
         />
-        <p className="mt-1 text-xs text-[var(--muted)]">Separa con comas.</p>
+        <p className="mt-1 text-xs text-[var(--muted)]">Separa con comas o punto y coma.</p>
       </div>
 
       <div>

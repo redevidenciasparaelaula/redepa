@@ -92,7 +92,7 @@
     "masterYear": "Año de magíster",
     "masterInstitution": "Institución del magíster",
     "topics": "Temas de investigación",
-    "topicsHint": "Separa con comas",
+    "topicsHint": "Separa con comas o punto y coma",
     "methodologies": "Metodologías",
     "country": "País",
     "city": "Ciudad",

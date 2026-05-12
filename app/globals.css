@@ -40,18 +40,9 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #f4f4f5;
-    --muted: #a1a1aa;
-    --border: #27272a;
-    --card: #131316;
-    --accent: #1f1f23;
-    --surface: #131316;
-    --primary-fg: #0a0a0a;
-  }
-}
+/* El sitio está diseñado solo para modo claro (todas las secciones usan bg-white
+   hardcoded). Forzamos light scheme para que los user-agents en modo oscuro no
+   inviertan controles ni hereden colores del sistema operativo. */
 
 * {
   border-color: var(--border);
@@ -59,6 +50,7 @@
 
 html {
   scroll-behavior: smooth;
+  color-scheme: light;
 }
 
 body {
