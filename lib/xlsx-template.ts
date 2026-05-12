@@ -83,7 +83,7 @@ export async function buildTemplateBuffer(): Promise<ArrayBuffer> {
 
   // Notas explicativas en cabeceras
   setCellNote(sheet, 'F1',
-    'Temas de investigación. Múltiples valores separados por punto y coma (;). Ej: "políticas educativas; equidad"');
+    'Temas principales de interés. Entre 2 y 5, separados por punto y coma (;). Ej: "políticas educativas; equidad; formación docente". Se guardan en minúsculas.');
   setCellNote(sheet, 'G1',
     'Metodologías. Copia exactamente los nombres en español de la hoja "Catálogos" (columna "Metodología"). Separa varias con punto y coma (;). Ej: "Cualitativa; Mixta; Estudio de caso". Las tildes y mayúsculas no importan.');
   setCellNote(sheet, 'C1',

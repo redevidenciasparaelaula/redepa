@@ -116,7 +116,11 @@ function validateRow(
       splitSemicolon(raw.temas ?? '').map((s) => s.toLowerCase())
     )
   );
-  if (topics.length === 0) errors.push('temas: al menos uno (separar con ;)');
+  if (topics.length < 2 || topics.length > 5) {
+    errors.push(
+      `temas: deben ser entre 2 y 5 (separar con ;). Recibidos: ${topics.length}`
+    );
+  }
 
   const methodKeys: string[] = [];
   const methodRaw = splitSemicolon(raw.metodologias ?? '');

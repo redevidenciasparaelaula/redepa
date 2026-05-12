@@ -75,8 +75,8 @@ export function EditProfileForm({ researcher, institutions, countries }: Props) 
           .filter(Boolean)
       )
     );
-    if (topics.length === 0) {
-      setError('Indica al menos un tema de investigación.');
+    if (topics.length < 2 || topics.length > 5) {
+      setError('Indica entre 2 y 5 temas principales de interés.');
       return;
     }
     if (form.methodologies.length === 0) {
@@ -250,7 +250,7 @@ export function EditProfileForm({ researcher, institutions, countries }: Props) 
       </div>
 
       <div>
-        <label className={labelClass}>Temas de investigación {requiredMark}</label>
+        <label className={labelClass}>Temas principales de interés {requiredMark}</label>
         <input
           required
           type="text"
@@ -258,7 +258,7 @@ export function EditProfileForm({ researcher, institutions, countries }: Props) 
           onChange={(e) => update('research_topics', e.target.value)}
           className={inputClass}
         />
-        <p className="mt-1 text-xs text-[var(--muted)]">Separa con comas o punto y coma.</p>
+        <p className="mt-1 text-xs text-[var(--muted)]">Entre 2 y 5 temas. Separa con comas o punto y coma.</p>
       </div>
 
       <div>
