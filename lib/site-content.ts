@@ -83,4 +83,4 @@ export const MISSION =
 export const TAGLINE =
   'La Red Evidencias para el Aula (EPA) articula universidades y centros de investigación en educación para colaborar en iniciativas de investigación, docencia, innovación e incidencia pública, con el objetivo de que academia y aula se retroalimenten mutuamente.';
 
-export const CONTACT_EMAIL = 'redevidenciasparaelaula@gmail.com';
+export const CONTACT_EMAIL = 'contacto@redepa.net';
