@@ -1,26 +1,120 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Paleta Red EPA */
+  --epa-green: #739600;       /* verde institucional */
+  --epa-green-dark: #5a7600;
+  --epa-blue: #4f759b;        /* azul acento */
+  --epa-blue-dark: #3f5e7d;
+  --epa-gray: #636363;        /* gris neutro */
+  --epa-black: #000000;
+  --epa-white: #ffffff;
+
+  --background: var(--epa-white);
+  --foreground: var(--epa-black);
+  --muted: var(--epa-gray);
+  --border: #e4e4e7;
+  --card: var(--epa-white);
+  --primary: var(--epa-green);
+  --primary-fg: var(--epa-white);
+  --accent: #f5f6f8;          /* gris ligerísimo, ligero tono frío */
+  --accent-color: var(--epa-blue);
+  --surface: #fafafa;         /* fondo de sección alternante */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-card: var(--card);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-fg);
+  --color-accent: var(--accent);
+  --color-surface: var(--surface);
+  --color-epa-green: var(--epa-green);
+  --color-epa-blue: var(--epa-blue);
+  --color-epa-gray: var(--epa-gray);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-plus-jakarta);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
-    --foreground: #ededed;
+    --foreground: #f4f4f5;
+    --muted: #a1a1aa;
+    --border: #27272a;
+    --card: #131316;
+    --accent: #1f1f23;
+    --surface: #131316;
+    --primary-fg: #0a0a0a;
   }
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), system-ui, -apple-system, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-plus-jakarta), var(--font-inter), system-ui, sans-serif;
+  letter-spacing: -0.015em;
+}
+
+/* Focus visible: anillo azul acento, consistente en toda interacción */
+:where(input, select, textarea, button, a, [tabindex]):focus-visible {
+  outline: 2px solid var(--epa-blue);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Eyebrow: pequeña etiqueta editorial encima de títulos */
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--epa-blue);
+}
+
+/* Inputs: borde sutil con foco azul (complementa el focus-visible) */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="number"],
+input[type="url"],
+input[type="tel"],
+input[type="date"],
+select,
+textarea {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="search"]:focus,
+input[type="number"]:focus,
+input[type="url"]:focus,
+input[type="tel"]:focus,
+input[type="date"]:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--epa-blue);
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--epa-blue) 18%, transparent);
 }

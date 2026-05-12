@@ -1,0 +1,155 @@
+import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
+import type { Locale } from '@/i18n/config';
+import type { ResearcherWithInstitution } from '@/lib/supabase/types';
+import { methodologyLabel } from '@/lib/methodologies';
+import {
+  BRAND_COLORS,
+  GoogleScholarIcon,
+  LinkedInIcon,
+  MailIcon,
+  OrcidIcon,
+  ResearchGateIcon,
+} from './brand-icons';
+
+interface Props {
+  researcher: ResearcherWithInstitution;
+  locale: Locale;
+}
+
+function orcidUrl(value: string): string {
+  return value.startsWith('http') ? value : `https://orcid.org/${value}`;
+}
+
+export async function ResearcherCard({ researcher, locale }: Props) {
+  const t = await getTranslations('card');
+  const tProfile = await getTranslations('profile');
+  const r = researcher;
+  const title = locale === 'en' ? r.title_en ?? r.title_es : r.title_es ?? r.title_en;
+  const instName =
+    locale === 'en'
+      ? r.institutions?.name_en ?? r.institutions?.name
+      : r.institutions?.name;
+
+  const hasContact =
+    r.email || r.linkedin_url || r.google_scholar_url || r.researchgate_url || r.orcid;
+
+  return (
+    <article className="group relative rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 transition-all hover:border-[var(--epa-blue)] hover:shadow-md">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="truncate text-base font-semibold text-[var(--foreground)]">
+            <Link
+              href={`/researcher/${r.id}`}
+              className="after:absolute after:inset-0 after:content-[''] group-hover:text-[var(--epa-blue)]"
+            >
+              {r.full_name}
+            </Link>
+          </h3>
+          {title && (
+            <p className="mt-0.5 truncate text-sm text-[var(--muted)]">{title}</p>
+          )}
+          {instName && <p className="mt-0.5 truncate text-sm">{instName}</p>}
+          <p className="mt-0.5 truncate text-xs text-[var(--muted)]">
+            {[r.city, r.country].filter(Boolean).join(', ')}
+          </p>
+        </div>
+        <div className="shrink-0 text-right text-xs text-[var(--muted)]">
+          {r.phd_year && <div>{t('phdAt', { year: r.phd_year })}</div>}
+          {!r.phd_year && r.master_year && (
+            <div>{t('masterAt', { year: r.master_year })}</div>
+          )}
+        </div>
+      </div>
+
+      {r.research_topics.length > 0 && (
+        <div className="mt-3.5 flex flex-wrap gap-1.5">
+          {r.research_topics.slice(0, 4).map((topic) => (
+            <span
+              key={topic}
+              className="rounded-full bg-[var(--accent)] px-2.5 py-0.5 text-xs font-medium text-[var(--foreground)]"
+            >
+              {topic}
+            </span>
+          ))}
+          {r.research_topics.length > 4 && (
+            <span className="self-center text-xs text-[var(--muted)]">
+              +{r.research_topics.length - 4}
+            </span>
+          )}
+        </div>
+      )}
+
+      {r.methodologies.length > 0 && (
+        <div className="mt-2 text-xs text-[var(--muted)]">
+          {r.methodologies.map((m) => methodologyLabel(m, locale)).join(' · ')}
+        </div>
+      )}
+
+      {hasContact && (
+        <div className="relative z-10 mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-2 text-xs">
+          {r.email && (
+            <a
+              href={`mailto:${r.email}`}
+              className="inline-flex min-w-0 items-center gap-1 truncate text-[var(--foreground)] hover:underline"
+              title={tProfile('sendEmail')}
+            >
+              <MailIcon className="h-3.5 w-3.5 shrink-0 text-[var(--muted)]" />
+              <span className="truncate">{r.email}</span>
+            </a>
+          )}
+          <span className="ml-auto flex items-center gap-2">
+            {r.linkedin_url && (
+              <a
+                href={r.linkedin_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="opacity-70 transition-opacity hover:opacity-100"
+                style={{ color: BRAND_COLORS.linkedin }}
+                title={tProfile('linkedin')}
+              >
+                <LinkedInIcon className="h-4 w-4" />
+              </a>
+            )}
+            {r.google_scholar_url && (
+              <a
+                href={r.google_scholar_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="opacity-70 transition-opacity hover:opacity-100"
+                style={{ color: BRAND_COLORS.scholar }}
+                title={tProfile('scholar')}
+              >
+                <GoogleScholarIcon className="h-4 w-4" />
+              </a>
+            )}
+            {r.researchgate_url && (
+              <a
+                href={r.researchgate_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="opacity-70 transition-opacity hover:opacity-100"
+                style={{ color: BRAND_COLORS.researchgate }}
+                title={tProfile('researchgate')}
+              >
+                <ResearchGateIcon className="h-4 w-4" />
+              </a>
+            )}
+            {r.orcid && (
+              <a
+                href={orcidUrl(r.orcid)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="opacity-70 transition-opacity hover:opacity-100"
+                style={{ color: BRAND_COLORS.orcid }}
+                title={tProfile('orcid')}
+              >
+                <OrcidIcon className="h-4 w-4" />
+              </a>
+            )}
+          </span>
+        </div>
+      )}
+    </article>
+  );
+}

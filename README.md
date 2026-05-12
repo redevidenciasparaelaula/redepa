@@ -1,36 +1,115 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Directorio Red EPA
 
-## Getting Started
+Directorio bilingüe (español/inglés) de investigadores en educación de América Latina.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router) + TypeScript + Tailwind CSS v4
+- **Supabase** — base de datos Postgres, autenticación y RLS
+- **next-intl** — internacionalización ES/EN
+- Hosting recomendado: **Vercel** (free) + **Supabase** (free)
+
+## Estado actual
+
+✅ Implementado en esta primera fase:
+
+- Búsqueda pública con filtros (nombre, país, ciudad, institución, tema, metodología, año PhD, h-index)
+- Página de detalle de investigador con `mailto:`, LinkedIn, Google Scholar, ORCID, sitio web
+- Formulario abierto de envío (queda en estado `pending`)
+- Selector de idioma ES/EN con cookie persistente
+- Esquema SQL con políticas RLS para los 3 roles
+
+🚧 Pendiente para próximas fases:
+
+- Autenticación por magic link (`/sign-in`)
+- Edición del propio perfil del investigador
+- Panel de administrador de institución (revisar pendientes, editar miembros)
+- Panel de super administrador (gestionar instituciones y admins)
+
+## Setup
+
+### 1. Crear proyecto en Supabase
+
+1. Crea cuenta gratis en [supabase.com](https://supabase.com).
+2. Crea un nuevo proyecto.
+3. Ve a **SQL Editor → New query**, pega el contenido de [`supabase/schema.sql`](supabase/schema.sql) y ejecuta.
+4. (Opcional) Ejecuta también [`supabase/seed.sql`](supabase/seed.sql) para tener datos de ejemplo.
+5. Ve a **Project Settings → API** y copia el `Project URL` y la `anon public key`.
+
+### 2. Configurar variables de entorno
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.local.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Edita `.env.local` con tus credenciales:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+NEXT_PUBLIC_SUPABASE_URL=https://TU-PROYECTO.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3. Instalar y correr
 
-## Learn More
+```bash
+npm install
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Abre http://localhost:3000.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Convertirte en super admin
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Después de crear tu primera cuenta de Supabase Auth (cualquier correo), corre en el SQL Editor:
 
-## Deploy on Vercel
+```sql
+insert into super_admins (user_id)
+select id from auth.users where email = 'tu-correo@ejemplo.com';
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Estructura
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+app/
+  page.tsx                  Búsqueda pública (home)
+  researcher/[id]/          Perfil de investigador
+  submit/                   Formulario de envío abierto
+  sign-in/                  (placeholder) Ingreso por magic link
+  actions/set-locale.ts     Server action para cambiar idioma
+components/
+  header.tsx                Barra superior con nav + switcher
+  language-switcher.tsx     Botones ES / EN
+  search-filters.tsx        Sidebar de filtros (cliente)
+  researcher-card.tsx       Tarjeta de investigador
+  submit-form.tsx           Formulario de envío
+i18n/
+  config.ts                 Locales y cookie
+  request.ts                next-intl: detecta locale de cookie/header
+lib/
+  queries.ts                Funciones de búsqueda y lectura
+  methodologies.ts          Lista canónica bilingüe de metodologías
+  supabase/
+    server.ts               Cliente Supabase para Server Components
+    browser.ts              Cliente Supabase para componentes cliente
+    types.ts                Tipos del esquema
+messages/
+  es.json / en.json         Traducciones de UI
+supabase/
+  schema.sql                Tablas + RLS — ejecutar en Supabase
+  seed.sql                  Datos de ejemplo (opcional)
+```
+
+## Roles del sistema
+
+| Rol | Cómo se asigna | Qué puede hacer |
+|---|---|---|
+| **Visitante** | (anónimo) | Ver perfiles aprobados, buscar, mandar correo, enviar formulario |
+| **Investigador** | Tener su correo en un perfil con `status = 'approved'` | Editar su propio perfil |
+| **Admin de institución** | Fila en `institution_admins` | Editar/aprobar/borrar investigadores de su institución |
+| **Super admin** | Fila en `super_admins` | Todo, incluido crear instituciones y nombrar admins |
+
+Todo el control de acceso se aplica vía Row Level Security en Postgres — el frontend no puede saltarse las reglas.
+
+## Despliegue
+
+Para Vercel: conecta este repo y agrega las dos variables `NEXT_PUBLIC_*` en **Project Settings → Environment Variables**. El plan free de Vercel + el plan free de Supabase alcanza para los primeros miles de visitas/registros mensuales.

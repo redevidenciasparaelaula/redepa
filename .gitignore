@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# claude session/worktree management
+.claude/
+
+# archivos de trabajo en raíz (no se publican)
+/color_palette_directorio.pdf
+/logo_red_epa.png

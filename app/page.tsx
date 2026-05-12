@@ -1,65 +1,208 @@
-import Image from "next/image";
+import Image from 'next/image';
+import Link from 'next/link';
+import {
+  BOARD,
+  CONTACT_EMAIL,
+  MEMBERS,
+  MISSION,
+  TAGLINE,
+  VALUES,
+  VISION,
+} from '@/lib/site-content';
 
-export default function Home() {
+function initials(name: string): string {
+  const parts = name.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div>
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-white">
+        <div className="pointer-events-none absolute inset-0 -z-10 opacity-[0.04]"
+          style={{
+            backgroundImage:
+              'radial-gradient(circle at 20% 20%, var(--epa-green) 0%, transparent 50%), radial-gradient(circle at 80% 80%, var(--epa-blue) 0%, transparent 50%)',
+          }}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+        <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6 sm:py-32">
+          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[1fr_1.4fr] lg:gap-16">
+            <div className="flex justify-center lg:justify-start">
+              <Image
+                src="/logos/epa.png"
+                alt="Red EPA — Red Latinoamericana Evidencias Para el Aula"
+                width={1024}
+                height={711}
+                priority
+                className="h-auto w-full max-w-sm"
+              />
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold tracking-tight text-[var(--foreground)] sm:text-5xl">
+                Investigación educativa que{' '}
+                <span className="text-[var(--epa-green)]">conecta</span> el aula
+                con la evidencia.
+              </h1>
+              <p className="mt-6 max-w-xl text-base leading-relaxed text-[var(--muted)] sm:text-lg">
+                {TAGLINE}
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link
+                  href="/directorio"
+                  className="rounded-md bg-[var(--epa-green)] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[var(--epa-green-dark)] hover:shadow-md"
+                >
+                  Buscar investigadores →
+                </Link>
+                <Link
+                  href="/sumate"
+                  className="rounded-md border border-[var(--foreground)] px-6 py-3 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--accent)]"
+                >
+                  Sumarme a la Red
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* Lo que nos mueve */}
+      <section className="bg-[var(--epa-green)] text-white">
+        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
+          <div className="mb-12 max-w-2xl">
+            <p className="eyebrow !text-white/70">Quiénes somos</p>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+              Lo que nos mueve
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <article className="rounded-2xl bg-white p-8 text-[var(--foreground)] shadow-sm">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--epa-blue)]">
+                Visión
+              </h3>
+              <p className="mt-4 text-base leading-relaxed">{VISION}</p>
+            </article>
+            <article className="rounded-2xl bg-white p-8 text-[var(--foreground)] shadow-sm">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--epa-blue)]">
+                Misión
+              </h3>
+              <p className="mt-4 text-base leading-relaxed">{MISSION}</p>
+            </article>
+          </div>
+
+          <div className="mt-16 max-w-2xl">
+            <p className="eyebrow !text-white/70">Principios</p>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+              Nuestros valores
+            </h2>
+          </div>
+          <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {VALUES.map((v) => (
+              <li
+                key={v}
+                className="rounded-xl bg-white/10 px-5 py-4 text-sm font-medium text-white ring-1 ring-white/20 backdrop-blur-sm"
+              >
+                {v}
+              </li>
+            ))}
+          </ul>
         </div>
-      </main>
+      </section>
+
+      {/* Miembros de la red */}
+      <section className="bg-white">
+        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
+          <div className="mb-12 max-w-2xl">
+            <p className="eyebrow">Comunidad</p>
+            <h2 className="mt-2 text-3xl font-bold uppercase tracking-tight text-[var(--epa-green)] sm:text-4xl">
+              Miembros de la red
+            </h2>
+            <p className="mt-3 text-base leading-relaxed text-[var(--muted)]">
+              {MEMBERS.length} instituciones colaboran activamente desde
+              distintos países de América Latina.
+            </p>
+          </div>
+          <ul className="grid grid-cols-2 items-center gap-x-8 gap-y-12 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {MEMBERS.map((m) => (
+              <li
+                key={m.name}
+                className="group flex h-24 items-center justify-center"
+                title={`${m.name}${m.country ? ' · ' + m.country : ''}`}
+              >
+                <Image
+                  src={m.logo}
+                  alt={m.name}
+                  width={200}
+                  height={80}
+                  className="max-h-20 w-auto object-contain grayscale opacity-70 transition-all duration-300 group-hover:grayscale-0 group-hover:opacity-100"
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* Directiva */}
+      <section className="bg-[var(--epa-blue)] text-white">
+        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
+          <div className="mb-12 max-w-2xl">
+            <p className="eyebrow !text-white/70">Quién lidera</p>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+              Directiva
+            </h2>
+          </div>
+          <ul className="grid grid-cols-2 gap-8 sm:grid-cols-3 md:grid-cols-5">
+            {BOARD.map((p) => (
+              <li key={p.name} className="text-center">
+                <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-white/15 text-2xl font-semibold tracking-tight text-white ring-2 ring-white/30 backdrop-blur-sm">
+                  {initials(p.name)}
+                </div>
+                <p className="mt-4 text-sm font-semibold leading-tight">
+                  {p.name}
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-white/75">
+                  {p.affiliation}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* Footer mini con contacto */}
+      <section className="bg-[var(--surface)]">
+        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
+          <div className="rounded-2xl bg-white p-6 shadow-sm sm:p-10 lg:p-12">
+            <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+              <div className="max-w-xl">
+                <p className="eyebrow">Para instituciones</p>
+                <h2 className="mt-2 text-3xl font-bold uppercase tracking-tight text-[var(--epa-green)] sm:text-4xl">
+                  Súmate a la red
+                </h2>
+                <p className="mt-3 text-base leading-relaxed text-[var(--muted)]">
+                  ¿Tu institución investiga en educación y quiere colaborar?
+                  Escríbenos a{' '}
+                  <a
+                    href={`mailto:${CONTACT_EMAIL}`}
+                    className="text-[var(--epa-blue)] underline underline-offset-2 hover:text-[var(--epa-blue-dark)]"
+                  >
+                    {CONTACT_EMAIL}
+                  </a>
+                  .
+                </p>
+              </div>
+              <Link
+                href="/sumate"
+                className="rounded-md bg-[var(--epa-green)] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[var(--epa-green-dark)] hover:shadow-md"
+              >
+                Conocer requisitos →
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
