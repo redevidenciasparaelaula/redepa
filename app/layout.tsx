@@ -94,12 +94,9 @@ export default async function RootLayout({
           <Header />
           <main className="flex-1">{children}</main>
           <footer className="border-t border-[var(--border)] bg-white py-5">
-            <div className="mx-auto flex max-w-6xl flex-col items-center gap-1 px-4 text-center sm:px-6">
+            <div className="mx-auto max-w-6xl px-4 text-center sm:px-6">
               <p className="text-sm text-[var(--muted)]">
-                © {new Date().getFullYear()} Red EPA · Evidencias Para el Aula
-              </p>
-              <p className="text-xs leading-relaxed text-[var(--muted)]">
-                Red Latinoamericana de Investigación Educativa
+                © {new Date().getFullYear()} Red EPA · Evidencias para el Aula
               </p>
             </div>
           </footer>
