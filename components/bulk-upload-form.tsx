@@ -111,7 +111,11 @@ function validateRow(
   const city = (raw.ciudad ?? '').trim();
   if (!city) errors.push('ciudad vacía');
 
-  const topics = splitSemicolon(raw.temas ?? '');
+  const topics = Array.from(
+    new Set(
+      splitSemicolon(raw.temas ?? '').map((s) => s.toLowerCase())
+    )
+  );
   if (topics.length === 0) errors.push('temas: al menos uno (separar con ;)');
 
   const methodKeys: string[] = [];

@@ -110,10 +110,14 @@ export function SubmitForm({ institutions, countries }: Props) {
     e.preventDefault();
     setError(null);
 
-    const topics = form.research_topics
-      .split(/[,;\n]/)
-      .map((s) => s.trim())
-      .filter(Boolean);
+    const topics = Array.from(
+      new Set(
+        form.research_topics
+          .split(/[,;\n]/)
+          .map((s) => s.trim().toLowerCase())
+          .filter(Boolean)
+      )
+    );
     if (topics.length === 0) {
       setError('Indica al menos un tema de investigación.');
       return;
