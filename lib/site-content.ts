@@ -34,14 +34,35 @@ export const MEMBERS: Member[] = [
 export interface BoardMember {
   name: string;
   affiliation: string;
+  photo: string;
 }
 
 export const BOARD: BoardMember[] = [
-  { name: 'Alejandra Balbi', affiliation: 'Universidad Católica de Uruguay' },
-  { name: 'Montserrat Cubillos', affiliation: 'Universidad del Desarrollo (Chile)' },
-  { name: 'Paulina Guzmán', affiliation: 'Universidad San Sebastián (Chile)' },
-  { name: 'Cristián Fuentes', affiliation: 'Escuela Normal de Amecameca (México)' },
-  { name: 'Farzaneh Saadati', affiliation: 'CIAE (Chile)' },
+  {
+    name: 'Alejandra Balbi',
+    affiliation: 'Universidad Católica de Uruguay',
+    photo: '/board/alejandra-balbi.jpg',
+  },
+  {
+    name: 'Montserrat Cubillos',
+    affiliation: 'Universidad del Desarrollo (Chile)',
+    photo: '/board/montserrat-cubillos.jpg',
+  },
+  {
+    name: 'Paulina Guzmán',
+    affiliation: 'Universidad San Sebastián (Chile)',
+    photo: '/board/paulina-guzman.jpg',
+  },
+  {
+    name: 'Cristián Fuentes',
+    affiliation: 'Escuela Normal de Amecameca (México)',
+    photo: '/board/cristian-fuentes.jpg',
+  },
+  {
+    name: 'Farzaneh Saadati',
+    affiliation: 'CIAE (Chile)',
+    photo: '/board/farzaneh-saadati.jpg',
+  },
 ];
 
 export const VALUES: string[] = [

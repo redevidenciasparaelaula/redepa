@@ -9,13 +9,6 @@ import {
   VISION,
 } from '@/lib/site-content';
 
-function initials(name: string): string {
-  const parts = name.split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
 export default function HomePage() {
   return (
     <div>
@@ -138,8 +131,14 @@ export default function HomePage() {
           <ul className="grid grid-cols-2 gap-8 sm:grid-cols-3 md:grid-cols-5">
             {BOARD.map((p) => (
               <li key={p.name} className="text-center">
-                <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-white/15 text-2xl font-semibold tracking-tight text-white ring-2 ring-white/30 backdrop-blur-sm">
-                  {initials(p.name)}
+                <div className="mx-auto h-28 w-28 overflow-hidden rounded-full ring-2 ring-white/40">
+                  <Image
+                    src={p.photo}
+                    alt={p.name}
+                    width={240}
+                    height={240}
+                    className="h-full w-full object-cover grayscale"
+                  />
                 </div>
                 <p className="mt-4 text-sm font-semibold leading-tight">
                   {p.name}
