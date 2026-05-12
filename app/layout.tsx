@@ -54,13 +54,13 @@ export async function generateMetadata(): Promise<Metadata> {
       type: 'website',
       locale: 'es_ES',
       url: 'https://redepa.net',
-      siteName: name,
-      title: name,
+      siteName: 'Red Evidencias para el Aula',
+      title: 'Red Evidencias para el Aula',
       description: tagline,
     },
     twitter: {
       card: 'summary_large_image',
-      title: name,
+      title: 'Red Evidencias para el Aula',
       description: tagline,
     },
     robots: {
