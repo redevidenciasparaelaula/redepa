@@ -84,7 +84,8 @@ export default async function ResearcherPage({ params }: Props) {
             )}
             {r.master_year && (
               <div>
-                <span className="text-[var(--muted)]">Mg:</span> {r.master_year}
+                <span className="text-[var(--muted)]">Magíster:</span>{' '}
+                {r.master_year}
               </div>
             )}
           </div>

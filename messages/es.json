@@ -45,14 +45,14 @@
     "institution": "Institución",
     "country": "País",
     "phd": "Doctorado",
-    "master": "Mg.",
+    "master": "Magíster",
     "topics": "Temas",
     "contact": "Contacto"
   },
   "card": {
     "viewProfile": "Ver perfil",
     "phdAt": "Doctorado {year}",
-    "masterAt": "Mg. {year}"
+    "masterAt": "Magíster {year}"
   },
   "profile": {
     "back": "Volver al directorio",
