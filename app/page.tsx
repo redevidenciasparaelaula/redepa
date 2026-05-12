@@ -6,7 +6,6 @@ import {
   MEMBERS,
   MISSION,
   TAGLINE,
-  VALUES,
   VISION,
 } from '@/lib/site-content';
 
@@ -69,7 +68,7 @@ export default function HomePage() {
       </section>
 
       {/* Lo que nos mueve */}
-      <section className="bg-[var(--epa-green)] text-white">
+      <section className="bg-[var(--epa-blue)] text-white">
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
           <div className="mb-12 max-w-2xl">
             <p className="eyebrow !text-white/70">Quiénes somos</p>
@@ -79,35 +78,18 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <article className="rounded-2xl bg-white p-8 text-[var(--foreground)] shadow-sm">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--epa-blue)]">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--epa-green)]">
                 Visión
               </h3>
               <p className="mt-4 text-base leading-relaxed">{VISION}</p>
             </article>
             <article className="rounded-2xl bg-white p-8 text-[var(--foreground)] shadow-sm">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--epa-blue)]">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--epa-green)]">
                 Misión
               </h3>
               <p className="mt-4 text-base leading-relaxed">{MISSION}</p>
             </article>
           </div>
-
-          <div className="mt-16 max-w-2xl">
-            <p className="eyebrow !text-white/70">Principios</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-              Nuestros valores
-            </h2>
-          </div>
-          <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {VALUES.map((v) => (
-              <li
-                key={v}
-                className="rounded-xl bg-white/10 px-5 py-4 text-sm font-medium text-white ring-1 ring-white/20 backdrop-blur-sm"
-              >
-                {v}
-              </li>
-            ))}
-          </ul>
         </div>
       </section>
 
@@ -145,7 +127,7 @@ export default function HomePage() {
       </section>
 
       {/* Directiva */}
-      <section className="bg-[var(--epa-blue)] text-white">
+      <section className="bg-[var(--epa-green)] text-white">
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
           <div className="mb-12 max-w-2xl">
             <p className="eyebrow !text-white/70">Quién lidera</p>
