@@ -329,10 +329,16 @@ export function SubmitForm({ institutions, countries }: Props) {
             type="email"
             value={form.email}
             onChange={(e) => update('email', e.target.value)}
+            placeholder="tu.correo@gmail.com"
             className={inputClass}
           />
-          <p className="mt-1 text-xs text-[var(--muted)]">
-            Será visible en el directorio para que otros te contacten.
+          <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
+            Será visible en el directorio para que otros te contacten.{' '}
+            <strong className="text-[var(--foreground)]">
+              Recomendamos usar tu correo personal
+            </strong>{' '}
+            (Gmail u otro), no el institucional, para no perder acceso a tu
+            cuenta si cambias de institución.
           </p>
         </div>
       </div>
