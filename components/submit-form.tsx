@@ -333,11 +333,8 @@ export function SubmitForm({ institutions, countries }: Props) {
             className={inputClass}
           />
           <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
-            Será visible en el directorio para que otros te contacten.{' '}
-            <strong className="text-[var(--foreground)]">
-              Recomendamos usar tu correo personal
-            </strong>{' '}
-            (Gmail u otro), no el institucional, para no perder acceso a tu
+            Será visible en el directorio para que otros te contacten.
+            Recomendamos usar tu correo personal para no perder acceso a tu
             cuenta si cambias de institución.
           </p>
         </div>
