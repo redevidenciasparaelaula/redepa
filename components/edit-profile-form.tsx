@@ -195,14 +195,14 @@ export function EditProfileForm({ researcher, institutions, countries }: Props) 
       </div>
 
       <div>
-        <label className={labelClass}>Cargo {requiredMark}</label>
+        <label className={labelClass}>Cargo o rol {requiredMark}</label>
         <select
           required
           value={form.title}
           onChange={(e) => update('title', e.target.value)}
           className={inputClass}
         >
-          <option value="">Selecciona tu cargo</option>
+          <option value="">Selecciona tu cargo o rol</option>
           {POSITIONS.map((p) => (
             <option key={p.key} value={p.es}>
               {p.es}
@@ -292,7 +292,7 @@ export function EditProfileForm({ researcher, institutions, countries }: Props) 
         </legend>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label className={labelClass}>Año de doctorado</label>
+            <label className={labelClass}>Año de obtención del doctorado</label>
             <input
               type="number"
               inputMode="numeric"
@@ -311,7 +311,7 @@ export function EditProfileForm({ researcher, institutions, countries }: Props) 
             />
           </div>
           <div>
-            <label className={labelClass}>Año de magíster</label>
+            <label className={labelClass}>Año de obtención del magíster</label>
             <input
               type="number"
               inputMode="numeric"

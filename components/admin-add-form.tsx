@@ -276,7 +276,7 @@ export function AdminAddForm({
       </div>
 
       <div>
-        <label className={labelClass}>Cargo {req}</label>
+        <label className={labelClass}>Cargo o rol {req}</label>
         <select
           required
           value={form.title}
@@ -373,7 +373,7 @@ export function AdminAddForm({
         </legend>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label className={labelClass}>Año doctorado</label>
+            <label className={labelClass}>Año de obtención del doctorado</label>
             <input
               type="number"
               value={form.phd_year}
@@ -391,7 +391,7 @@ export function AdminAddForm({
             />
           </div>
           <div>
-            <label className={labelClass}>Año Magíster</label>
+            <label className={labelClass}>Año de obtención del magíster</label>
             <input
               type="number"
               value={form.master_year}
