@@ -63,19 +63,41 @@ export default async function SignInPage({ searchParams }: Props) {
           </div>
 
           {/* Sign up */}
-          <div className="flex flex-col rounded-2xl border-l-4 border-[var(--epa-blue)] bg-white p-6 shadow-sm sm:p-8">
+          <div className="flex flex-col rounded-2xl bg-white p-6 shadow-sm sm:p-8">
             <h2 className="text-lg font-bold text-[var(--foreground)]">
               ¿Aún no eres parte de la Red?
             </h2>
             <p className="mt-1 text-sm leading-relaxed text-[var(--muted)]">
-              Tu cuenta se crea al inscribirte como investigador/a. Súmate al
-              directorio y conecta con quienes investigan educación en
-              Latinoamérica.
+              Tu cuenta se crea al inscribirte como investigador/a.
             </p>
-            <div className="mt-auto pt-6">
+            <ul className="mt-6 space-y-3 text-sm leading-relaxed text-[var(--foreground)]">
+              {[
+                'Conecta con investigadoras e investigadores de toda Latinoamérica',
+                'Encuentra colaboraciones por tema o metodología',
+                'Da visibilidad a tu trabajo en una red institucional',
+              ].map((benefit) => (
+                <li key={benefit} className="flex gap-3">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="mt-0.5 h-4 w-4 shrink-0 text-[var(--epa-blue)]"
+                    aria-hidden="true"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  <span>{benefit}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-auto pt-8">
               <Link
                 href="/submit"
-                className="inline-flex items-center gap-1 rounded-md border border-[var(--epa-blue)] px-4 py-2 text-sm font-semibold text-[var(--epa-blue)] transition-colors hover:bg-[var(--epa-blue)] hover:text-white"
+                className="block w-full rounded-md bg-[var(--epa-blue)] px-6 py-3.5 text-center text-base font-semibold text-white shadow-sm transition-all hover:bg-[var(--epa-blue-dark)] hover:shadow-md"
               >
                 Inscribirme al directorio →
               </Link>
