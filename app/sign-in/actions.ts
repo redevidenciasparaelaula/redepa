@@ -57,7 +57,9 @@ export async function requestPasswordRecoveryAction(
   const origin = siteOriginFromHeaders(await headers());
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.resetPasswordForEmail(cleaned, {
-    redirectTo: `${origin}/reset-password`,
+    // El route handler /auth/callback intercambia el ?code= por sesión
+    // y redirige a /reset-password (ya autenticado, listo para nueva pwd).
+    redirectTo: `${origin}/auth/callback?next=/reset-password`,
   });
   if (error) {
     console.error('resetPasswordForEmail error', error);
