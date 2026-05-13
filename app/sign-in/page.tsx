@@ -66,19 +66,6 @@ export default async function SignInPage({ searchParams }: Props) {
         )}
 
         <div className="mt-10 grid gap-6 md:grid-cols-2">
-          {/* Sign in */}
-          <div className="flex flex-col rounded-2xl bg-white p-6 shadow-sm sm:p-8">
-            <h2 className="text-lg font-bold text-[var(--foreground)]">
-              Iniciar sesión
-            </h2>
-            <p className="mt-1 text-sm text-[var(--muted)]">
-              Para investigadoras e investigadores ya inscritos.
-            </p>
-            <div className="mt-6 flex flex-1 flex-col">
-              <SignInForm next={nextSafe} />
-            </div>
-          </div>
-
           {/* Sign up */}
           <div className="flex flex-col rounded-2xl bg-white p-6 shadow-sm sm:p-8">
             <h2 className="text-lg font-bold text-[var(--foreground)]">
@@ -118,6 +105,19 @@ export default async function SignInPage({ searchParams }: Props) {
               >
                 Inscribirme al directorio →
               </Link>
+            </div>
+          </div>
+
+          {/* Sign in */}
+          <div className="flex flex-col rounded-2xl bg-white p-6 shadow-sm sm:p-8">
+            <h2 className="text-lg font-bold text-[var(--foreground)]">
+              Iniciar sesión
+            </h2>
+            <p className="mt-1 text-sm text-[var(--muted)]">
+              Para investigadoras e investigadores ya inscritos.
+            </p>
+            <div className="mt-6 flex flex-1 flex-col">
+              <SignInForm next={nextSafe} />
             </div>
           </div>
         </div>
