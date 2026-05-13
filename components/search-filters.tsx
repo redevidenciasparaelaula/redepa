@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import type { Locale } from '@/i18n/config';
 import type { Institution } from '@/lib/supabase/types';
@@ -10,6 +10,7 @@ import { methodologiesAlphabetical } from '@/lib/methodologies';
 interface Props {
   institutions: Institution[];
   countries: string[];
+  topicSuggestions: string[];
   initial: {
     q?: string;
     countries?: string[];
@@ -28,7 +29,20 @@ function toggle(arr: string[], value: string): string[] {
   return arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
 }
 
-export function SearchFilters({ institutions, countries, initial }: Props) {
+function normalize(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .trim();
+}
+
+export function SearchFilters({
+  institutions,
+  countries,
+  topicSuggestions,
+  initial,
+}: Props) {
   const t = useTranslations('search');
   const locale = useLocale() as Locale;
   const router = useRouter();
@@ -58,7 +72,7 @@ export function SearchFilters({ institutions, countries, initial }: Props) {
   );
 
   function addTopic() {
-    const v = topicDraft.trim();
+    const v = topicDraft.trim().toLowerCase();
     if (!v || topics.includes(v)) {
       setTopicDraft('');
       return;
@@ -66,6 +80,21 @@ export function SearchFilters({ institutions, countries, initial }: Props) {
     setTopics([...topics, v]);
     setTopicDraft('');
   }
+
+  function pickSuggestion(value: string) {
+    if (!topics.includes(value)) setTopics([...topics, value]);
+    setTopicDraft('');
+  }
+
+  // Sugerencias basadas en lo que ya hay en la DB, match acento-insensible.
+  const filteredSuggestions = useMemo(() => {
+    const draft = topicDraft.trim();
+    if (!draft) return [];
+    const needle = normalize(draft);
+    return topicSuggestions
+      .filter((s) => !topics.includes(s) && normalize(s).includes(needle))
+      .slice(0, 8);
+  }, [topicDraft, topicSuggestions, topics]);
 
   function apply(e: React.FormEvent) {
     e.preventDefault();
@@ -167,30 +196,63 @@ export function SearchFilters({ institutions, countries, initial }: Props) {
         </select>
       </div>
 
-      {/* Topics — chip input */}
+      {/* Topics — chip input con sugerencias */}
       <div>
         <label className="mb-1 block font-medium">{t('topics')}</label>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={topicDraft}
-            onChange={(e) => setTopicDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                addTopic();
-              }
-            }}
-            placeholder={t('topicsPlaceholder')}
-            className={inputClass}
-          />
-          <button
-            type="button"
-            onClick={addTopic}
-            className="shrink-0 rounded-md border border-[var(--border)] px-3 py-2 text-sm hover:bg-[var(--accent)]"
-          >
-            +
-          </button>
+        <div className="relative">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={topicDraft}
+              onChange={(e) => setTopicDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  // Si hay sugerencias y la primera matchea exacto, agregamos esa
+                  // (con su casing original). Si no, agregamos lo que escribió.
+                  if (filteredSuggestions.length > 0) {
+                    pickSuggestion(filteredSuggestions[0]!);
+                  } else {
+                    addTopic();
+                  }
+                }
+              }}
+              placeholder={t('topicsPlaceholder')}
+              className={inputClass}
+              autoComplete="off"
+            />
+            <button
+              type="button"
+              onClick={addTopic}
+              className="shrink-0 rounded-md border border-[var(--border)] px-3 py-2 text-sm hover:bg-[var(--accent)]"
+              aria-label="Agregar tema"
+            >
+              +
+            </button>
+          </div>
+          {filteredSuggestions.length > 0 && (
+            <ul
+              role="listbox"
+              className="absolute left-0 right-0 top-full z-10 mt-1 max-h-56 overflow-y-auto rounded-md border border-[var(--border)] bg-white py-1 shadow-md"
+            >
+              {filteredSuggestions.map((s) => (
+                <li key={s}>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => {
+                      // mousedown en vez de click para que se ejecute antes
+                      // del blur del input
+                      e.preventDefault();
+                      pickSuggestion(s);
+                    }}
+                    className="block w-full cursor-pointer truncate px-3 py-1.5 text-left text-xs hover:bg-[var(--accent)]"
+                  >
+                    {s}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         {topics.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1">

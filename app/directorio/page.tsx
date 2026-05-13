@@ -4,6 +4,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { getCurrentUser } from '@/lib/auth';
 import {
   distinctCountries,
+  distinctTopics,
   listInstitutionsInUse,
   searchResearchers,
   SORTABLE_COLUMNS,
@@ -68,10 +69,11 @@ export default async function DirectoryPage({ searchParams }: PageProps) {
     page: pickInt(sp.page),
   };
 
-  const [{ rows, total, page, pageSize }, institutions, countries] = await Promise.all([
+  const [{ rows, total, page, pageSize }, institutions, countries, topicSuggestions] = await Promise.all([
     searchResearchers(filters),
     listInstitutionsInUse(),
     distinctCountries(),
+    distinctTopics(),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -97,6 +99,7 @@ export default async function DirectoryPage({ searchParams }: PageProps) {
               initial={filters}
               institutions={institutions}
               countries={countries}
+              topicSuggestions={topicSuggestions}
             />
           </CollapsibleFilters>
         </aside>
