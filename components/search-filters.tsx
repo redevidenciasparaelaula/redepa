@@ -243,51 +243,89 @@ export function SearchFilters({ institutions, countries, initial }: Props) {
         </details>
       </fieldset>
 
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label className="mb-1 block font-medium">{t('phdYearFrom')}</label>
-          <input
-            type="number"
-            inputMode="numeric"
-            value={phdYearFrom}
-            onChange={(e) => setPhdYearFrom(e.target.value)}
-            className={inputClass}
-          />
+      <fieldset>
+        <legend className="mb-2 block font-medium">
+          Año de obtención del doctorado
+        </legend>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label
+              htmlFor="phd-from"
+              className="mb-1 block text-xs text-[var(--muted)]"
+            >
+              Desde
+            </label>
+            <input
+              id="phd-from"
+              type="number"
+              inputMode="numeric"
+              placeholder="2010"
+              value={phdYearFrom}
+              onChange={(e) => setPhdYearFrom(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="phd-to"
+              className="mb-1 block text-xs text-[var(--muted)]"
+            >
+              Hasta
+            </label>
+            <input
+              id="phd-to"
+              type="number"
+              inputMode="numeric"
+              placeholder="2025"
+              value={phdYearTo}
+              onChange={(e) => setPhdYearTo(e.target.value)}
+              className={inputClass}
+            />
+          </div>
         </div>
-        <div>
-          <label className="mb-1 block font-medium">{t('phdYearTo')}</label>
-          <input
-            type="number"
-            inputMode="numeric"
-            value={phdYearTo}
-            onChange={(e) => setPhdYearTo(e.target.value)}
-            className={inputClass}
-          />
-        </div>
-      </div>
+      </fieldset>
 
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label className="mb-1 block font-medium">{t('masterYearFrom')}</label>
-          <input
-            type="number"
-            inputMode="numeric"
-            value={masterYearFrom}
-            onChange={(e) => setMasterYearFrom(e.target.value)}
-            className={inputClass}
-          />
+      <fieldset>
+        <legend className="mb-2 block font-medium">
+          Año de obtención del magíster
+        </legend>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label
+              htmlFor="master-from"
+              className="mb-1 block text-xs text-[var(--muted)]"
+            >
+              Desde
+            </label>
+            <input
+              id="master-from"
+              type="number"
+              inputMode="numeric"
+              placeholder="2008"
+              value={masterYearFrom}
+              onChange={(e) => setMasterYearFrom(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="master-to"
+              className="mb-1 block text-xs text-[var(--muted)]"
+            >
+              Hasta
+            </label>
+            <input
+              id="master-to"
+              type="number"
+              inputMode="numeric"
+              placeholder="2025"
+              value={masterYearTo}
+              onChange={(e) => setMasterYearTo(e.target.value)}
+              className={inputClass}
+            />
+          </div>
         </div>
-        <div>
-          <label className="mb-1 block font-medium">{t('masterYearTo')}</label>
-          <input
-            type="number"
-            inputMode="numeric"
-            value={masterYearTo}
-            onChange={(e) => setMasterYearTo(e.target.value)}
-            className={inputClass}
-          />
-        </div>
-      </div>
+      </fieldset>
 
       <div className="flex gap-2 pt-1">
         <button
