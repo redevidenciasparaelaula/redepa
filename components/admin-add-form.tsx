@@ -8,6 +8,7 @@ import { methodologiesAlphabetical } from '@/lib/methodologies';
 import type { CountryGroups } from '@/lib/countries';
 import { POSITIONS, positionByEs } from '@/lib/positions';
 import { normalizeDoi } from '@/lib/doi';
+import { normalizeUrl } from '@/lib/normalize-url';
 import { InstitutionCombobox } from './institution-combobox';
 
 interface Props {
@@ -120,11 +121,11 @@ export function AdminAddForm({
       representative_dois: dois,
       country: form.country.trim(),
       city: form.city.trim(),
-      linkedin_url: form.linkedin_url.trim() || null,
-      google_scholar_url: form.google_scholar_url.trim() || null,
-      researchgate_url: form.researchgate_url.trim() || null,
+      linkedin_url: normalizeUrl(form.linkedin_url),
+      google_scholar_url: normalizeUrl(form.google_scholar_url),
+      researchgate_url: normalizeUrl(form.researchgate_url),
       orcid: form.orcid.trim() || null,
-      website: form.website.trim() || null,
+      website: normalizeUrl(form.website),
     });
     setSubmitting(false);
 
@@ -417,21 +418,21 @@ export function AdminAddForm({
         </legend>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <input
-            type="url"
+            type="text"
             value={form.linkedin_url}
             onChange={(e) => update('linkedin_url', e.target.value)}
             placeholder="URL de LinkedIn"
             className={inputClass}
           />
           <input
-            type="url"
+            type="text"
             value={form.google_scholar_url}
             onChange={(e) => update('google_scholar_url', e.target.value)}
             placeholder="URL de Google Scholar"
             className={inputClass}
           />
           <input
-            type="url"
+            type="text"
             value={form.researchgate_url}
             onChange={(e) => update('researchgate_url', e.target.value)}
             placeholder="URL de ResearchGate"
@@ -445,7 +446,7 @@ export function AdminAddForm({
             className={inputClass}
           />
           <input
-            type="url"
+            type="text"
             value={form.website}
             onChange={(e) => update('website', e.target.value)}
             placeholder="Sitio web personal"

@@ -7,6 +7,7 @@ import { methodologiesAlphabetical } from '@/lib/methodologies';
 import type { CountryGroups } from '@/lib/countries';
 import { POSITIONS, positionByEs } from '@/lib/positions';
 import { normalizeDoi } from '@/lib/doi';
+import { normalizeUrl } from '@/lib/normalize-url';
 import { InstitutionCombobox } from './institution-combobox';
 
 // Este formulario es siempre en español, independiente del idioma de la UI.
@@ -197,11 +198,11 @@ export function SubmitForm({ institutions, countries }: Props) {
       representative_dois: dois,
       country: form.country.trim(),
       city: form.city.trim(),
-      linkedin_url: form.linkedin_url.trim() || null,
-      google_scholar_url: form.google_scholar_url.trim() || null,
-      researchgate_url: form.researchgate_url.trim() || null,
+      linkedin_url: normalizeUrl(form.linkedin_url),
+      google_scholar_url: normalizeUrl(form.google_scholar_url),
+      researchgate_url: normalizeUrl(form.researchgate_url),
       orcid: form.orcid.trim() || null,
-      website: form.website.trim() || null,
+      website: normalizeUrl(form.website),
       status: 'approved' as const,
     };
 
@@ -590,16 +591,17 @@ export function SubmitForm({ institutions, countries }: Props) {
           <div>
             <label className={labelClass}>URL de LinkedIn</label>
             <input
-              type="url"
+              type="text"
               value={form.linkedin_url}
               onChange={(e) => update('linkedin_url', e.target.value)}
+              placeholder="https://www.linkedin.com/in/tu-perfil"
               className={inputClass}
             />
           </div>
           <div>
             <label className={labelClass}>URL de Google Scholar</label>
             <input
-              type="url"
+              type="text"
               value={form.google_scholar_url}
               onChange={(e) => update('google_scholar_url', e.target.value)}
               placeholder="https://scholar.google.com/citations?user=..."
@@ -609,7 +611,7 @@ export function SubmitForm({ institutions, countries }: Props) {
           <div>
             <label className={labelClass}>URL de ResearchGate</label>
             <input
-              type="url"
+              type="text"
               value={form.researchgate_url}
               onChange={(e) => update('researchgate_url', e.target.value)}
               className={inputClass}
@@ -631,7 +633,7 @@ export function SubmitForm({ institutions, countries }: Props) {
           <div className="md:col-span-2">
             <label className={labelClass}>Sitio web personal</label>
             <input
-              type="url"
+              type="text"
               value={form.website}
               onChange={(e) => update('website', e.target.value)}
               className={inputClass}
