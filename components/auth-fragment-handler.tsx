@@ -15,17 +15,25 @@ export function AuthFragmentHandler({ dest }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const hash =
-      typeof window !== 'undefined' ? window.location.hash.substring(1) : '';
+    if (typeof window === 'undefined') return;
+    const search = new URLSearchParams(window.location.search);
+    const hasOldCode = search.has('code');
+    const hash = window.location.hash.substring(1);
+
     if (!hash) {
-      window.location.replace('/sign-in?error=link_invalid');
+      // Sin fragment ni manejo previo. Si llegó con ?code= sin pasar por
+      // /auth/callback, probablemente es un link viejo del flow anterior.
+      const detail = hasOldCode ? 'old_link_format' : 'no_fragment';
+      window.location.replace(`/sign-in?error=link_invalid&detail=${detail}`);
       return;
     }
     const params = new URLSearchParams(hash);
     const access_token = params.get('access_token');
     const refresh_token = params.get('refresh_token');
     if (!access_token || !refresh_token) {
-      window.location.replace('/sign-in?error=link_invalid');
+      window.location.replace(
+        '/sign-in?error=link_invalid&detail=fragment_missing_tokens'
+      );
       return;
     }
 

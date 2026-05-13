@@ -3,7 +3,11 @@ import Link from 'next/link';
 import { SignInForm } from '@/components/sign-in-form';
 
 interface Props {
-  searchParams: Promise<{ error?: string; next?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    next?: string;
+    detail?: string;
+  }>;
 }
 
 function safeNext(next: string | undefined): string | undefined {
@@ -13,8 +17,9 @@ function safeNext(next: string | undefined): string | undefined {
 }
 
 export default async function SignInPage({ searchParams }: Props) {
-  const { error, next } = await searchParams;
+  const { error, next, detail } = await searchParams;
   const nextSafe = safeNext(next);
+  const detailDecoded = detail ? decodeURIComponent(detail) : undefined;
 
   return (
     <div className="bg-[var(--surface)]">
@@ -43,8 +48,20 @@ export default async function SignInPage({ searchParams }: Props) {
         </div>
 
         {error === 'link_invalid' && (
-          <div className="mx-auto mt-6 max-w-md rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-900">
-            El enlace ya no es válido o expiró. Inicia sesión normalmente.
+          <div className="mx-auto mt-6 max-w-md rounded-md border border-red-300 bg-red-50 px-3 py-3 text-sm text-red-900">
+            <p className="font-semibold">
+              El enlace ya no es válido o expiró.
+            </p>
+            <p className="mt-1">
+              Si fue un link de recuperación de contraseña, solicita uno nuevo
+              desde <strong>¿La olvidaste?</strong> Los links son de un solo uso
+              y caducan en 1 hora.
+            </p>
+            {detailDecoded && (
+              <p className="mt-2 break-words font-mono text-xs opacity-70">
+                debug: {detailDecoded}
+              </p>
+            )}
           </div>
         )}
 
