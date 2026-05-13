@@ -91,7 +91,7 @@ export async function buildTemplateBuffer(): Promise<ArrayBuffer> {
   setCellNote(sheet, 'D1',
     'País: elige una opción del desplegable.');
   setCellNote(sheet, 'O1',
-    'ORCID con formato 0000-0000-0000-0000. Sin la URL completa.');
+    'ORCID. Pega la URL completa, ej: "https://orcid.org/0000-0000-0000-0000". También acepta solo el número.');
   setCellNote(sheet, 'Q1',
     'DOI sin prefijo. Ej: "10.1234/abc". Acepta también la URL completa de doi.org.');
 

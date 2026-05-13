@@ -441,7 +441,7 @@ export function AdminAddForm({
             type="text"
             value={form.orcid}
             onChange={(e) => update('orcid', e.target.value)}
-            placeholder="ORCID"
+            placeholder="https://orcid.org/0000-0000-0000-0000"
             className={inputClass}
           />
           <input

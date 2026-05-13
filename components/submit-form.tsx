@@ -618,9 +618,12 @@ export function SubmitForm({ institutions, countries }: Props) {
               type="text"
               value={form.orcid}
               onChange={(e) => update('orcid', e.target.value)}
-              placeholder="0000-0000-0000-0000"
+              placeholder="https://orcid.org/0000-0000-0000-0000"
               className={inputClass}
             />
+            <p className="mt-1 text-xs text-[var(--muted)]">
+              Pega la URL completa de tu perfil ORCID.
+            </p>
           </div>
           <div className="md:col-span-2">
             <label className={labelClass}>Sitio web personal</label>
