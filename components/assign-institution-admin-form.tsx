@@ -56,7 +56,7 @@ export function AssignInstitutionAdminForm({ institutions }: Props) {
 
   if (success) {
     return (
-      <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-6 text-emerald-900">
+      <div className="rounded-lg border border-[var(--success-border)] bg-[var(--success-bg)] p-6 text-[var(--success-text)]">
         <p className="font-medium">
           {success.invited
             ? `${success.email} invitada/o por correo y asignada/o como admin de ${success.institutionName}. Recibirá un enlace para activar su acceso.`
@@ -72,13 +72,13 @@ export function AssignInstitutionAdminForm({ institutions }: Props) {
           <button
             type="button"
             onClick={() => setSuccess(null)}
-            className="rounded-md border border-emerald-700 px-3 py-1.5 text-sm hover:bg-emerald-100"
+            className="rounded-md border border-[var(--success-text-medium)] px-3 py-1.5 text-sm hover:bg-[var(--success-bg-hover)]"
           >
             Asignar otro
           </button>
           <Link
             href="/admin"
-            className="rounded-md border border-emerald-700 px-3 py-1.5 text-sm hover:bg-emerald-100"
+            className="rounded-md border border-[var(--success-text-medium)] px-3 py-1.5 text-sm hover:bg-[var(--success-bg-hover)]"
           >
             Volver a Administración
           </Link>

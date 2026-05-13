@@ -20,6 +20,14 @@
   --accent: #f5f6f8;          /* gris ligerísimo, ligero tono frío */
   --accent-color: var(--epa-blue);
   --surface: #fafafa;         /* fondo de sección alternante */
+
+  /* Mensajes de confirmación / éxito — pastel basado en --epa-green (#739600) */
+  --success-bg: #f4f8e6;          /* fondo pastel */
+  --success-bg-hover: #e8efc9;    /* hover de botones outlined */
+  --success-border: #c4d678;      /* borde sutil */
+  --success-border-strong: #9fb84a;
+  --success-text: #2e3d00;        /* texto principal — alto contraste */
+  --success-text-medium: #4d6700; /* texto secundario / iconografía */
 }
 
 @theme inline {

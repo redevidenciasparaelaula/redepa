@@ -143,11 +143,11 @@ export function AdminAddForm({
   if (created) {
     return (
       <div className="space-y-4">
-        <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-6 text-emerald-900">
+        <div className="rounded-lg border border-[var(--success-border)] bg-[var(--success-bg)] p-6 text-[var(--success-text)]">
           <p className="font-medium">Investigador agregado al directorio.</p>
           {created.createdAuthUser && (
-            <div className="mt-3 rounded-md border border-emerald-400 bg-white p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+            <div className="mt-3 rounded-md border border-[var(--success-border-strong)] bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--success-text-medium)]">
                 Credenciales para comunicar a {created.email}:
               </p>
               <p className="mt-2 font-mono text-sm">
@@ -163,11 +163,11 @@ export function AdminAddForm({
                     `Correo: ${created.email}\nContraseña: ${created.password}`
                   )
                 }
-                className="mt-3 rounded-md border border-emerald-700 px-3 py-1 text-xs hover:bg-emerald-100"
+                className="mt-3 rounded-md border border-[var(--success-text-medium)] px-3 py-1 text-xs hover:bg-[var(--success-bg-hover)]"
               >
                 Copiar al portapapeles
               </button>
-              <p className="mt-2 text-xs text-emerald-800">
+              <p className="mt-2 text-xs text-[var(--success-text)]">
                 Guárdala antes de cerrar esta pantalla. Si la pierdes, puedes
                 resetearla desde el panel admin.
               </p>
@@ -188,13 +188,13 @@ export function AdminAddForm({
             </Link>
             <Link
               href="/admin/researchers/new"
-              className="rounded-md border border-emerald-700 px-4 py-2 text-sm hover:bg-emerald-100"
+              className="rounded-md border border-[var(--success-text-medium)] px-4 py-2 text-sm hover:bg-[var(--success-bg-hover)]"
             >
               Agregar otro
             </Link>
             <Link
               href="/admin"
-              className="rounded-md border border-emerald-700 px-4 py-2 text-sm hover:bg-emerald-100"
+              className="rounded-md border border-[var(--success-text-medium)] px-4 py-2 text-sm hover:bg-[var(--success-bg-hover)]"
             >
               Volver a Administración
             </Link>
@@ -254,7 +254,7 @@ export function AdminAddForm({
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label className={labelClass}>Nombre completo {req}</label>
+          <label className={labelClass}>Nombre y apellido {req}</label>
           <input
             required
             type="text"

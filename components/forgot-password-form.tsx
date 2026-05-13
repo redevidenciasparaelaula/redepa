@@ -25,7 +25,7 @@ export function ForgotPasswordForm() {
 
   if (sent) {
     return (
-      <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-5 text-sm text-emerald-900">
+      <div className="rounded-xl border border-[var(--success-border)] bg-[var(--success-bg)] p-5 text-sm text-[var(--success-text)]">
         <p className="font-semibold">Revisa tu correo</p>
         <p className="mt-2 leading-relaxed">
           Te enviamos un enlace a <strong>{email}</strong>. Ábrelo desde el

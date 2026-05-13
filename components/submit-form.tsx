@@ -243,13 +243,13 @@ export function SubmitForm({ institutions, countries }: Props) {
 
   if (createdId) {
     return (
-      <div className="rounded-2xl border border-emerald-300 bg-emerald-50 p-6 text-emerald-900 sm:p-8">
+      <div className="rounded-2xl border border-[var(--success-border)] bg-[var(--success-bg)] p-6 text-[var(--success-text)] sm:p-8">
         <p className="text-base font-semibold">
           Recibimos tu inscripción — ahora falta un paso.
         </p>
         <ol className="mt-4 space-y-3 text-sm leading-relaxed">
           <li className="flex gap-3">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-xs font-bold text-white">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--success-text-medium)] text-xs font-bold text-white">
               1
             </span>
             <span>
@@ -259,7 +259,7 @@ export function SubmitForm({ institutions, countries }: Props) {
             </span>
           </li>
           <li className="flex gap-3">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-xs font-bold text-white">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--success-text-medium)] text-xs font-bold text-white">
               2
             </span>
             <span>
@@ -268,7 +268,7 @@ export function SubmitForm({ institutions, countries }: Props) {
             </span>
           </li>
           <li className="flex gap-3">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-xs font-bold text-white">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--success-text-medium)] text-xs font-bold text-white">
               3
             </span>
             <span>
@@ -278,7 +278,7 @@ export function SubmitForm({ institutions, countries }: Props) {
             </span>
           </li>
         </ol>
-        <p className="mt-5 border-t border-emerald-300 pt-4 text-xs leading-relaxed">
+        <p className="mt-5 border-t border-[var(--success-border)] pt-4 text-xs leading-relaxed">
           ¿No te llegó el correo después de 1 hora? Revisa la carpeta de spam o
           escríbenos a{' '}
           <a
@@ -311,7 +311,7 @@ export function SubmitForm({ institutions, countries }: Props) {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label className={labelClass}>Nombre completo {requiredMark}</label>
+          <label className={labelClass}>Nombre y apellido {requiredMark}</label>
           <input
             required
             type="text"

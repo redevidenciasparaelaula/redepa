@@ -152,14 +152,14 @@ export function EditProfileForm({ researcher, institutions, countries }: Props) 
         </div>
       )}
       {savedAt && !error && (
-        <div className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+        <div className="rounded-md border border-[var(--success-border)] bg-[var(--success-bg)] px-3 py-2 text-sm text-[var(--success-text)]">
           Cambios guardados.
         </div>
       )}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label className={labelClass}>Nombre completo {requiredMark}</label>
+          <label className={labelClass}>Nombre y apellido {requiredMark}</label>
           <input
             required
             type="text"

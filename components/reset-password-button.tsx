@@ -43,7 +43,7 @@ export function ResetPasswordButton({ email, name }: Props) {
         {pending ? 'Reseteando…' : 'Reset contraseña'}
       </button>
       {newPassword && (
-        <span className="rounded-md border border-emerald-400 bg-emerald-50 px-2 py-1 font-mono text-xs text-emerald-900">
+        <span className="rounded-md border border-[var(--success-border-strong)] bg-[var(--success-bg)] px-2 py-1 font-mono text-xs text-[var(--success-text)]">
           Nueva: <strong>{newPassword}</strong>{' '}
           <button
             type="button"

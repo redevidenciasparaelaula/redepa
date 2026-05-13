@@ -370,7 +370,7 @@ export function BulkUploadForm({ availableInstitutions }: Props) {
           </h2>
           <p className="mb-3 text-sm">
             {rows.length} fila(s) cargada(s). Válidas:{' '}
-            <strong className="text-emerald-700">{validRows.length}</strong>.
+            <strong className="text-[var(--success-text-medium)]">{validRows.length}</strong>.
             Con errores:{' '}
             <strong className="text-red-700">{invalidRows.length}</strong>.
           </p>
@@ -465,7 +465,7 @@ export function BulkUploadForm({ availableInstitutions }: Props) {
 
       {/* Paso 4: resultado */}
       {result && (
-        <section className="rounded-lg border border-emerald-300 bg-emerald-50 p-6 text-emerald-900">
+        <section className="rounded-lg border border-[var(--success-border)] bg-[var(--success-bg)] p-6 text-[var(--success-text)]">
           <h2 className="text-base font-semibold">Resultado</h2>
           <p className="mt-1 text-sm">
             <strong>{result.inserted}</strong> investigador(es) insertado(s).
@@ -487,11 +487,11 @@ export function BulkUploadForm({ availableInstitutions }: Props) {
           )}
 
           {result.credentials.length > 0 && (
-            <div className="mt-4 rounded-md border border-emerald-400 bg-white p-4 text-[var(--foreground)]">
-              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+            <div className="mt-4 rounded-md border border-[var(--success-border-strong)] bg-white p-4 text-[var(--foreground)]">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--success-text-medium)]">
                 Credenciales generadas — comunícalas a cada investigador
               </p>
-              <p className="mt-1 text-xs text-emerald-800">
+              <p className="mt-1 text-xs text-[var(--success-text)]">
                 Guarda esta lista antes de cerrar la pantalla. Si la pierdes,
                 puedes resetear contraseñas desde el panel admin.
               </p>
@@ -524,7 +524,7 @@ export function BulkUploadForm({ availableInstitutions }: Props) {
                     .join('\n');
                   navigator.clipboard.writeText('email,password\n' + text);
                 }}
-                className="mt-3 rounded-md border border-emerald-700 px-3 py-1 text-xs hover:bg-emerald-100"
+                className="mt-3 rounded-md border border-[var(--success-text-medium)] px-3 py-1 text-xs hover:bg-[var(--success-bg-hover)]"
               >
                 Copiar todas como CSV
               </button>
@@ -541,7 +541,7 @@ export function BulkUploadForm({ availableInstitutions }: Props) {
             <button
               type="button"
               onClick={reset}
-              className="rounded-md border border-emerald-700 px-3 py-1.5 text-sm hover:bg-emerald-100"
+              className="rounded-md border border-[var(--success-text-medium)] px-3 py-1.5 text-sm hover:bg-[var(--success-bg-hover)]"
             >
               Cargar otro archivo
             </button>
