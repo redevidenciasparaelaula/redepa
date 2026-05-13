@@ -74,7 +74,7 @@ export default async function SignInPage({ searchParams }: Props) {
             <p className="mt-1 text-sm text-[var(--muted)]">
               Para investigadoras e investigadores ya inscritos.
             </p>
-            <div className="mt-6 flex-1">
+            <div className="mt-6 flex flex-1 flex-col">
               <SignInForm next={nextSafe} />
             </div>
           </div>
