@@ -1,16 +1,10 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import type { Locale } from '@/i18n/config';
 import type { ResearcherWithInstitution } from '@/lib/supabase/types';
 import { methodologyLabel } from '@/lib/methodologies';
-import {
-  BRAND_COLORS,
-  GoogleScholarIcon,
-  LinkedInIcon,
-  MailIcon,
-  OrcidIcon,
-  ResearchGateIcon,
-} from './brand-icons';
+import { MailIcon } from './brand-icons';
 
 interface Props {
   researcher: ResearcherWithInstitution;
@@ -98,17 +92,23 @@ export async function ResearcherCard({ researcher, locale }: Props) {
               <span className="truncate">{r.email}</span>
             </a>
           )}
-          <span className="ml-auto flex items-center gap-2">
+          <span className="ml-auto flex items-center gap-1.5">
             {r.linkedin_url && (
               <a
                 href={r.linkedin_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="opacity-70 transition-opacity hover:opacity-100"
-                style={{ color: BRAND_COLORS.linkedin }}
+                className="transition-opacity hover:opacity-80"
                 title={tProfile('linkedin')}
+                aria-label={tProfile('linkedin')}
               >
-                <LinkedInIcon className="h-4 w-4" />
+                <Image
+                  src="/social/linkedin.png"
+                  alt=""
+                  width={300}
+                  height={300}
+                  className="h-5 w-5"
+                />
               </a>
             )}
             {r.google_scholar_url && (
@@ -116,11 +116,17 @@ export async function ResearcherCard({ researcher, locale }: Props) {
                 href={r.google_scholar_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="opacity-70 transition-opacity hover:opacity-100"
-                style={{ color: BRAND_COLORS.scholar }}
+                className="transition-opacity hover:opacity-80"
                 title={tProfile('scholar')}
+                aria-label={tProfile('scholar')}
               >
-                <GoogleScholarIcon className="h-4 w-4" />
+                <Image
+                  src="/social/scholar.png"
+                  alt=""
+                  width={300}
+                  height={300}
+                  className="h-5 w-5"
+                />
               </a>
             )}
             {r.researchgate_url && (
@@ -128,11 +134,17 @@ export async function ResearcherCard({ researcher, locale }: Props) {
                 href={r.researchgate_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="opacity-70 transition-opacity hover:opacity-100"
-                style={{ color: BRAND_COLORS.researchgate }}
+                className="transition-opacity hover:opacity-80"
                 title={tProfile('researchgate')}
+                aria-label={tProfile('researchgate')}
               >
-                <ResearchGateIcon className="h-4 w-4" />
+                <Image
+                  src="/social/researchgate.png"
+                  alt=""
+                  width={300}
+                  height={300}
+                  className="h-5 w-5"
+                />
               </a>
             )}
             {r.orcid && (
@@ -140,11 +152,17 @@ export async function ResearcherCard({ researcher, locale }: Props) {
                 href={orcidUrl(r.orcid)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="opacity-70 transition-opacity hover:opacity-100"
-                style={{ color: BRAND_COLORS.orcid }}
+                className="transition-opacity hover:opacity-80"
                 title={tProfile('orcid')}
+                aria-label={tProfile('orcid')}
               >
-                <OrcidIcon className="h-4 w-4" />
+                <Image
+                  src="/social/orcid.png"
+                  alt=""
+                  width={300}
+                  height={300}
+                  className="h-5 w-5"
+                />
               </a>
             )}
           </span>
