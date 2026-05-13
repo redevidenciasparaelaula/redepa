@@ -87,8 +87,15 @@ export default function PremioPage() {
                 <span className="font-semibold text-[var(--foreground)]">
                   Artículo:
                 </span>{' '}
-                Formative research in teacher training: A case study carried
-                out in Uruguay
+                <a
+                  href="https://www.sciencedirect.com/science/article/pii/S0883035524000326"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[var(--epa-blue)] underline underline-offset-2 hover:text-[var(--epa-blue-dark)]"
+                >
+                  Formative research in teacher training: A case study carried
+                  out in Uruguay
+                </a>
               </p>
             </article>
 
@@ -104,9 +111,16 @@ export default function PremioPage() {
                 <span className="font-semibold text-[var(--foreground)]">
                   Producto:
                 </span>{' '}
-                &ldquo;Matemáticas ProFuturo&rdquo;, plataforma educativa
-                digital adaptativa para fortalecer el aprendizaje de
-                matemáticas en educación básica.
+                <a
+                  href="https://maths.profuturo.education/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[var(--epa-blue)] underline underline-offset-2 hover:text-[var(--epa-blue-dark)]"
+                >
+                  &ldquo;Matemáticas ProFuturo&rdquo;
+                </a>
+                , plataforma educativa digital adaptativa para fortalecer el
+                aprendizaje de matemáticas en educación básica.
               </p>
             </article>
           </div>
