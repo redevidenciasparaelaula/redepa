@@ -58,7 +58,7 @@ export async function ResearcherCard({ researcher, locale }: Props) {
 
       {r.research_topics.length > 0 && (
         <div className="mt-3.5 flex flex-wrap gap-1.5">
-          {r.research_topics.slice(0, 4).map((topic) => (
+          {r.research_topics.slice(0, 5).map((topic) => (
             <span
               key={topic}
               className="rounded-full bg-[var(--accent)] px-2.5 py-0.5 text-xs font-medium text-[var(--foreground)]"
@@ -66,9 +66,9 @@ export async function ResearcherCard({ researcher, locale }: Props) {
               {topic}
             </span>
           ))}
-          {r.research_topics.length > 4 && (
+          {r.research_topics.length > 5 && (
             <span className="self-center text-xs text-[var(--muted)]">
-              +{r.research_topics.length - 4}
+              +{r.research_topics.length - 5}
             </span>
           )}
         </div>
