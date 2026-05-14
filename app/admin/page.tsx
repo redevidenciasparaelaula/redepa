@@ -94,9 +94,6 @@ export default async function AdminPage({ searchParams }: Props) {
   const resFilters = {
     rq: pickString(sp.rq).trim(),
     rinst: pickString(sp.rinst),
-    rstatus: (['approved', 'pending'].includes(pickString(sp.rstatus))
-      ? (pickString(sp.rstatus) as 'approved' | 'pending')
-      : 'all') as 'all' | 'approved' | 'pending',
   };
 
   const adminFilters = {

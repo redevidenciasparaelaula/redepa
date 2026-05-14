@@ -8,7 +8,6 @@ interface Props {
   initial: {
     rq?: string;
     rinst?: string;
-    rstatus?: 'all' | 'approved' | 'pending';
   };
 }
 
@@ -16,7 +15,6 @@ export function ResearcherFilters({ institutions, initial }: Props) {
   const router = useRouter();
   const [q, setQ] = useState(initial.rq ?? '');
   const [inst, setInst] = useState(initial.rinst ?? '');
-  const [status, setStatus] = useState(initial.rstatus ?? 'all');
 
   function apply(e: React.FormEvent) {
     e.preventDefault();
@@ -24,14 +22,12 @@ export function ResearcherFilters({ institutions, initial }: Props) {
     params.set('tab', 'investigadores');
     if (q.trim()) params.set('rq', q.trim());
     if (inst) params.set('rinst', inst);
-    if (status !== 'all') params.set('rstatus', status);
     router.push(`/admin?${params.toString()}`);
   }
 
   function clear() {
     setQ('');
     setInst('');
-    setStatus('all');
     router.push('/admin?tab=investigadores');
   }
 
@@ -43,7 +39,7 @@ export function ResearcherFilters({ institutions, initial }: Props) {
       onSubmit={apply}
       className="mb-4 rounded-lg border border-[var(--border)] bg-[var(--card)] p-4"
     >
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div>
           <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
             Buscar
@@ -71,22 +67,6 @@ export function ResearcherFilters({ institutions, initial }: Props) {
                 {i.name}
               </option>
             ))}
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
-            Estado
-          </label>
-          <select
-            value={status}
-            onChange={(e) =>
-              setStatus(e.target.value as 'all' | 'approved' | 'pending')
-            }
-            className={fieldClass}
-          >
-            <option value="all">Todos</option>
-            <option value="approved">Aprobado</option>
-            <option value="pending">Pendiente</option>
           </select>
         </div>
         <div className="flex items-end gap-2">

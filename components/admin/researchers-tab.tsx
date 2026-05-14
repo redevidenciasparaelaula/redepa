@@ -22,7 +22,6 @@ interface Props {
   filters: {
     rq: string;
     rinst: string;
-    rstatus: 'all' | 'approved' | 'pending';
   };
 }
 
@@ -56,12 +55,10 @@ export async function ResearchersTab({ user, filters }: Props) {
       if (!hay.includes(needle)) return false;
     }
     if (filters.rinst && r.institution_id !== filters.rinst) return false;
-    if (filters.rstatus !== 'all' && r.status !== filters.rstatus) return false;
     return true;
   });
 
-  const hasFilters =
-    filters.rq || filters.rinst || filters.rstatus !== 'all';
+  const hasFilters = !!(filters.rq || filters.rinst);
 
   return (
     <>
@@ -105,14 +102,13 @@ export async function ResearchersTab({ user, filters }: Props) {
         </p>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--card)]">
-          <table className="w-full min-w-[920px] text-sm">
+          <table className="w-full min-w-[820px] text-sm">
             <thead>
               <tr>
                 <Th>Nombre</Th>
                 <Th>Institución</Th>
                 <Th>Correo</Th>
                 <Th>País</Th>
-                <Th>Estado</Th>
                 <Th align="right">Acciones</Th>
               </tr>
             </thead>
@@ -152,9 +148,6 @@ export async function ResearchersTab({ user, filters }: Props) {
                       <div className="text-xs">{r.city}</div>
                     )}
                   </td>
-                  <td className="px-3 py-2 align-top">
-                    <StatusBadge status={r.status} />
-                  </td>
                   <td className="px-3 py-2 align-top text-right">
                     <div className="inline-flex flex-wrap items-start justify-end gap-2">
                       <Link
@@ -174,26 +167,6 @@ export async function ResearchersTab({ user, filters }: Props) {
         </div>
       )}
     </>
-  );
-}
-
-function StatusBadge({ status }: { status: string | null }) {
-  if (status === 'approved') {
-    return (
-      <span className="rounded-full bg-[var(--success-bg)] px-2 py-0.5 text-xs font-medium text-[var(--success-text)]">
-        Aprobado
-      </span>
-    );
-  }
-  if (status === 'pending') {
-    return (
-      <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-900">
-        Pendiente
-      </span>
-    );
-  }
-  return (
-    <span className="text-xs text-[var(--muted)]">{status ?? '—'}</span>
   );
 }
 

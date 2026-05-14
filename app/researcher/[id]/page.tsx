@@ -58,12 +58,6 @@ export default async function ResearcherPage({ params }: Props) {
         )}
       </div>
 
-      {r.status === 'pending' && (
-        <div className="mb-4 rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900">
-          {t('pendingNotice')}
-        </div>
-      )}
-
       <header className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-6">
         <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
