@@ -1,17 +1,11 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import type { Locale } from '@/i18n/config';
 import type { ResearcherWithInstitution } from '@/lib/supabase/types';
 import { SORTABLE_COLUMNS, type SortColumn, type SortDir } from '@/lib/queries';
 import { buildHref } from '@/lib/url';
-import {
-  BRAND_COLORS,
-  GoogleScholarIcon,
-  LinkedInIcon,
-  MailIcon,
-  OrcidIcon,
-  ResearchGateIcon,
-} from './brand-icons';
+import { MailIcon } from './brand-icons';
 
 interface Props {
   researchers: ResearcherWithInstitution[];
@@ -176,10 +170,16 @@ export async function ResearcherTable({
                         target="_blank"
                         rel="noopener noreferrer"
                         title={tProfile('linkedin')}
-                        style={{ color: BRAND_COLORS.linkedin }}
-                        className="opacity-70 hover:opacity-100"
+                        aria-label={tProfile('linkedin')}
+                        className="transition-opacity hover:opacity-80"
                       >
-                        <LinkedInIcon className="h-4 w-4" />
+                        <Image
+                          src="/social/linkedin.png"
+                          alt=""
+                          width={300}
+                          height={300}
+                          className="h-5 w-5"
+                        />
                       </a>
                     )}
                     {r.google_scholar_url && (
@@ -188,10 +188,16 @@ export async function ResearcherTable({
                         target="_blank"
                         rel="noopener noreferrer"
                         title={tProfile('scholar')}
-                        style={{ color: BRAND_COLORS.scholar }}
-                        className="opacity-70 hover:opacity-100"
+                        aria-label={tProfile('scholar')}
+                        className="transition-opacity hover:opacity-80"
                       >
-                        <GoogleScholarIcon className="h-4 w-4" />
+                        <Image
+                          src="/social/scholar.png"
+                          alt=""
+                          width={300}
+                          height={300}
+                          className="h-5 w-5"
+                        />
                       </a>
                     )}
                     {r.researchgate_url && (
@@ -200,10 +206,16 @@ export async function ResearcherTable({
                         target="_blank"
                         rel="noopener noreferrer"
                         title={tProfile('researchgate')}
-                        style={{ color: BRAND_COLORS.researchgate }}
-                        className="opacity-70 hover:opacity-100"
+                        aria-label={tProfile('researchgate')}
+                        className="transition-opacity hover:opacity-80"
                       >
-                        <ResearchGateIcon className="h-4 w-4" />
+                        <Image
+                          src="/social/researchgate.png"
+                          alt=""
+                          width={300}
+                          height={300}
+                          className="h-5 w-5"
+                        />
                       </a>
                     )}
                     {r.orcid && (
@@ -212,10 +224,16 @@ export async function ResearcherTable({
                         target="_blank"
                         rel="noopener noreferrer"
                         title={tProfile('orcid')}
-                        style={{ color: BRAND_COLORS.orcid }}
-                        className="opacity-70 hover:opacity-100"
+                        aria-label={tProfile('orcid')}
+                        className="transition-opacity hover:opacity-80"
                       >
-                        <OrcidIcon className="h-4 w-4" />
+                        <Image
+                          src="/social/orcid.png"
+                          alt=""
+                          width={300}
+                          height={300}
+                          className="h-5 w-5"
+                        />
                       </a>
                     )}
                   </div>
