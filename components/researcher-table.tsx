@@ -171,14 +171,14 @@ export async function ResearcherTable({
                         rel="noopener noreferrer"
                         title={tProfile('linkedin')}
                         aria-label={tProfile('linkedin')}
-                        className="transition-opacity hover:opacity-80"
+                        className="inline-flex h-5 w-5 shrink-0 transition-opacity hover:opacity-80"
                       >
                         <Image
                           src="/social/linkedin.png"
                           alt=""
                           width={300}
                           height={300}
-                          className="h-5 w-5"
+                          className="h-5 w-5 shrink-0 object-contain"
                         />
                       </a>
                     )}
@@ -189,14 +189,14 @@ export async function ResearcherTable({
                         rel="noopener noreferrer"
                         title={tProfile('scholar')}
                         aria-label={tProfile('scholar')}
-                        className="transition-opacity hover:opacity-80"
+                        className="inline-flex h-5 w-5 shrink-0 transition-opacity hover:opacity-80"
                       >
                         <Image
                           src="/social/scholar.png"
                           alt=""
                           width={300}
                           height={300}
-                          className="h-5 w-5"
+                          className="h-5 w-5 shrink-0 object-contain"
                         />
                       </a>
                     )}
@@ -207,14 +207,14 @@ export async function ResearcherTable({
                         rel="noopener noreferrer"
                         title={tProfile('researchgate')}
                         aria-label={tProfile('researchgate')}
-                        className="transition-opacity hover:opacity-80"
+                        className="inline-flex h-5 w-5 shrink-0 transition-opacity hover:opacity-80"
                       >
                         <Image
                           src="/social/researchgate.png"
                           alt=""
                           width={300}
                           height={300}
-                          className="h-5 w-5"
+                          className="h-5 w-5 shrink-0 object-contain"
                         />
                       </a>
                     )}
@@ -225,14 +225,14 @@ export async function ResearcherTable({
                         rel="noopener noreferrer"
                         title={tProfile('orcid')}
                         aria-label={tProfile('orcid')}
-                        className="transition-opacity hover:opacity-80"
+                        className="inline-flex h-5 w-5 shrink-0 transition-opacity hover:opacity-80"
                       >
                         <Image
                           src="/social/orcid.png"
                           alt=""
                           width={300}
                           height={300}
-                          className="h-5 w-5"
+                          className="h-5 w-5 shrink-0 object-contain"
                         />
                       </a>
                     )}

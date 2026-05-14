@@ -98,7 +98,7 @@ export async function ResearcherCard({ researcher, locale }: Props) {
                 href={r.linkedin_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="transition-opacity hover:opacity-80"
+                className="inline-flex h-5 w-5 shrink-0 transition-opacity hover:opacity-80"
                 title={tProfile('linkedin')}
                 aria-label={tProfile('linkedin')}
               >
@@ -107,7 +107,7 @@ export async function ResearcherCard({ researcher, locale }: Props) {
                   alt=""
                   width={300}
                   height={300}
-                  className="h-5 w-5"
+                  className="h-5 w-5 shrink-0 object-contain"
                 />
               </a>
             )}
@@ -116,7 +116,7 @@ export async function ResearcherCard({ researcher, locale }: Props) {
                 href={r.google_scholar_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="transition-opacity hover:opacity-80"
+                className="inline-flex h-5 w-5 shrink-0 transition-opacity hover:opacity-80"
                 title={tProfile('scholar')}
                 aria-label={tProfile('scholar')}
               >
@@ -125,7 +125,7 @@ export async function ResearcherCard({ researcher, locale }: Props) {
                   alt=""
                   width={300}
                   height={300}
-                  className="h-5 w-5"
+                  className="h-5 w-5 shrink-0 object-contain"
                 />
               </a>
             )}
@@ -134,7 +134,7 @@ export async function ResearcherCard({ researcher, locale }: Props) {
                 href={r.researchgate_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="transition-opacity hover:opacity-80"
+                className="inline-flex h-5 w-5 shrink-0 transition-opacity hover:opacity-80"
                 title={tProfile('researchgate')}
                 aria-label={tProfile('researchgate')}
               >
@@ -143,7 +143,7 @@ export async function ResearcherCard({ researcher, locale }: Props) {
                   alt=""
                   width={300}
                   height={300}
-                  className="h-5 w-5"
+                  className="h-5 w-5 shrink-0 object-contain"
                 />
               </a>
             )}
@@ -152,7 +152,7 @@ export async function ResearcherCard({ researcher, locale }: Props) {
                 href={orcidUrl(r.orcid)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="transition-opacity hover:opacity-80"
+                className="inline-flex h-5 w-5 shrink-0 transition-opacity hover:opacity-80"
                 title={tProfile('orcid')}
                 aria-label={tProfile('orcid')}
               >
@@ -161,7 +161,7 @@ export async function ResearcherCard({ researcher, locale }: Props) {
                   alt=""
                   width={300}
                   height={300}
-                  className="h-5 w-5"
+                  className="h-5 w-5 shrink-0 object-contain"
                 />
               </a>
             )}
