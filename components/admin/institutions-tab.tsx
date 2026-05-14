@@ -9,6 +9,7 @@ import type { Institution, ResearcherWithInstitution } from '@/lib/supabase/type
 import { AdminInstitutionFilters } from '@/components/admin-institution-filters';
 import { DeleteResearcherButton } from '@/components/delete-researcher-button';
 import { ResetPasswordButton } from '@/components/reset-password-button';
+import { InstitutionDeleteLink } from '@/components/admin/institution-delete-link';
 
 interface User {
   id: string;
@@ -138,6 +139,7 @@ export async function InstitutionsTab({ user, filters }: Props) {
                 key={inst.id}
                 institution={inst}
                 researchers={list}
+                canDelete={user.isSuperAdmin}
               />
             );
           })
@@ -152,6 +154,7 @@ export async function InstitutionsTab({ user, filters }: Props) {
               institution={null}
               researchers={orphans}
               title="Sin institución"
+              canDelete={false}
             />
           )}
       </div>
@@ -163,10 +166,12 @@ function InstitutionSection({
   institution,
   researchers,
   title,
+  canDelete,
 }: {
   institution: Institution | null;
   researchers: ResearcherWithInstitution[];
   title?: string;
+  canDelete: boolean;
 }) {
   const heading = title ?? institution?.name ?? '—';
   return (
@@ -199,6 +204,13 @@ function InstitutionSection({
               >
                 ↥ carga masiva
               </Link>
+              {canDelete && (
+                <InstitutionDeleteLink
+                  id={institution.id}
+                  name={institution.name}
+                  researchersCount={researchers.length}
+                />
+              )}
             </>
           )}
         </div>
