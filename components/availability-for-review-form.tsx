@@ -43,9 +43,8 @@ export function AvailabilityForReviewForm({ initialValue }: Props) {
             Estaría dispuesta/o a ser evaluador/a en un Congreso EPA.
           </span>
           <span className="mt-1 block text-xs text-[var(--muted)]">
-            Te contactaremos cuando se abra el proceso de revisión, para
-            confirmar tu disponibilidad y coordinar los detalles (carga,
-            temas asignados, plazos).
+            Te contactaremos cuando se abra el proceso de revisión para
+            confirmar tu disponibilidad y coordinar los detalles.
           </span>
         </span>
       </label>

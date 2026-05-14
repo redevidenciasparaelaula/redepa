@@ -92,9 +92,10 @@ export default async function MyAccountPage() {
                 Disponibilidad para Congresos EPA
               </h2>
               <p className="mb-5 text-sm leading-relaxed text-[var(--muted)]">
-                Los Congresos EPA son nuestro encuentro bianual de investigación
-                educativa. La revisión de los trabajos postulados se hace por
-                pares y necesitamos investigadoras e investigadores de la red.
+                Los Congresos EPA son nuestros encuentros bianuales de
+                investigación educativa. La revisión de los trabajos postulados
+                se hace por pares y necesitamos investigadoras e investigadores
+                de la red.
               </p>
               <AvailabilityForReviewForm
                 initialValue={researcher.available_for_review ?? false}
