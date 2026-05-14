@@ -16,9 +16,7 @@ export default async function SubmitPage() {
           Agregarme al directorio
         </h1>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          Completa este formulario para crear tu perfil. Aparece de inmediato
-          en el directorio. El administrador de cada institución puede
-          editar, eliminar o agregar perfiles de sus investigadores/as.
+          Completa este formulario para crear tu perfil.
         </p>
       </header>
       <SubmitForm institutions={institutions} countries={countries} />
