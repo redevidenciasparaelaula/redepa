@@ -24,6 +24,66 @@ async function siteOrigin(): Promise<string> {
 }
 
 // ---------------------------------------------------------------------
+// Crear nueva institución (solo super admin)
+// ---------------------------------------------------------------------
+
+export async function createInstitutionAction(patch: {
+  name: string;
+  name_en?: string;
+  country: string;
+  city?: string;
+  website?: string;
+}): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  const user = await getCurrentUser();
+  if (!user || !user.isSuperAdmin) {
+    return {
+      ok: false,
+      error: 'Solo super admin puede crear instituciones.',
+    };
+  }
+  const name = patch.name.trim();
+  const country = patch.country.trim();
+  if (!name) return { ok: false, error: 'El nombre es obligatorio.' };
+  if (!country) return { ok: false, error: 'El país es obligatorio.' };
+
+  const supabase = await createSupabaseServerClient();
+
+  // Evitar duplicado por nombre+país (case-insensitive)
+  const { data: existing } = await supabase
+    .from('institutions')
+    .select('id, name')
+    .ilike('name', name)
+    .eq('country', country)
+    .limit(1)
+    .maybeSingle();
+  if (existing) {
+    return {
+      ok: false,
+      error: `Ya existe "${existing.name}" en ${country}.`,
+    };
+  }
+
+  const { data: created, error } = await supabase
+    .from('institutions')
+    .insert({
+      name,
+      name_en: patch.name_en?.trim() || null,
+      country,
+      city: patch.city?.trim() || null,
+      website: patch.website?.trim() || null,
+    })
+    .select('id')
+    .single();
+
+  if (error) {
+    console.error('createInstitution error', error);
+    return { ok: false, error: error.message };
+  }
+  revalidatePath('/admin');
+  return { ok: true, id: created.id };
+}
+
+// ---------------------------------------------------------------------
 // Editar metadata de institución (solo super admin)
 // ---------------------------------------------------------------------
 

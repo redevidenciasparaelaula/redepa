@@ -154,6 +154,12 @@ export default async function AdminPage({ searchParams }: Props) {
         {user.isSuperAdmin && (
           <>
             <Link
+              href="/admin/institutions/new"
+              className="rounded-md border border-[var(--border)] px-4 py-2 text-sm hover:bg-[var(--accent)]"
+            >
+              + Agregar institución
+            </Link>
+            <Link
               href="/admin/institutions/assign-admin"
               className="rounded-md border border-[var(--border)] px-4 py-2 text-sm hover:bg-[var(--accent)]"
             >
