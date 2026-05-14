@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { getResearcher } from '@/lib/queries';
 import { ResetPasswordForm } from '@/components/reset-password-form';
+import { AvailabilityForReviewForm } from '@/components/availability-for-review-form';
 
 export default async function MyAccountPage() {
   const user = await getCurrentUser();
@@ -83,6 +84,23 @@ export default async function MyAccountPage() {
               </div>
             )}
           </section>
+
+          {/* Disponibilidad para Congresos EPA — solo si tiene perfil */}
+          {researcher && (
+            <section className="rounded-2xl bg-white p-8 shadow-sm">
+              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--epa-blue)]">
+                Disponibilidad para Congresos EPA
+              </h2>
+              <p className="mb-5 text-sm leading-relaxed text-[var(--muted)]">
+                Los Congresos EPA son nuestro encuentro bianual de investigación
+                educativa. La revisión de los trabajos postulados se hace por
+                pares y necesitamos investigadoras e investigadores de la red.
+              </p>
+              <AvailabilityForReviewForm
+                initialValue={researcher.available_for_review ?? false}
+              />
+            </section>
+          )}
 
           {/* Cuenta */}
           <section className="rounded-2xl bg-white p-8 shadow-sm">

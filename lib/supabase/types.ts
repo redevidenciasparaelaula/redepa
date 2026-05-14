@@ -37,6 +37,7 @@ export type Researcher = {
   website: string | null;
   photo_url: string | null;
   status: ResearcherStatus;
+  available_for_review: boolean;
   created_at: string;
   updated_at: string;
 };
