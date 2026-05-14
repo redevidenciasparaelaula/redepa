@@ -328,6 +328,63 @@ export async function removeSuperAdminAction(
 }
 
 // ---------------------------------------------------------------------
+// Eliminar institución (solo super admin)
+//
+// Bloquea si la institución tiene investigadores asignados. El admin
+// debe reasignarlos o fusionar con otra institución antes de eliminar.
+// Esto previene orfandad silenciosa de investigadores.
+// ---------------------------------------------------------------------
+
+export async function deleteInstitutionAction(
+  id: string
+): Promise<SimpleResult> {
+  const user = await getCurrentUser();
+  if (!user || !user.isSuperAdmin) {
+    return {
+      ok: false,
+      error: 'Solo super admin puede eliminar instituciones.',
+    };
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  // Bloquear si hay investigadores asignados
+  const { count: rCount, error: countErr } = await supabase
+    .from('researchers')
+    .select('id', { count: 'exact', head: true })
+    .eq('institution_id', id);
+  if (countErr) {
+    console.error('count researchers error', countErr);
+    return { ok: false, error: countErr.message };
+  }
+  if ((rCount ?? 0) > 0) {
+    return {
+      ok: false,
+      error:
+        `Esta institución tiene ${rCount} investigador(es) asignados. ` +
+        `Reasígnalos a otra institución (o usa "Fusionar") antes de eliminar.`,
+    };
+  }
+
+  // Borrar los admins de la institución primero (cleanup)
+  await supabase.from('institution_admins').delete().eq('institution_id', id);
+
+  // Borrar la institución
+  const { error } = await supabase.from('institutions').delete().eq('id', id);
+  if (error) {
+    console.error('deleteInstitution error', error);
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath('/admin');
+  revalidatePath('/submit');
+  revalidatePath('/admin/researchers/new');
+  revalidatePath('/admin/researchers/bulk');
+  revalidatePath('/admin/institutions/assign-admin');
+  return { ok: true };
+}
+
+// ---------------------------------------------------------------------
 // Fusionar instituciones (source → target)
 // ---------------------------------------------------------------------
 

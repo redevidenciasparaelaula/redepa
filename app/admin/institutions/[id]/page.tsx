@@ -8,6 +8,7 @@ import type { Institution } from '@/lib/supabase/types';
 import { InstitutionEditForm } from '@/components/institution-edit-form';
 import { InstitutionAdminsManager } from '@/components/institution-admins-manager';
 import { InstitutionMergeForm } from '@/components/institution-merge-form';
+import { InstitutionDeleteButton } from '@/components/institution-delete-button';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -113,6 +114,22 @@ export default async function InstitutionPage({ params }: Props) {
           <InstitutionMergeForm
             source={institution}
             allInstitutions={allInstitutions}
+          />
+        </section>
+
+        <section className="rounded-lg border border-red-300 bg-red-50 p-6">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-red-900">
+            Zona de peligro
+          </h2>
+          <p className="mb-4 text-xs leading-relaxed text-red-900">
+            Eliminar la institución es permanente. No se puede deshacer.
+            Solo es posible si no tiene investigadores asignados — primero
+            reasígnalos a otra institución o usa &ldquo;Fusionar&rdquo; arriba.
+          </p>
+          <InstitutionDeleteButton
+            id={institution.id}
+            name={institution.name}
+            researchersCount={researchersCount ?? 0}
           />
         </section>
       </div>
