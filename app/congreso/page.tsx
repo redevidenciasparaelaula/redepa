@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function CongresoPage() {
   const stats = [
     { number: '170', label: 'Ponencias recibidas', detail: '88 aceptadas' },
@@ -39,6 +41,30 @@ export default function CongresoPage() {
               Se realiza en formato bianual, durante los años impares.
             </p>
           </header>
+        </div>
+      </section>
+
+      {/* Banner Congreso 2027 */}
+      <section className="bg-[var(--epa-blue)] text-white">
+        <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
+          <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="eyebrow !text-white/70">Próxima edición</p>
+              <h2 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
+                Congreso EPA 2027
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/85 sm:text-base">
+                Construyendo sobre evidencia para la mejora educativa:
+                implementación e impacto en contextos latinoamericanos.
+              </p>
+            </div>
+            <Link
+              href="/congreso/2027"
+              className="shrink-0 rounded-md bg-white px-6 py-3 text-sm font-semibold text-[var(--epa-blue)] shadow-sm transition-shadow hover:shadow-md"
+            >
+              Ver convocatoria →
+            </Link>
+          </div>
         </div>
       </section>
 

@@ -275,6 +275,81 @@ export async function listAllInstitutionAdmins(): Promise<InstitutionAdminRow[]>
   });
 }
 
+// ---------------------------------------------------------------------
+// Congresos: obtener un congreso con sus tracks por slug.
+// Lo usa /congreso/[slug]/page.tsx
+// ---------------------------------------------------------------------
+
+export interface CongressTrack {
+  id: string;
+  name: string;
+  description: string | null;
+  display_order: number;
+}
+
+export interface CongressWithTracks {
+  id: string;
+  year: number;
+  name: string;
+  slug: string;
+  theme: string | null;
+  start_date: string;
+  end_date: string;
+  cfp_open_at: string | null;
+  cfp_close_at: string | null;
+  notification_at: string | null;
+  registration_open_at: string | null;
+  status:
+    | 'draft'
+    | 'cfp_open'
+    | 'review'
+    | 'program'
+    | 'live'
+    | 'closed';
+  tracks: CongressTrack[];
+}
+
+export async function getCongressBySlug(
+  slug: string
+): Promise<CongressWithTracks | null> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('congresses')
+    .select(
+      'id, year, name, slug, theme, start_date, end_date, cfp_open_at, cfp_close_at, notification_at, registration_open_at, status, congress_tracks(id, name, description, display_order)'
+    )
+    .eq('slug', slug)
+    .maybeSingle();
+  if (error) {
+    console.error('getCongressBySlug error', error);
+    return null;
+  }
+  if (!data) return null;
+  const tracks: CongressTrack[] = (data.congress_tracks ?? [])
+    .map((t) => ({
+      id: t.id,
+      name: t.name,
+      description: t.description,
+      display_order: t.display_order,
+    }))
+    .sort((a, b) => a.display_order - b.display_order);
+  return {
+    id: data.id,
+    year: data.year,
+    name: data.name,
+    slug: data.slug,
+    theme: data.theme,
+    start_date: data.start_date,
+    end_date: data.end_date,
+    cfp_open_at: data.cfp_open_at,
+    cfp_close_at: data.cfp_close_at,
+    notification_at: data.notification_at,
+    registration_open_at: data.registration_open_at,
+    status: data.status as CongressWithTracks['status'],
+    tracks,
+  };
+}
+
 export async function distinctTopics(): Promise<string[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase

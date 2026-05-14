@@ -56,6 +56,47 @@ export type SuperAdmin = {
   created_at: string;
 };
 
+// =====================================================================
+// Congresos (módulo de congreso EPA)
+// Las demás tablas (submissions, reviews, sessions, etc.) se agregarán
+// a medida que avancemos en las olas de implementación.
+// =====================================================================
+
+export type CongressStatus =
+  | 'draft'
+  | 'cfp_open'
+  | 'review'
+  | 'program'
+  | 'live'
+  | 'closed';
+
+export type Congress = {
+  id: string;
+  year: number;
+  name: string;
+  slug: string;
+  theme: string | null;
+  start_date: string;
+  end_date: string;
+  cfp_open_at: string | null;
+  cfp_close_at: string | null;
+  notification_at: string | null;
+  registration_open_at: string | null;
+  status: CongressStatus;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CongressTrack = {
+  id: string;
+  congress_id: string;
+  name: string;
+  description: string | null;
+  chair_user_id: string | null;
+  display_order: number;
+  created_at: string;
+};
+
 // Para Insert: campos requeridos en NOT NULL sin default; el resto, opcionales.
 type ResearcherInsert = Partial<Researcher> & {
   full_name: string;
@@ -104,6 +145,35 @@ export type Database = {
         Insert: Partial<SuperAdmin> & { user_id: string };
         Update: Partial<SuperAdmin>;
         Relationships: [];
+      };
+      congresses: {
+        Row: Congress;
+        Insert: Partial<Congress> & {
+          year: number;
+          name: string;
+          slug: string;
+          start_date: string;
+          end_date: string;
+        };
+        Update: Partial<Congress>;
+        Relationships: [];
+      };
+      congress_tracks: {
+        Row: CongressTrack;
+        Insert: Partial<CongressTrack> & {
+          congress_id: string;
+          name: string;
+        };
+        Update: Partial<CongressTrack>;
+        Relationships: [
+          {
+            foreignKeyName: 'congress_tracks_congress_id_fkey';
+            columns: ['congress_id'];
+            isOneToOne: false;
+            referencedRelation: 'congresses';
+            referencedColumns: ['id'];
+          },
+        ];
       };
     };
     Views: Record<string, never>;
