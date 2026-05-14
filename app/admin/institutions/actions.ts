@@ -79,7 +79,18 @@ export async function createInstitutionAction(patch: {
     console.error('createInstitution error', error);
     return { ok: false, error: error.message };
   }
+
+  // Invalidar todas las rutas que listan instituciones, para que la nueva
+  // aparezca de inmediato en formularios y bulk upload.
   revalidatePath('/admin');
+  revalidatePath('/submit');
+  revalidatePath('/admin/researchers/new');
+  revalidatePath('/admin/researchers/bulk');
+  revalidatePath('/admin/institutions/assign-admin');
+  // /directorio (sidebar de filtros) solo muestra instituciones con
+  // investigadores, así que no necesita invalidarse hasta que alguien
+  // se inscriba a la institución nueva.
+
   return { ok: true, id: created.id };
 }
 
