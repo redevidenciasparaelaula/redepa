@@ -49,6 +49,7 @@ export function SubmitForm({ institutions, countries }: Props) {
     doi_1: '',
     doi_2: '',
     doi_3: '',
+    available_for_review: false,
   });
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
@@ -219,6 +220,7 @@ export function SubmitForm({ institutions, countries }: Props) {
       researchgate_url: normalizeUrl(form.researchgate_url),
       orcid: form.orcid.trim() || null,
       website: normalizeUrl(form.website),
+      available_for_review: form.available_for_review,
       status: 'approved' as const,
     };
 
@@ -658,6 +660,36 @@ export function SubmitForm({ institutions, countries }: Props) {
             />
           </div>
         </div>
+      </fieldset>
+
+      <fieldset className="rounded-md border border-[var(--border)] p-4">
+        <legend className="px-1 text-xs uppercase tracking-wide text-[var(--muted)]">
+          Disponibilidad para Congresos EPA
+        </legend>
+        <p className="mb-3 text-xs leading-relaxed text-[var(--muted)]">
+          Los Congresos EPA son nuestros encuentros bianuales de investigación
+          educativa. La revisión de los trabajos postulados se hace por pares
+          y necesitamos investigadoras e investigadores de la red.
+        </p>
+        <label className="flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            checked={form.available_for_review}
+            onChange={(e) =>
+              update('available_for_review', e.target.checked)
+            }
+            className="mt-1 h-4 w-4 shrink-0 rounded border-[var(--border)] text-[var(--epa-green)]"
+          />
+          <span className="text-sm leading-relaxed text-[var(--foreground)]">
+            <span className="font-medium">
+              Estaría dispuesta/o a ser evaluador/a en un Congreso EPA.
+            </span>
+            <span className="mt-1 block text-xs text-[var(--muted)]">
+              Te contactaremos cuando se abra el proceso de revisión para
+              confirmar tu disponibilidad y coordinar los detalles.
+            </span>
+          </span>
+        </label>
       </fieldset>
 
       <button
