@@ -113,7 +113,6 @@ export default async function CongressEpa2027Page() {
             </h2>
             <p className="mt-3 text-base leading-relaxed text-[var(--muted)]">
               {c.tracks.length} líneas temáticas para esta edición.
-              Las postulaciones se asignan a la línea más afín.
             </p>
           </div>
 
