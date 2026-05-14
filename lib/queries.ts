@@ -1,4 +1,8 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import {
+  createSupabaseAdminClient,
+  hasServiceRoleKey,
+} from '@/lib/supabase/admin';
 import { stripAccents } from '@/lib/text';
 import type { Institution, ResearcherWithInstitution } from '@/lib/supabase/types';
 
@@ -212,6 +216,63 @@ export async function distinctCountries(): Promise<string[]> {
     if (r.country) set.add(r.country);
   }
   return [...set].sort();
+}
+
+// ---------------------------------------------------------------------
+// Lista todos los institution_admins del sistema (uso: tab Admins del
+// panel super admin). Combina la tabla institution_admins + el nombre
+// de la institución, y trae los emails desde auth.users vía admin client.
+// ---------------------------------------------------------------------
+
+export interface InstitutionAdminRow {
+  user_id: string;
+  email: string;
+  institution_id: string;
+  institution_name: string;
+  created_at: string;
+}
+
+export async function listAllInstitutionAdmins(): Promise<InstitutionAdminRow[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data: rows, error } = await supabase
+    .from('institution_admins')
+    .select('user_id, institution_id, created_at, institutions(id, name)')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('listAllInstitutionAdmins error', error);
+    return [];
+  }
+  if (!rows || rows.length === 0) return [];
+
+  let emailById = new Map<string, string>();
+  if (hasServiceRoleKey()) {
+    try {
+      const admin = createSupabaseAdminClient();
+      const { data: usersResp } = await admin.auth.admin.listUsers({
+        page: 1,
+        perPage: 1000,
+      });
+      for (const u of usersResp?.users ?? []) {
+        if (u.email) emailById.set(u.id, u.email);
+      }
+    } catch (e) {
+      console.error('listAllInstitutionAdmins admin listUsers error', e);
+    }
+  }
+
+  return rows.map((r) => {
+    // PostgREST devuelve la institución como objeto si la relación es 1-a-1,
+    // o como array si la considera 1-a-muchos. Soportamos ambos.
+    const inst = Array.isArray(r.institutions) ? r.institutions[0] : r.institutions;
+    return {
+      user_id: r.user_id,
+      email: emailById.get(r.user_id) ?? '(sin email)',
+      institution_id: r.institution_id,
+      institution_name: inst?.name ?? '—',
+      created_at: r.created_at,
+    };
+  });
 }
 
 export async function distinctTopics(): Promise<string[]> {
