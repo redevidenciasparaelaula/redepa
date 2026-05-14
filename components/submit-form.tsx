@@ -8,6 +8,7 @@ import type { CountryGroups } from '@/lib/countries';
 import { POSITIONS, positionByEs } from '@/lib/positions';
 import { normalizeDoi } from '@/lib/doi';
 import { normalizeUrl } from '@/lib/normalize-url';
+import { parseYear } from '@/lib/parse-year';
 import { InstitutionCombobox } from './institution-combobox';
 
 // Este formulario es siempre en español, independiente del idioma de la UI.
@@ -143,6 +144,21 @@ export function SubmitForm({ institutions, countries }: Props) {
       return;
     }
 
+    const phdYear = parseYear(form.phd_year);
+    if (!phdYear.ok) {
+      setError(
+        'Año del doctorado: ingresa un año de 4 dígitos válido (ej: 2010), o déjalo vacío.'
+      );
+      return;
+    }
+    const masterYear = parseYear(form.master_year);
+    if (!masterYear.ok) {
+      setError(
+        'Año del magíster: ingresa un año de 4 dígitos válido (ej: 2010), o déjalo vacío.'
+      );
+      return;
+    }
+
     setSubmitting(true);
 
     let institutionId = form.institution_id;
@@ -189,9 +205,9 @@ export function SubmitForm({ institutions, countries }: Props) {
       institution_id: institutionId,
       title_es: form.title.trim(),
       title_en: positionByEs(form.title.trim())?.en ?? null,
-      phd_year: form.phd_year ? parseInt(form.phd_year, 10) : null,
+      phd_year: phdYear.value,
       phd_institution: form.phd_institution.trim() || null,
-      master_year: form.master_year ? parseInt(form.master_year, 10) : null,
+      master_year: masterYear.value,
       master_institution: form.master_institution.trim() || null,
       research_topics: topics,
       methodologies: form.methodologies,
@@ -523,10 +539,11 @@ export function SubmitForm({ institutions, countries }: Props) {
           <div>
             <label className={labelClass}>Año de obtención del doctorado</label>
             <input
-              type="number"
+              type="text"
               inputMode="numeric"
               value={form.phd_year}
               onChange={(e) => update('phd_year', e.target.value)}
+              placeholder="año 2010"
               className={inputClass}
             />
           </div>
@@ -542,10 +559,11 @@ export function SubmitForm({ institutions, countries }: Props) {
           <div>
             <label className={labelClass}>Año de obtención del magíster</label>
             <input
-              type="number"
+              type="text"
               inputMode="numeric"
               value={form.master_year}
               onChange={(e) => update('master_year', e.target.value)}
+              placeholder="año 2010"
               className={inputClass}
             />
           </div>
