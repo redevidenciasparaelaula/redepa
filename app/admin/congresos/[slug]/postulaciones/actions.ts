@@ -3,6 +3,11 @@
 import { revalidatePath } from 'next/cache';
 import { getCurrentUser } from '@/lib/auth';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { sendEmail } from '@/lib/email';
+import {
+  reviewerAssignedTemplate,
+  decisionEmittedTemplate,
+} from '@/lib/email-templates';
 
 type R = { ok: true } | { ok: false; error: string };
 
@@ -48,9 +53,64 @@ export async function assignReviewerAction(
     };
   }
 
+  // Side-effect: notificar al revisor por email. No bloquea si falla.
+  void notifyReviewerAssigned(submissionId, reviewerUserId);
+
   revalidatePath('/admin/congresos/[slug]/postulaciones', 'page');
   revalidatePath('/admin/congresos/[slug]/postulaciones/[id]', 'page');
   return { ok: true };
+}
+
+async function notifyReviewerAssigned(
+  submissionId: string,
+  reviewerUserId: string
+): Promise<void> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const [{ data: sub }, { data: assignment }] = await Promise.all([
+      supabase
+        .from('submissions')
+        .select(
+          'title, congress_id, track_id, congresses(name, year), congress_tracks(name)'
+        )
+        .eq('id', submissionId)
+        .maybeSingle(),
+      supabase
+        .from('review_assignments')
+        .select('deadline_at')
+        .eq('submission_id', submissionId)
+        .eq('reviewer_user_id', reviewerUserId)
+        .maybeSingle(),
+    ]);
+    if (!sub) return;
+
+    // Email del revisor (auth.users) + nombre (researchers) vía RPC list_assignments
+    const { data: assigns } = await supabase.rpc(
+      'list_assignments_for_submission',
+      { p_submission_id: submissionId }
+    );
+    const my = assigns?.find((a) => a.reviewer_user_id === reviewerUserId);
+    if (!my) return;
+
+    const congress = sub.congresses as { name: string; year: number } | null;
+    const track = sub.congress_tracks as { name: string } | null;
+
+    const tpl = reviewerAssignedTemplate({
+      congressName: congress?.name ?? 'Congreso EPA',
+      year: congress?.year ?? new Date().getFullYear(),
+      reviewerName: my.reviewer_name,
+      submissionTitle: sub.title,
+      trackName: track?.name ?? null,
+      deadlineAt: assignment?.deadline_at ?? null,
+    });
+    await sendEmail({
+      to: { email: my.reviewer_email, name: my.reviewer_name },
+      subject: tpl.subject,
+      html: tpl.html,
+    });
+  } catch (err) {
+    console.error('notifyReviewerAssigned failed', err);
+  }
 }
 
 // =====================================================================
@@ -140,7 +200,56 @@ export async function decideSubmissionAction(
     return { ok: false, error: DECISION_ERRORS[data ?? ''] ?? `Error (${data}).` };
   }
 
+  // Notificar a los autores solo cuando es decisión final (no en revert).
+  if (decision === 'accepted' || decision === 'rejected') {
+    void notifyAuthorsOfDecision(submissionId, decision, note);
+  }
+
   revalidatePath('/admin/congresos/[slug]/postulaciones', 'page');
   revalidatePath('/admin/congresos/[slug]/postulaciones/[id]', 'page');
   return { ok: true };
+}
+
+async function notifyAuthorsOfDecision(
+  submissionId: string,
+  decision: 'accepted' | 'rejected',
+  note: string | null
+): Promise<void> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data: sub } = await supabase
+      .from('submissions')
+      .select('title, congresses(name, year)')
+      .eq('id', submissionId)
+      .maybeSingle();
+    if (!sub) return;
+    const congress = sub.congresses as { name: string; year: number } | null;
+
+    const { data: authors } = await supabase
+      .from('submission_authors')
+      .select('email, full_name')
+      .eq('submission_id', submissionId);
+    if (!authors || authors.length === 0) return;
+
+    await Promise.allSettled(
+      authors.map(async (a) => {
+        const tpl = decisionEmittedTemplate({
+          congressName: congress?.name ?? 'Congreso EPA',
+          year: congress?.year ?? new Date().getFullYear(),
+          authorName: a.full_name,
+          submissionId,
+          submissionTitle: sub.title,
+          decision,
+          decisionNote: note,
+        });
+        await sendEmail({
+          to: { email: a.email, name: a.full_name },
+          subject: tpl.subject,
+          html: tpl.html,
+        });
+      })
+    );
+  } catch (err) {
+    console.error('notifyAuthorsOfDecision failed', err);
+  }
 }

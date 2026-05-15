@@ -1025,6 +1025,35 @@ export async function listReviewsForSubmissionChairView(
   });
 }
 
+// ---------------------------------------------------------------------
+// Reviews anonimizadas para el autor (decisión emitida)
+// ---------------------------------------------------------------------
+
+export interface AuthorReviewView {
+  position: number;
+  score_originality: number;
+  score_methodology: number;
+  score_clarity: number;
+  score_impact: number;
+  comments_to_author: string;
+  recommendation: string;
+  submitted_at: string;
+}
+
+export async function listReviewsForSubmissionAuthorView(
+  submissionId: string
+): Promise<AuthorReviewView[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.rpc('list_reviews_for_author', {
+    p_submission_id: submissionId,
+  });
+  if (error) {
+    console.error('listReviewsForSubmissionAuthorView', error);
+    return [];
+  }
+  return data ?? [];
+}
+
 export async function distinctTopics(): Promise<string[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase

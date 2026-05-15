@@ -531,6 +531,19 @@ export type Database = {
           submitted_at: string;
         }[];
       };
+      list_reviews_for_author: {
+        Args: { p_submission_id: string };
+        Returns: {
+          position: number;
+          score_originality: number;
+          score_methodology: number;
+          score_clarity: number;
+          score_impact: number;
+          comments_to_author: string;
+          recommendation: string;
+          submitted_at: string;
+        }[];
+      };
     };
     Enums: {
       researcher_status: ResearcherStatus;

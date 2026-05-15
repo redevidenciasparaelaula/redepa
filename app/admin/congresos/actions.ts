@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { getCurrentUser } from '@/lib/auth';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { sendBulkEmail } from '@/lib/email';
+import { cfpOpenedTemplate } from '@/lib/email-templates';
 
 type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -184,10 +186,54 @@ export async function updateCongressStatusAction(
     .eq('id', id);
   if (error) return { ok: false, error: error.message };
 
+  // Side-effect: si la transición es draft → cfp_open, notificamos por
+  // email a todos los suscriptores que dejaron su email en /congreso/YYYY.
+  // Errores de envío se loguean pero no abortan la transición.
+  if (from === 'draft' && to === 'cfp_open') {
+    void notifyCfpOpened(id);
+  }
+
   revalidatePath('/admin');
   revalidatePath('/admin/congresos');
   revalidatePath('/congreso/[year]', 'page');
   return { ok: true };
+}
+
+async function notifyCfpOpened(congressId: string): Promise<void> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const [{ data: congress }, { data: subscribers }] = await Promise.all([
+      supabase
+        .from('congresses')
+        .select('name, year, theme, cfp_close_at')
+        .eq('id', congressId)
+        .maybeSingle(),
+      supabase
+        .from('congress_subscribers')
+        .select('email, name')
+        .eq('congress_id', congressId),
+    ]);
+    if (!congress || !subscribers || subscribers.length === 0) return;
+
+    const result = await sendBulkEmail(
+      subscribers.map((s) => ({ email: s.email, name: s.name ?? undefined })),
+      (r) => {
+        const tpl = cfpOpenedTemplate({
+          congressName: congress.name,
+          year: congress.year,
+          theme: congress.theme ?? null,
+          cfpCloseAt: congress.cfp_close_at ?? null,
+          subscriberName: r.name ?? null,
+        });
+        return { subject: tpl.subject, html: tpl.html };
+      }
+    );
+    console.info(
+      `[email] CFP abierto: ${result.sent} enviados, ${result.failed} fallidos`
+    );
+  } catch (err) {
+    console.error('notifyCfpOpened failed', err);
+  }
 }
 
 // =====================================================================

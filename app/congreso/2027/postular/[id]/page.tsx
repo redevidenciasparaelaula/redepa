@@ -1,8 +1,13 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
-import { getCongressBySlug, getSubmission } from '@/lib/queries';
+import {
+  getCongressBySlug,
+  getSubmission,
+  listReviewsForSubmissionAuthorView,
+} from '@/lib/queries';
 import { SubmissionEditor } from '@/components/submission-editor';
+import { AuthorDecisionView } from '@/components/author-decision-view';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -50,6 +55,13 @@ export default async function SubmissionEditPage({ params }: Props) {
     deadlinePassed ||
     ['accepted', 'rejected', 'under_review'].includes(submission.status);
 
+  // Si el comité ya emitió decisión, traemos las reviews anonimizadas para
+  // mostrárselas al autor.
+  const decisionEmitted = submission.decision_at !== null;
+  const authorReviews = decisionEmitted
+    ? await listReviewsForSubmissionAuthorView(submission.id)
+    : [];
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
       <div className="mb-6">
@@ -61,13 +73,23 @@ export default async function SubmissionEditPage({ params }: Props) {
         </Link>
       </div>
 
-      {readOnly && (
+      {/* Decisión del comité + reviews anonimizadas (al autor) */}
+      {decisionEmitted && (
+        <AuthorDecisionView
+          status={submission.status}
+          decisionAt={submission.decision_at}
+          decisionNote={submission.decision_note}
+          reviews={authorReviews}
+        />
+      )}
+
+      {readOnly && !decisionEmitted && (
         <div className="mb-6 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4 text-sm">
           Esta postulación es solo de lectura
           {deadlinePassed && ' (el deadline ya pasó)'}
           {!cfpOpen && ' (el CFP no está abierto)'}
-          {['accepted', 'rejected', 'under_review'].includes(submission.status) &&
-            ' (estado: ' + submission.status + ')'}
+          {submission.status === 'under_review' &&
+            ' (está siendo revisada por pares)'}
           .
         </div>
       )}
