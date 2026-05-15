@@ -87,13 +87,8 @@
       display: flex;
       flex-direction: column;
     }
-    .logo {
-      width: 260px;
-      height: auto;
-      object-fit: contain;
-    }
     .eyebrow {
-      margin: 70px 0 0;
+      margin: 0;
       font-size: 18px;
       font-weight: 600;
       letter-spacing: 0.2em;
@@ -121,12 +116,11 @@
     }
     .cta {
       margin-top: auto;
-      padding-top: 36px;
+      padding-top: 40px;
       display: flex;
       align-items: flex-end;
       justify-content: space-between;
-      gap: 24px;
-      border-top: 2px solid var(--accent);
+      gap: 32px;
     }
     .url-pill {
       display: inline-block;
@@ -140,15 +134,11 @@
       border-radius: 12px;
       text-decoration: none;
     }
-    .footer-meta {
-      text-align: right;
-      font-size: 17px;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-    .footer-meta strong {
-      color: var(--foreground);
-      font-weight: 600;
+    .logo {
+      width: 220px;
+      height: auto;
+      object-fit: contain;
+      flex-shrink: 0;
     }
   </style>
 </head>
@@ -159,12 +149,6 @@
     <div class="bg-decor blue"></div>
 
     <div class="content">
-      <img
-        class="logo"
-        src="https://redepa.net/logos/epa.png"
-        alt="Red EPA — Red Latinoamericana Evidencias para el Aula"
-      />
-
       <p class="eyebrow">Convocatoria abierta · Latinoamérica</p>
 
       <h1>
@@ -180,10 +164,11 @@
 
       <div class="cta">
         <span class="url-pill">redepa.net</span>
-        <p class="footer-meta">
-          <strong>Red EPA</strong><br />
-          Evidencias para el Aula
-        </p>
+        <img
+          class="logo"
+          src="../public/logos/epa.png"
+          alt="Red EPA — Red Latinoamericana Evidencias para el Aula"
+        />
       </div>
     </div>
   </div>
