@@ -9,6 +9,7 @@ import { POSITIONS, positionByEs } from '@/lib/positions';
 import { normalizeDoi } from '@/lib/doi';
 import { normalizeUrl } from '@/lib/normalize-url';
 import { parseYear } from '@/lib/parse-year';
+import { toTitleCase, toTitleCaseOrNull } from '@/lib/title-case';
 import { InstitutionCombobox } from './institution-combobox';
 
 // Este formulario es siempre en español, independiente del idioma de la UI.
@@ -165,7 +166,7 @@ export function SubmitForm({ institutions, countries }: Props) {
     let institutionId = form.institution_id;
     if (otherInstitutionMode) {
       const newId = await findOrCreateInstitution(
-        otherInstitutionName.trim(),
+        toTitleCase(otherInstitutionName),
         form.country.trim()
       );
       if (!newId) {
@@ -201,20 +202,20 @@ export function SubmitForm({ institutions, countries }: Props) {
     }
 
     const payload = {
-      full_name: form.full_name.trim(),
+      full_name: toTitleCase(form.full_name),
       email: cleanedEmail,
       institution_id: institutionId,
       title_es: form.title.trim(),
       title_en: positionByEs(form.title.trim())?.en ?? null,
       phd_year: phdYear.value,
-      phd_institution: form.phd_institution.trim() || null,
+      phd_institution: toTitleCaseOrNull(form.phd_institution),
       master_year: masterYear.value,
-      master_institution: form.master_institution.trim() || null,
+      master_institution: toTitleCaseOrNull(form.master_institution),
       research_topics: topics,
       methodologies: form.methodologies,
       representative_dois: dois,
       country: form.country.trim(),
-      city: form.city.trim(),
+      city: toTitleCase(form.city),
       linkedin_url: normalizeUrl(form.linkedin_url),
       google_scholar_url: normalizeUrl(form.google_scholar_url),
       researchgate_url: normalizeUrl(form.researchgate_url),
