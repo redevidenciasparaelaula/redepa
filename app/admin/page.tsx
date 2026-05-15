@@ -6,6 +6,7 @@ import { AdminTabs, type AdminTab } from '@/components/admin-tabs';
 import { InstitutionsTab } from '@/components/admin/institutions-tab';
 import { ResearchersTab } from '@/components/admin/researchers-tab';
 import { AdminsTab } from '@/components/admin/admins-tab';
+import { CongresosTab } from '@/components/admin/congresos-tab';
 
 interface Props {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -42,9 +43,11 @@ export default async function AdminPage({ searchParams }: Props) {
   const tab: AdminTab =
     rawTab === 'investigadores'
       ? 'investigadores'
-      : rawTab === 'administradores' && user.isSuperAdmin
-        ? 'administradores'
-        : 'instituciones';
+      : rawTab === 'congresos' && user.isSuperAdmin
+        ? 'congresos'
+        : rawTab === 'administradores' && user.isSuperAdmin
+          ? 'administradores'
+          : 'instituciones';
 
   // Fetchs ligeros para los contadores de las tabs (siempre se hacen)
   const supabase = await createSupabaseServerClient();
@@ -65,6 +68,7 @@ export default async function AdminPage({ searchParams }: Props) {
 
   // Contador de admins (solo super admin lo ve)
   let adminsCount = 0;
+  let congresosCount = 0;
   if (user.isSuperAdmin) {
     const { data: supers } = await supabase.rpc('list_super_admins');
     const { count: instAdminsCount } = await supabase
@@ -73,6 +77,11 @@ export default async function AdminPage({ searchParams }: Props) {
     adminsCount =
       ((supers as { user_id: string }[] | null)?.length ?? 0) +
       (instAdminsCount ?? 0);
+
+    const { count: cCount } = await supabase
+      .from('congresses')
+      .select('id', { count: 'exact', head: true });
+    congresosCount = cCount ?? 0;
   }
 
   const totalInst = instCount ?? 0;
@@ -121,9 +130,11 @@ export default async function AdminPage({ searchParams }: Props) {
           counts={{
             instituciones: totalInst,
             investigadores: totalRes,
+            congresos: congresosCount,
             administradores: adminsCount,
           }}
           showAdminsTab={user.isSuperAdmin}
+          showCongresosTab={user.isSuperAdmin}
         />
       </div>
 
@@ -133,6 +144,7 @@ export default async function AdminPage({ searchParams }: Props) {
       {tab === 'investigadores' && (
         <ResearchersTab user={user} filters={resFilters} />
       )}
+      {tab === 'congresos' && user.isSuperAdmin && <CongresosTab />}
       {tab === 'administradores' && user.isSuperAdmin && (
         <AdminsTab currentUserId={user.id} filters={adminFilters} />
       )}

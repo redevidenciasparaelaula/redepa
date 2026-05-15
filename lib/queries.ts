@@ -350,6 +350,73 @@ export async function getCongressBySlug(
   };
 }
 
+// ---------------------------------------------------------------------
+// listCongresses(): lista todos los congresos para el panel admin.
+// Devuelve un resumen ligero (sin tracks) ordenado por año descendente.
+// ---------------------------------------------------------------------
+
+export interface CongressSummary {
+  id: string;
+  year: number;
+  name: string;
+  slug: string;
+  theme: string | null;
+  start_date: string;
+  end_date: string;
+  cfp_open_at: string | null;
+  cfp_close_at: string | null;
+  status: CongressWithTracks['status'];
+  submissions_count: number;
+  tracks_count: number;
+}
+
+export async function listCongresses(): Promise<CongressSummary[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('congresses')
+    .select(
+      'id, year, name, slug, theme, start_date, end_date, cfp_open_at, cfp_close_at, status'
+    )
+    .order('year', { ascending: false });
+  if (error) {
+    console.error('listCongresses error', error);
+    return [];
+  }
+  if (!data || data.length === 0) return [];
+
+  // Conteos en paralelo: submissions y tracks por congreso
+  const counts = await Promise.all(
+    data.map(async (c) => {
+      const [{ count: subs }, { count: tracks }] = await Promise.all([
+        supabase
+          .from('submissions')
+          .select('id', { count: 'exact', head: true })
+          .eq('congress_id', c.id),
+        supabase
+          .from('congress_tracks')
+          .select('id', { count: 'exact', head: true })
+          .eq('congress_id', c.id),
+      ]);
+      return { submissions: subs ?? 0, tracks: tracks ?? 0 };
+    })
+  );
+
+  return data.map((c, i) => ({
+    id: c.id,
+    year: c.year,
+    name: c.name,
+    slug: c.slug,
+    theme: c.theme,
+    start_date: c.start_date,
+    end_date: c.end_date,
+    cfp_open_at: c.cfp_open_at,
+    cfp_close_at: c.cfp_close_at,
+    status: c.status as CongressWithTracks['status'],
+    submissions_count: counts[i].submissions,
+    tracks_count: counts[i].tracks,
+  }));
+}
+
 export async function distinctTopics(): Promise<string[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase

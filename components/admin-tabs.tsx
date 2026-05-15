@@ -3,16 +3,22 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-export type AdminTab = 'instituciones' | 'investigadores' | 'administradores';
+export type AdminTab =
+  | 'instituciones'
+  | 'investigadores'
+  | 'congresos'
+  | 'administradores';
 
 interface Props {
   current: AdminTab;
   counts: {
     instituciones: number;
     investigadores: number;
+    congresos: number;
     administradores: number;
   };
   showAdminsTab: boolean;
+  showCongresosTab: boolean;
 }
 
 interface TabDef {
@@ -21,13 +27,25 @@ interface TabDef {
   count: number;
 }
 
-export function AdminTabs({ current, counts, showAdminsTab }: Props) {
+export function AdminTabs({
+  current,
+  counts,
+  showAdminsTab,
+  showCongresosTab,
+}: Props) {
   const pathname = usePathname();
 
   const tabs: TabDef[] = [
     { key: 'instituciones', label: 'Instituciones', count: counts.instituciones },
     { key: 'investigadores', label: 'Investigadores', count: counts.investigadores },
   ];
+  if (showCongresosTab) {
+    tabs.push({
+      key: 'congresos',
+      label: 'Congresos',
+      count: counts.congresos,
+    });
+  }
   if (showAdminsTab) {
     tabs.push({
       key: 'administradores',
