@@ -119,6 +119,25 @@ export type Submission = {
   updated_at: string;
 };
 
+export type ReviewRecommendation =
+  | 'accept'
+  | 'minor_revision'
+  | 'major_revision'
+  | 'reject';
+
+export type Review = {
+  id: string;
+  assignment_id: string;
+  score_originality: number;
+  score_methodology: number;
+  score_clarity: number;
+  score_impact: number;
+  comments_to_author: string;
+  comments_to_chair: string;
+  recommendation: ReviewRecommendation;
+  submitted_at: string;
+};
+
 export type ReviewAssignmentStatus =
   | 'pending'
   | 'in_progress'
@@ -287,6 +306,19 @@ export type Database = {
         Update: Partial<ReviewAssignment>;
         Relationships: [];
       };
+      reviews: {
+        Row: Review;
+        Insert: Partial<Review> & {
+          assignment_id: string;
+          score_originality: number;
+          score_methodology: number;
+          score_clarity: number;
+          score_impact: number;
+          recommendation: ReviewRecommendation;
+        };
+        Update: Partial<Review>;
+        Relationships: [];
+      };
       congress_subscribers: {
         Row: CongressSubscriber;
         Insert: Partial<CongressSubscriber> & {
@@ -437,6 +469,66 @@ export type Database = {
           assigned_at: string;
           deadline_at: string | null;
           review_submitted: boolean;
+        }[];
+      };
+      submit_review_atomic: {
+        Args: {
+          p_assignment_id: string;
+          p_score_originality: number;
+          p_score_methodology: number;
+          p_score_clarity: number;
+          p_score_impact: number;
+          p_comments_to_author: string;
+          p_comments_to_chair: string;
+          p_recommendation: string;
+        };
+        Returns: string;
+      };
+      decline_assignment: {
+        Args: { p_assignment_id: string };
+        Returns: string;
+      };
+      mark_assignment_in_progress: {
+        Args: { p_assignment_id: string };
+        Returns: string;
+      };
+      decide_submission: {
+        Args: {
+          p_submission_id: string;
+          p_decision: string;
+          p_note?: string | null;
+        };
+        Returns: string;
+      };
+      list_my_review_assignments: {
+        Args: Record<string, never>;
+        Returns: {
+          assignment_id: string;
+          submission_id: string;
+          submission_title: string;
+          submission_type: SubmissionType;
+          track_name: string | null;
+          congress_id: string;
+          congress_name: string;
+          congress_slug: string;
+          congress_year: number;
+          assignment_status: 'pending' | 'in_progress' | 'submitted' | 'declined';
+          deadline_at: string | null;
+          review_submitted: boolean;
+          recommendation: string | null;
+        }[];
+      };
+      get_review_for_reviewer: {
+        Args: { p_assignment_id: string };
+        Returns: {
+          score_originality: number;
+          score_methodology: number;
+          score_clarity: number;
+          score_impact: number;
+          comments_to_author: string;
+          comments_to_chair: string;
+          recommendation: string;
+          submitted_at: string;
         }[];
       };
     };

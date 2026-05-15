@@ -1,7 +1,12 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
-import { getResearcher } from '@/lib/queries';
+import {
+  getResearcher,
+  listMyReviewAssignments,
+  getCongressBySlug,
+  listMySubmissionsForCongress,
+} from '@/lib/queries';
 import { ResetPasswordForm } from '@/components/reset-password-form';
 import { AvailabilityForReviewForm } from '@/components/availability-for-review-form';
 
@@ -12,6 +17,16 @@ export default async function MyAccountPage() {
   const researcher = user.researcherId
     ? await getResearcher(user.researcherId)
     : null;
+
+  // Conteos del módulo congreso (para el bloque de accesos rápidos)
+  const epa2027 = await getCongressBySlug('epa-2027');
+  const [myReviews, mySubs] = await Promise.all([
+    listMyReviewAssignments(),
+    epa2027
+      ? listMySubmissionsForCongress(epa2027.id, user.id)
+      : Promise.resolve([]),
+  ]);
+  const pendingReviews = myReviews.filter((r) => !r.review_submitted).length;
 
   return (
     <div className="bg-[var(--surface)]">
@@ -84,6 +99,71 @@ export default async function MyAccountPage() {
               </div>
             )}
           </section>
+
+          {/* Accesos rápidos a Congreso EPA 2027 */}
+          {(mySubs.length > 0 || myReviews.length > 0 || (epa2027 && epa2027.status === 'cfp_open')) && (
+            <section className="rounded-2xl bg-white p-8 shadow-sm">
+              <h2 className="mb-5 text-xs font-semibold uppercase tracking-wider text-[var(--epa-blue)]">
+                Congreso EPA 2027
+              </h2>
+              <ul className="space-y-3">
+                {(epa2027 && epa2027.status === 'cfp_open') && (
+                  <li>
+                    <Link
+                      href="/congreso/2027/postular"
+                      className="flex items-center justify-between gap-3 rounded-md border border-[var(--border)] bg-white px-4 py-3 text-sm hover:bg-[var(--accent)]"
+                    >
+                      <span>
+                        <span className="font-medium">Mis postulaciones</span>
+                        <span className="ml-2 text-[var(--muted)]">
+                          ({mySubs.length})
+                        </span>
+                      </span>
+                      <span className="text-[var(--epa-blue)]">→</span>
+                    </Link>
+                  </li>
+                )}
+                {mySubs.length > 0 && !(epa2027 && epa2027.status === 'cfp_open') && (
+                  <li>
+                    <Link
+                      href="/congreso/2027/postular"
+                      className="flex items-center justify-between gap-3 rounded-md border border-[var(--border)] bg-white px-4 py-3 text-sm hover:bg-[var(--accent)]"
+                    >
+                      <span>
+                        <span className="font-medium">Mis postulaciones</span>
+                        <span className="ml-2 text-[var(--muted)]">
+                          ({mySubs.length})
+                        </span>
+                      </span>
+                      <span className="text-[var(--epa-blue)]">→</span>
+                    </Link>
+                  </li>
+                )}
+                {myReviews.length > 0 && (
+                  <li>
+                    <Link
+                      href="/me/revisiones"
+                      className="flex items-center justify-between gap-3 rounded-md border border-[var(--border)] bg-white px-4 py-3 text-sm hover:bg-[var(--accent)]"
+                    >
+                      <span>
+                        <span className="font-medium">Mis revisiones</span>
+                        {pendingReviews > 0 ? (
+                          <span className="ml-2 rounded-full bg-[var(--epa-blue)] px-2 py-0.5 text-xs font-medium text-white">
+                            {pendingReviews} por entregar
+                          </span>
+                        ) : (
+                          <span className="ml-2 text-[var(--muted)]">
+                            ({myReviews.length})
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-[var(--epa-blue)]">→</span>
+                    </Link>
+                  </li>
+                )}
+              </ul>
+            </section>
+          )}
 
           {/* Disponibilidad para Congresos EPA — solo si tiene perfil */}
           {researcher && (

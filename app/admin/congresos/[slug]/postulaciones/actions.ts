@@ -104,3 +104,43 @@ export async function updateAssignmentDeadlineAction(
   revalidatePath('/admin/congresos/[slug]/postulaciones/[id]', 'page');
   return { ok: true };
 }
+
+// =====================================================================
+// decideSubmissionAction
+//   El chair emite decisión final: 'accepted' / 'rejected' / 'revert'
+//   (revert vuelve a 'under_review'). Validación de status del congreso
+//   y del submission se hace en el RPC.
+// =====================================================================
+const DECISION_ERRORS: Record<string, string> = {
+  forbidden: 'Solo super-admin.',
+  invalid_decision: 'Decisión inválida.',
+  not_found: 'Postulación no encontrada.',
+  wrong_congress_status:
+    'El congreso tiene que estar en estado "review" o "program" para emitir decisiones.',
+  wrong_submission_status:
+    'La postulación no está en un estado válido para emitir decisión.',
+};
+
+export async function decideSubmissionAction(
+  submissionId: string,
+  decision: 'accepted' | 'rejected' | 'revert',
+  note: string | null
+): Promise<R> {
+  const auth = await requireSuperAdmin();
+  if (!auth.ok) return auth;
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.rpc('decide_submission', {
+    p_submission_id: submissionId,
+    p_decision: decision,
+    p_note: note,
+  });
+  if (error) return { ok: false, error: error.message };
+  if (data !== 'ok') {
+    return { ok: false, error: DECISION_ERRORS[data ?? ''] ?? `Error (${data}).` };
+  }
+
+  revalidatePath('/admin/congresos/[slug]/postulaciones', 'page');
+  revalidatePath('/admin/congresos/[slug]/postulaciones/[id]', 'page');
+  return { ok: true };
+}

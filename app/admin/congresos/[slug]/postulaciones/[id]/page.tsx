@@ -6,9 +6,11 @@ import {
   getSubmission,
   listAssignmentsForSubmission,
   suggestReviewersForSubmission,
+  listReviewsForSubmissionChairView,
 } from '@/lib/queries';
 import { methodologyLabel } from '@/lib/methodologies';
 import { ReviewerAssignmentPanel } from '@/components/admin/reviewer-assignment-panel';
+import { DecisionPanel } from '@/components/admin/decision-panel';
 
 interface Props {
   params: Promise<{ slug: string; id: string }>;
@@ -55,9 +57,10 @@ export default async function AdminSubmissionDetailPage({ params }: Props) {
   if (!c || !sub) notFound();
   if (sub.congress_id !== c.id) notFound();
 
-  const [assignments, suggestions] = await Promise.all([
+  const [assignments, suggestions, reviews] = await Promise.all([
     listAssignmentsForSubmission(sub.id),
     suggestReviewersForSubmission(sub.id, c.id),
+    listReviewsForSubmissionChairView(sub.id),
   ]);
 
   const trackName = c.tracks.find((t) => t.id === sub.track_id)?.name ?? null;
@@ -188,6 +191,16 @@ export default async function AdminSubmissionDetailPage({ params }: Props) {
           assignments={assignments}
           suggestions={suggestions}
           submissionStatus={sub.status}
+        />
+      </Section>
+
+      {/* Decisión del comité: ver reviews + aceptar/rechazar */}
+      <Section title="Reviews entregadas y decisión">
+        <DecisionPanel
+          submissionId={sub.id}
+          status={sub.status}
+          decisionNote={sub.decision_note}
+          reviews={reviews}
         />
       </Section>
     </div>

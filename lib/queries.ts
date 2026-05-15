@@ -852,6 +852,179 @@ export async function suggestReviewersForSubmission(
   return suggestions;
 }
 
+// ---------------------------------------------------------------------
+// Revisión y decisión
+// ---------------------------------------------------------------------
+
+export interface MyReviewAssignment {
+  assignment_id: string;
+  submission_id: string;
+  submission_title: string;
+  submission_type: Submission['type'];
+  track_name: string | null;
+  congress_id: string;
+  congress_name: string;
+  congress_slug: string;
+  congress_year: number;
+  assignment_status: 'pending' | 'in_progress' | 'submitted' | 'declined';
+  deadline_at: string | null;
+  review_submitted: boolean;
+  recommendation: string | null;
+}
+
+export async function listMyReviewAssignments(): Promise<
+  MyReviewAssignment[]
+> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.rpc('list_my_review_assignments');
+  if (error) {
+    console.error('listMyReviewAssignments', error);
+    return [];
+  }
+  return data ?? [];
+}
+
+export interface ReviewerSubmissionBlind {
+  // Vista del revisor: sin info de autoría.
+  id: string;
+  title: string;
+  type: Submission['type'];
+  track_id: string | null;
+  track_name: string | null;
+  congress_id: string;
+  congress_year: number;
+  congress_slug: string;
+  abs_context: string;
+  abs_framework: string;
+  abs_methods: string;
+  abs_results: string;
+  abs_discussion: string;
+  keywords: string[];
+  methodologies: string[];
+}
+
+// Devuelve una submission solo con el contenido (sin autores) para el
+// revisor. RLS permite leer porque hay assignment.
+export async function getSubmissionForReviewer(
+  submissionId: string
+): Promise<ReviewerSubmissionBlind | null> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('submissions')
+    .select(
+      'id, title, type, track_id, congress_id, abs_context, abs_framework, abs_methods, abs_results, abs_discussion, keywords, methodologies, congresses(year, slug), congress_tracks(name)'
+    )
+    .eq('id', submissionId)
+    .maybeSingle();
+  if (error) {
+    console.error('getSubmissionForReviewer', error);
+    return null;
+  }
+  if (!data) return null;
+  return {
+    id: data.id,
+    title: data.title,
+    type: data.type,
+    track_id: data.track_id,
+    track_name: (data.congress_tracks as { name: string } | null)?.name ?? null,
+    congress_id: data.congress_id,
+    congress_year:
+      (data.congresses as { year: number } | null)?.year ?? 0,
+    congress_slug:
+      (data.congresses as { slug: string } | null)?.slug ?? '',
+    abs_context: data.abs_context,
+    abs_framework: data.abs_framework,
+    abs_methods: data.abs_methods,
+    abs_results: data.abs_results,
+    abs_discussion: data.abs_discussion,
+    keywords: data.keywords,
+    methodologies: data.methodologies,
+  };
+}
+
+export interface ExistingReviewValues {
+  score_originality: number;
+  score_methodology: number;
+  score_clarity: number;
+  score_impact: number;
+  comments_to_author: string;
+  comments_to_chair: string;
+  recommendation: string;
+  submitted_at: string;
+}
+
+export async function getMyExistingReview(
+  assignmentId: string
+): Promise<ExistingReviewValues | null> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.rpc('get_review_for_reviewer', {
+    p_assignment_id: assignmentId,
+  });
+  if (error) return null;
+  return data && data.length > 0 ? data[0] : null;
+}
+
+// Para el chair: lee todas las reviews de un submission (con nombre del
+// reviewer porque super-admin puede ver todo).
+export interface ChairReviewView {
+  assignment_id: string;
+  reviewer_name: string;
+  reviewer_email: string;
+  score_originality: number;
+  score_methodology: number;
+  score_clarity: number;
+  score_impact: number;
+  comments_to_author: string;
+  comments_to_chair: string;
+  recommendation: string;
+  submitted_at: string;
+}
+
+export async function listReviewsForSubmissionChairView(
+  submissionId: string
+): Promise<ChairReviewView[]> {
+  const supabase = await createSupabaseServerClient();
+  // Une assignments + reviews + (vía RPC list_assignments) los datos del reviewer
+  const { data: assignments } = await supabase.rpc(
+    'list_assignments_for_submission',
+    { p_submission_id: submissionId }
+  );
+  if (!assignments) return [];
+  const submittedIds = assignments
+    .filter((a) => a.review_submitted)
+    .map((a) => a.assignment_id);
+  if (submittedIds.length === 0) return [];
+
+  const { data: reviews, error } = await supabase
+    .from('reviews')
+    .select('*')
+    .in('assignment_id', submittedIds);
+  if (error) {
+    console.error('listReviewsForSubmissionChairView', error);
+    return [];
+  }
+
+  const byAssignment = new Map<string, (typeof assignments)[number]>();
+  for (const a of assignments) byAssignment.set(a.assignment_id, a);
+
+  return (reviews ?? []).map((r) => {
+    const a = byAssignment.get(r.assignment_id);
+    return {
+      assignment_id: r.assignment_id,
+      reviewer_name: a?.reviewer_name ?? '—',
+      reviewer_email: a?.reviewer_email ?? '—',
+      score_originality: r.score_originality,
+      score_methodology: r.score_methodology,
+      score_clarity: r.score_clarity,
+      score_impact: r.score_impact,
+      comments_to_author: r.comments_to_author,
+      comments_to_chair: r.comments_to_chair,
+      recommendation: r.recommendation,
+      submitted_at: r.submitted_at,
+    };
+  });
+}
+
 export async function distinctTopics(): Promise<string[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
