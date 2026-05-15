@@ -199,6 +199,43 @@ export type Database = {
         Args: { p_source_id: string; p_target_id: string };
         Returns: void;
       };
+      list_reviewer_pool: {
+        Args: { p_congress_id: string };
+        Returns: {
+          user_id: string;
+          email: string;
+          max_load: number;
+          topics: string[];
+          methodologies: string[];
+          active: boolean;
+          assignments_count: number;
+        }[];
+      };
+      add_reviewer_pool_entry_by_email: {
+        Args: {
+          p_email: string;
+          p_congress_id: string;
+          p_max_load: number;
+          p_topics: string[];
+          p_methodologies: string[];
+        };
+        Returns: string;
+      };
+      update_reviewer_pool_entry: {
+        Args: {
+          p_user_id: string;
+          p_congress_id: string;
+          p_max_load: number;
+          p_topics: string[];
+          p_methodologies: string[];
+          p_active: boolean;
+        };
+        Returns: string;
+      };
+      remove_reviewer_pool_entry: {
+        Args: { p_user_id: string; p_congress_id: string };
+        Returns: string;
+      };
     };
     Enums: {
       researcher_status: ResearcherStatus;

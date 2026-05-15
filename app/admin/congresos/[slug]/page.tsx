@@ -93,6 +93,16 @@ export default async function AdminCongresoPage({ params }: Props) {
         <StatCard label="Asistentes" value={attendees ?? 0} />
       </section>
 
+      {/* Sub-paneles */}
+      <section className="mb-8 flex flex-wrap gap-3">
+        <Link
+          href={`/admin/congresos/${c.slug}/revisores`}
+          className="inline-flex items-center gap-2 rounded-md bg-[var(--epa-blue)] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+        >
+          Gestionar pool de evaluadores →
+        </Link>
+      </section>
+
       {/* Cambio de estado */}
       <Section title="Estado del congreso">
         <CongressStatusControls id={c.id} status={c.status} />

@@ -417,6 +417,139 @@ export async function listCongresses(): Promise<CongressSummary[]> {
   }));
 }
 
+// ---------------------------------------------------------------------
+// Reviewer pool: combina las filas de reviewer_pool (vía RPC, devuelve
+// emails) con los datos del directorio (researchers).
+// ---------------------------------------------------------------------
+
+export interface ReviewerPoolMember {
+  user_id: string;
+  email: string;
+  max_load: number;
+  topics: string[];
+  methodologies: string[];
+  active: boolean;
+  assignments_count: number;
+  // datos enriquecidos desde researchers (pueden faltar si la persona
+  // tiene cuenta auth pero no está en el directorio aún)
+  researcher: {
+    id: string;
+    full_name: string;
+    institution_name: string | null;
+    available_for_review: boolean;
+    topics: string[];
+    methodologies: string[];
+  } | null;
+}
+
+export async function getReviewerPoolForCongress(
+  congressId: string
+): Promise<ReviewerPoolMember[]> {
+  const supabase = await createSupabaseServerClient();
+
+  const { data: pool, error } = await supabase.rpc('list_reviewer_pool', {
+    p_congress_id: congressId,
+  });
+  if (error) {
+    console.error('list_reviewer_pool error', error);
+    return [];
+  }
+  if (!pool || pool.length === 0) return [];
+
+  // Enriquecer con datos del directorio: matchear por email.
+  const emails = pool.map((p) => p.email.toLowerCase());
+  const { data: researchers } = await supabase
+    .from('researchers')
+    .select(
+      'id, full_name, email, research_topics, methodologies, available_for_review, institutions(name)'
+    )
+    .in('email', emails);
+
+  const byEmail = new Map<
+    string,
+    {
+      id: string;
+      full_name: string;
+      institution_name: string | null;
+      available_for_review: boolean;
+      topics: string[];
+      methodologies: string[];
+    }
+  >();
+  for (const r of researchers ?? []) {
+    byEmail.set(r.email.toLowerCase(), {
+      id: r.id,
+      full_name: r.full_name,
+      institution_name:
+        (r.institutions as { name: string } | null)?.name ?? null,
+      available_for_review: r.available_for_review,
+      topics: r.research_topics ?? [],
+      methodologies: r.methodologies ?? [],
+    });
+  }
+
+  return pool.map((p) => ({
+    user_id: p.user_id,
+    email: p.email,
+    max_load: p.max_load,
+    topics: p.topics ?? [],
+    methodologies: p.methodologies ?? [],
+    active: p.active,
+    assignments_count: p.assignments_count,
+    researcher: byEmail.get(p.email.toLowerCase()) ?? null,
+  }));
+}
+
+// Researchers que marcaron 'disponible para revisar' Y que aún no están
+// en el pool del congreso indicado. Útil para el panel "Agregar al pool".
+export interface AvailableReviewerCandidate {
+  id: string;
+  full_name: string;
+  email: string;
+  institution_name: string | null;
+  topics: string[];
+  methodologies: string[];
+}
+
+export async function getAvailableReviewersNotInPool(
+  congressId: string
+): Promise<AvailableReviewerCandidate[]> {
+  const supabase = await createSupabaseServerClient();
+
+  const { data: researchers, error: rErr } = await supabase
+    .from('researchers')
+    .select(
+      'id, full_name, email, research_topics, methodologies, institutions(name)'
+    )
+    .eq('available_for_review', true)
+    .eq('status', 'approved')
+    .order('full_name', { ascending: true });
+  if (rErr) {
+    console.error('getAvailableReviewersNotInPool error', rErr);
+    return [];
+  }
+  if (!researchers || researchers.length === 0) return [];
+
+  const { data: pool } = await supabase.rpc('list_reviewer_pool', {
+    p_congress_id: congressId,
+  });
+  const inPool = new Set(
+    (pool ?? []).map((p) => p.email.toLowerCase())
+  );
+
+  return researchers
+    .filter((r) => !inPool.has(r.email.toLowerCase()))
+    .map((r) => ({
+      id: r.id,
+      full_name: r.full_name,
+      email: r.email,
+      institution_name:
+        (r.institutions as { name: string } | null)?.name ?? null,
+      topics: r.research_topics ?? [],
+      methodologies: r.methodologies ?? [],
+    }));
+}
+
 export async function distinctTopics(): Promise<string[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
