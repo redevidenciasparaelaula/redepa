@@ -119,6 +119,21 @@ export type Submission = {
   updated_at: string;
 };
 
+export type ReviewAssignmentStatus =
+  | 'pending'
+  | 'in_progress'
+  | 'submitted'
+  | 'declined';
+
+export type ReviewAssignment = {
+  id: string;
+  submission_id: string;
+  reviewer_user_id: string;
+  assigned_at: string;
+  deadline_at: string | null;
+  status: ReviewAssignmentStatus;
+};
+
 export type SubmissionAuthor = {
   id: string;
   submission_id: string;
@@ -263,6 +278,15 @@ export type Database = {
         Update: Partial<SubmissionAuthor>;
         Relationships: [];
       };
+      review_assignments: {
+        Row: ReviewAssignment;
+        Insert: Partial<ReviewAssignment> & {
+          submission_id: string;
+          reviewer_user_id: string;
+        };
+        Update: Partial<ReviewAssignment>;
+        Relationships: [];
+      };
       congress_subscribers: {
         Row: CongressSubscriber;
         Insert: Partial<CongressSubscriber> & {
@@ -372,6 +396,48 @@ export type Database = {
       withdraw_submission_atomic: {
         Args: { p_submission_id: string };
         Returns: string;
+      };
+      list_submissions_for_admin: {
+        Args: { p_congress_id: string };
+        Returns: {
+          id: string;
+          title: string;
+          status: SubmissionStatus;
+          type: SubmissionType;
+          track_id: string | null;
+          track_name: string | null;
+          authors_count: number;
+          authors_names: string | null;
+          assignments_count: number;
+          reviews_completed: number;
+          updated_at: string;
+          submitted_at: string | null;
+        }[];
+      };
+      assign_reviewer_to_submission: {
+        Args: {
+          p_submission_id: string;
+          p_reviewer_user_id: string;
+          p_deadline_at?: string | null;
+        };
+        Returns: string;
+      };
+      unassign_reviewer_from_submission: {
+        Args: { p_assignment_id: string };
+        Returns: string;
+      };
+      list_assignments_for_submission: {
+        Args: { p_submission_id: string };
+        Returns: {
+          assignment_id: string;
+          reviewer_user_id: string;
+          reviewer_email: string;
+          reviewer_name: string;
+          status: 'pending' | 'in_progress' | 'submitted' | 'declined';
+          assigned_at: string;
+          deadline_at: string | null;
+          review_submitted: boolean;
+        }[];
       };
     };
     Enums: {

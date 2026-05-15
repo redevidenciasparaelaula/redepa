@@ -106,6 +106,12 @@ export default async function AdminCongresoPage({ params }: Props) {
       {/* Sub-paneles */}
       <section className="mb-8 flex flex-wrap gap-3">
         <Link
+          href={`/admin/congresos/${c.slug}/postulaciones`}
+          className="inline-flex items-center gap-2 rounded-md bg-[var(--epa-green)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--epa-green-dark)]"
+        >
+          Ver postulaciones →
+        </Link>
+        <Link
           href={`/admin/congresos/${c.slug}/revisores`}
           className="inline-flex items-center gap-2 rounded-md bg-[var(--epa-blue)] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
         >

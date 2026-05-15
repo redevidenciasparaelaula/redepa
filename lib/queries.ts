@@ -675,6 +675,183 @@ export async function getSubmission(
   return { ...(s as Submission), authors: (authors as SubmissionAuthor[]) ?? [] };
 }
 
+// ---------------------------------------------------------------------
+// Admin de postulaciones del congreso
+// ---------------------------------------------------------------------
+
+export interface AdminSubmissionRow {
+  id: string;
+  title: string;
+  status: Submission['status'];
+  type: Submission['type'];
+  track_id: string | null;
+  track_name: string | null;
+  authors_count: number;
+  authors_names: string | null;
+  assignments_count: number;
+  reviews_completed: number;
+  updated_at: string;
+  submitted_at: string | null;
+}
+
+export async function listSubmissionsForAdmin(
+  congressId: string
+): Promise<AdminSubmissionRow[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.rpc('list_submissions_for_admin', {
+    p_congress_id: congressId,
+  });
+  if (error) {
+    console.error('listSubmissionsForAdmin', error);
+    return [];
+  }
+  return data ?? [];
+}
+
+export interface AssignmentRow {
+  assignment_id: string;
+  reviewer_user_id: string;
+  reviewer_email: string;
+  reviewer_name: string;
+  status: 'pending' | 'in_progress' | 'submitted' | 'declined';
+  assigned_at: string;
+  deadline_at: string | null;
+  review_submitted: boolean;
+}
+
+export async function listAssignmentsForSubmission(
+  submissionId: string
+): Promise<AssignmentRow[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.rpc(
+    'list_assignments_for_submission',
+    { p_submission_id: submissionId }
+  );
+  if (error) {
+    console.error('listAssignmentsForSubmission', error);
+    return [];
+  }
+  return data ?? [];
+}
+
+// ---------------------------------------------------------------------
+// suggestReviewersForSubmission: ranking del pool por match con el
+// submission. La lógica vive en JS para que sea fácil iterar y depurar.
+// ---------------------------------------------------------------------
+
+export interface ReviewerSuggestion {
+  user_id: string;
+  email: string;
+  full_name: string;
+  institution_name: string | null;
+  topics: string[];
+  methodologies: string[];
+  max_load: number;
+  current_load: number; // assignments en este congreso
+  capacity_left: number;
+  match_score: number;
+  match_keywords: string[];
+  match_methodologies: string[];
+  is_already_assigned: boolean;
+  is_conflict: boolean; // es autor del submission
+}
+
+export async function suggestReviewersForSubmission(
+  submissionId: string,
+  congressId: string
+): Promise<ReviewerSuggestion[]> {
+  const supabase = await createSupabaseServerClient();
+
+  const [{ data: sub }, { data: authors }, { data: pool }, { data: existing }] =
+    await Promise.all([
+      supabase
+        .from('submissions')
+        .select('keywords, methodologies')
+        .eq('id', submissionId)
+        .maybeSingle(),
+      supabase
+        .from('submission_authors')
+        .select('user_id')
+        .eq('submission_id', submissionId),
+      supabase.rpc('list_reviewer_pool', { p_congress_id: congressId }),
+      supabase
+        .from('review_assignments')
+        .select('reviewer_user_id')
+        .eq('submission_id', submissionId),
+    ]);
+
+  if (!sub || !pool) return [];
+
+  const authorIds = new Set(
+    (authors ?? []).map((a) => a.user_id).filter((x): x is string => !!x)
+  );
+  const assignedIds = new Set(
+    (existing ?? []).map((a) => a.reviewer_user_id)
+  );
+
+  // Trae nombres + institución desde researchers para enriquecer.
+  const emails = pool.map((p) => p.email.toLowerCase());
+  const { data: researchers } = await supabase
+    .from('researchers')
+    .select('email, full_name, institutions(name)')
+    .in('email', emails);
+  const byEmail = new Map<string, { full_name: string; institution: string | null }>();
+  for (const r of researchers ?? []) {
+    byEmail.set(r.email.toLowerCase(), {
+      full_name: r.full_name,
+      institution: (r.institutions as { name: string } | null)?.name ?? null,
+    });
+  }
+
+  const subKeywords = new Set(
+    (sub.keywords ?? []).map((k) => k.toLowerCase())
+  );
+  const subMethods = new Set(
+    (sub.methodologies ?? []).map((m) => m.toLowerCase())
+  );
+
+  const suggestions: ReviewerSuggestion[] = pool
+    .filter((p) => p.active)
+    .map((p) => {
+      const topics = (p.topics ?? []).map((t) => t.toLowerCase());
+      const methods = (p.methodologies ?? []).map((m) => m.toLowerCase());
+
+      const matchKw = topics.filter((t) => subKeywords.has(t));
+      const matchMe = methods.filter((m) => subMethods.has(m));
+
+      // Topics pesan más que metodologías en el match.
+      const matchScore = matchKw.length * 2 + matchMe.length;
+
+      const info = byEmail.get(p.email.toLowerCase());
+      return {
+        user_id: p.user_id,
+        email: p.email,
+        full_name: info?.full_name ?? p.email.split('@')[0],
+        institution_name: info?.institution ?? null,
+        topics: p.topics ?? [],
+        methodologies: p.methodologies ?? [],
+        max_load: p.max_load,
+        current_load: p.assignments_count,
+        capacity_left: p.max_load - p.assignments_count,
+        match_score: matchScore,
+        match_keywords: matchKw,
+        match_methodologies: matchMe,
+        is_already_assigned: assignedIds.has(p.user_id),
+        is_conflict: authorIds.has(p.user_id),
+      };
+    })
+    // Ordena: primero los con match score alto, luego con capacidad disponible
+    .sort((a, b) => {
+      if (a.is_conflict !== b.is_conflict) return a.is_conflict ? 1 : -1;
+      if (a.is_already_assigned !== b.is_already_assigned)
+        return a.is_already_assigned ? 1 : -1;
+      if (b.match_score !== a.match_score) return b.match_score - a.match_score;
+      return b.capacity_left - a.capacity_left;
+    });
+
+  return suggestions;
+}
+
 export async function distinctTopics(): Promise<string[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
