@@ -88,6 +88,14 @@ export type Congress = {
   updated_at: string;
 };
 
+export type CongressSubscriber = {
+  id: string;
+  congress_id: string;
+  email: string;
+  name: string | null;
+  created_at: string;
+};
+
 export type CongressTrack = {
   id: string;
   congress_id: string;
@@ -176,6 +184,23 @@ export type Database = {
           },
         ];
       };
+      congress_subscribers: {
+        Row: CongressSubscriber;
+        Insert: Partial<CongressSubscriber> & {
+          congress_id: string;
+          email: string;
+        };
+        Update: Partial<CongressSubscriber>;
+        Relationships: [
+          {
+            foreignKeyName: 'congress_subscribers_congress_id_fkey';
+            columns: ['congress_id'];
+            isOneToOne: false;
+            referencedRelation: 'congresses';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -234,6 +259,14 @@ export type Database = {
       };
       remove_reviewer_pool_entry: {
         Args: { p_user_id: string; p_congress_id: string };
+        Returns: string;
+      };
+      subscribe_to_congress: {
+        Args: {
+          p_congress_id: string;
+          p_email: string;
+          p_name?: string | null;
+        };
         Returns: string;
       };
     };

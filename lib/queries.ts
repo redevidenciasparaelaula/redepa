@@ -550,6 +550,45 @@ export async function getAvailableReviewersNotInPool(
     }));
 }
 
+// ---------------------------------------------------------------------
+// Congress subscribers — solo super-admin puede leer
+// ---------------------------------------------------------------------
+
+export interface CongressSubscriberRow {
+  id: string;
+  email: string;
+  name: string | null;
+  created_at: string;
+}
+
+export async function listCongressSubscribers(
+  congressId: string
+): Promise<CongressSubscriberRow[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('congress_subscribers')
+    .select('id, email, name, created_at')
+    .eq('congress_id', congressId)
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.error('listCongressSubscribers error', error);
+    return [];
+  }
+  return data ?? [];
+}
+
+export async function countCongressSubscribers(
+  congressId: string
+): Promise<number> {
+  const supabase = await createSupabaseServerClient();
+  const { count, error } = await supabase
+    .from('congress_subscribers')
+    .select('id', { count: 'exact', head: true })
+    .eq('congress_id', congressId);
+  if (error) return 0;
+  return count ?? 0;
+}
+
 export async function distinctTopics(): Promise<string[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase

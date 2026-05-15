@@ -1,7 +1,11 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
-import { getCongressBySlug, type CongressWithTracks } from '@/lib/queries';
+import {
+  getCongressBySlug,
+  countCongressSubscribers,
+  type CongressWithTracks,
+} from '@/lib/queries';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import {
   CongressBasicsForm,
@@ -47,21 +51,26 @@ export default async function AdminCongresoPage({ params }: Props) {
 
   // Conteos para el panel de stats
   const supabase = await createSupabaseServerClient();
-  const [{ count: subs }, { count: reviewers }, { count: attendees }] =
-    await Promise.all([
-      supabase
-        .from('submissions')
-        .select('id', { count: 'exact', head: true })
-        .eq('congress_id', c.id),
-      supabase
-        .from('reviewer_pool')
-        .select('user_id', { count: 'exact', head: true })
-        .eq('congress_id', c.id),
-      supabase
-        .from('attendees')
-        .select('id', { count: 'exact', head: true })
-        .eq('congress_id', c.id),
-    ]);
+  const [
+    { count: subs },
+    { count: reviewers },
+    { count: attendees },
+    subscribersCount,
+  ] = await Promise.all([
+    supabase
+      .from('submissions')
+      .select('id', { count: 'exact', head: true })
+      .eq('congress_id', c.id),
+    supabase
+      .from('reviewer_pool')
+      .select('user_id', { count: 'exact', head: true })
+      .eq('congress_id', c.id),
+    supabase
+      .from('attendees')
+      .select('id', { count: 'exact', head: true })
+      .eq('congress_id', c.id),
+    countCongressSubscribers(c.id),
+  ]);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
@@ -86,11 +95,12 @@ export default async function AdminCongresoPage({ params }: Props) {
       </header>
 
       {/* Stats rápidas */}
-      <section className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <section className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-5">
         <StatCard label="Líneas temáticas" value={c.tracks.length} />
         <StatCard label="Postulaciones" value={subs ?? 0} />
         <StatCard label="Pool de revisores" value={reviewers ?? 0} />
         <StatCard label="Asistentes" value={attendees ?? 0} />
+        <StatCard label="Suscriptores pre-CFP" value={subscribersCount} />
       </section>
 
       {/* Sub-paneles */}
@@ -100,6 +110,12 @@ export default async function AdminCongresoPage({ params }: Props) {
           className="inline-flex items-center gap-2 rounded-md bg-[var(--epa-blue)] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
         >
           Gestionar pool de evaluadores →
+        </Link>
+        <Link
+          href={`/admin/congresos/${c.slug}/subscribers`}
+          className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-white px-4 py-2 text-sm font-medium hover:bg-[var(--accent)]"
+        >
+          Ver suscriptores pre-CFP →
         </Link>
       </section>
 

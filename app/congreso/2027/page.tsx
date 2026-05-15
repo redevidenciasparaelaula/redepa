@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getCongressBySlug } from '@/lib/queries';
 import { CongressCountdown } from '@/components/congress-countdown';
+import { CongressSubscribeForm } from '@/components/congress-subscribe-form';
 
 const SLUG = 'epa-2027';
 
@@ -94,6 +95,26 @@ export default async function CongressEpa2027Page() {
           </div>
         </div>
       </section>
+
+      {/* Captura de email pre-CFP — solo cuando el CFP aún no abre */}
+      {c.status === 'draft' && (
+        <section className="bg-[var(--surface)]">
+          <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+            <div className="rounded-2xl bg-white p-6 shadow-sm sm:p-10">
+              <p className="eyebrow">Aviso de apertura</p>
+              <h2 className="mt-2 text-xl font-bold tracking-tight text-[var(--epa-green)] sm:text-2xl">
+                Quiero saber cuándo abre la convocatoria
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+                Dejá tu email y te avisamos en cuanto abra el plazo para postular.
+              </p>
+              <div className="mt-6">
+                <CongressSubscribeForm congressId={c.id} />
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Fechas clave */}
       <section className="bg-[var(--surface)]">
