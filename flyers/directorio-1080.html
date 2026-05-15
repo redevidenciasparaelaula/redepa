@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Flyer Directorio Red EPA — 1080×1080</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      --epa-green: #739600;
+      --epa-green-dark: #5a7600;
+      --epa-blue: #4f759b;
+      --epa-blue-dark: #3f5e7d;
+      --foreground: #000000;
+      --muted: #636363;
+      --accent: #f5f6f8;
+      --surface: #fafafa;
+    }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, Arial, sans-serif;
+      background: #d8d8d8;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 40px;
+    }
+    .flyer {
+      width: 1080px;
+      height: 1080px;
+      background: #ffffff;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+    }
+    /* Decorative radial gradients (very subtle) */
+    .bg-decor {
+      position: absolute;
+      pointer-events: none;
+      z-index: 0;
+      width: 720px;
+      height: 720px;
+      border-radius: 50%;
+    }
+    .bg-decor.green {
+      background: radial-gradient(circle, var(--epa-green) 0%, transparent 65%);
+      top: -240px;
+      right: -240px;
+      opacity: 0.12;
+    }
+    .bg-decor.blue {
+      background: radial-gradient(circle, var(--epa-blue) 0%, transparent 65%);
+      bottom: -260px;
+      left: -260px;
+      opacity: 0.1;
+    }
+    /* Green band at top */
+    .top-band {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 12px;
+      background: var(--epa-green);
+      z-index: 2;
+    }
+    /* Content layout */
+    .content {
+      position: relative;
+      z-index: 1;
+      padding: 100px 96px 80px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .logo {
+      width: 260px;
+      height: auto;
+      object-fit: contain;
+    }
+    .eyebrow {
+      margin: 70px 0 0;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--epa-blue);
+    }
+    h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: 76px;
+      line-height: 1.04;
+      letter-spacing: -0.02em;
+      color: var(--foreground);
+      margin: 20px 0 0;
+    }
+    h1 .accent {
+      color: var(--epa-green);
+    }
+    .lead {
+      margin: 36px 0 0;
+      font-size: 26px;
+      line-height: 1.5;
+      color: var(--muted);
+      max-width: 88%;
+    }
+    .benefits {
+      margin: 50px 0 0;
+      display: grid;
+      gap: 18px;
+    }
+    .benefit {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      font-size: 22px;
+      line-height: 1.4;
+      color: var(--foreground);
+    }
+    .benefit::before {
+      content: '';
+      flex: 0 0 12px;
+      width: 12px;
+      height: 12px;
+      margin-top: 14px;
+      border-radius: 50%;
+      background: var(--epa-blue);
+    }
+    .cta {
+      margin-top: auto;
+      padding-top: 36px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      border-top: 2px solid var(--accent);
+    }
+    .url-pill {
+      display: inline-block;
+      background: var(--epa-green);
+      color: #ffffff;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      font-size: 48px;
+      letter-spacing: -0.01em;
+      padding: 18px 36px;
+      border-radius: 12px;
+      text-decoration: none;
+    }
+    .footer-meta {
+      text-align: right;
+      font-size: 17px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .footer-meta strong {
+      color: var(--foreground);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="flyer">
+    <div class="top-band"></div>
+    <div class="bg-decor green"></div>
+    <div class="bg-decor blue"></div>
+
+    <div class="content">
+      <img
+        class="logo"
+        src="https://redepa.net/logos/epa.png"
+        alt="Red EPA — Red Latinoamericana Evidencias para el Aula"
+      />
+
+      <p class="eyebrow">Convocatoria abierta · Latinoamérica</p>
+
+      <h1>
+        Súmate al directorio de investigación educativa
+        <span class="accent">latinoamericano</span>.
+      </h1>
+
+      <p class="lead">
+        Conecta con quienes investigan educación en América Latina.
+        Encuentra pares por tema o metodología y haz visible tu trabajo en
+        una red institucional.
+      </p>
+
+      <div class="benefits">
+        <div class="benefit">
+          Investigadoras e investigadores de toda la región en un solo lugar
+        </div>
+        <div class="benefit">
+          Filtros por temática, metodología, institución y país
+        </div>
+        <div class="benefit">
+          Tu perfil queda enlazado a colaboraciones, congresos y publicaciones
+        </div>
+      </div>
+
+      <div class="cta">
+        <span class="url-pill">redepa.net</span>
+        <p class="footer-meta">
+          <strong>Red EPA</strong><br />
+          Evidencias para el Aula
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
