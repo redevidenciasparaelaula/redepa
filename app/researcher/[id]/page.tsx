@@ -6,14 +6,8 @@ import { getCurrentUser } from '@/lib/auth';
 import { canEditResearcher } from '@/lib/permissions';
 import { methodologyLabel } from '@/lib/methodologies';
 import { doiUrl } from '@/lib/doi';
-import {
-  BRAND_COLORS,
-  GoogleScholarIcon,
-  LinkedInIcon,
-  MailIcon,
-  OrcidIcon,
-  ResearchGateIcon,
-} from '@/components/brand-icons';
+import Image from 'next/image';
+import { MailIcon } from '@/components/brand-icons';
 import type { Locale } from '@/i18n/config';
 
 interface Props {
@@ -100,11 +94,18 @@ export default async function ResearcherPage({ params }: Props) {
               href={r.linkedin_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-md border border-[var(--border)] px-3 py-1.5 text-sm hover:bg-[var(--accent)]"
-              style={{ color: BRAND_COLORS.linkedin }}
+              className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] px-3 py-1.5 text-sm text-[var(--foreground)] hover:bg-[var(--accent)]"
             >
-              <LinkedInIcon className="h-4 w-4" />
-              <span className="text-[var(--foreground)]">{t('linkedin')}</span>
+              <span className="inline-block h-5 w-5 shrink-0">
+                <Image
+                  src="/social/linkedin.png"
+                  alt=""
+                  width={300}
+                  height={300}
+                  className="h-5 w-5 shrink-0 object-contain"
+                />
+              </span>
+              {t('linkedin')}
             </a>
           )}
           {r.google_scholar_url && (
@@ -112,11 +113,18 @@ export default async function ResearcherPage({ params }: Props) {
               href={r.google_scholar_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-md border border-[var(--border)] px-3 py-1.5 text-sm hover:bg-[var(--accent)]"
-              style={{ color: BRAND_COLORS.scholar }}
+              className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] px-3 py-1.5 text-sm text-[var(--foreground)] hover:bg-[var(--accent)]"
             >
-              <GoogleScholarIcon className="h-4 w-4" />
-              <span className="text-[var(--foreground)]">{t('scholar')}</span>
+              <span className="inline-block h-5 w-5 shrink-0">
+                <Image
+                  src="/social/scholar.png"
+                  alt=""
+                  width={300}
+                  height={300}
+                  className="h-5 w-5 shrink-0 object-contain"
+                />
+              </span>
+              {t('scholar')}
             </a>
           )}
           {r.researchgate_url && (
@@ -124,11 +132,18 @@ export default async function ResearcherPage({ params }: Props) {
               href={r.researchgate_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-md border border-[var(--border)] px-3 py-1.5 text-sm hover:bg-[var(--accent)]"
-              style={{ color: BRAND_COLORS.researchgate }}
+              className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] px-3 py-1.5 text-sm text-[var(--foreground)] hover:bg-[var(--accent)]"
             >
-              <ResearchGateIcon className="h-4 w-4" />
-              <span className="text-[var(--foreground)]">{t('researchgate')}</span>
+              <span className="inline-block h-5 w-5 shrink-0">
+                <Image
+                  src="/social/researchgate.png"
+                  alt=""
+                  width={300}
+                  height={300}
+                  className="h-5 w-5 shrink-0 object-contain"
+                />
+              </span>
+              {t('researchgate')}
             </a>
           )}
           {r.orcid && (
@@ -140,11 +155,18 @@ export default async function ResearcherPage({ params }: Props) {
               }
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-md border border-[var(--border)] px-3 py-1.5 text-sm hover:bg-[var(--accent)]"
-              style={{ color: BRAND_COLORS.orcid }}
+              className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] px-3 py-1.5 text-sm text-[var(--foreground)] hover:bg-[var(--accent)]"
             >
-              <OrcidIcon className="h-4 w-4" />
-              <span className="text-[var(--foreground)]">{t('orcid')}</span>
+              <span className="inline-block h-5 w-5 shrink-0">
+                <Image
+                  src="/social/orcid.png"
+                  alt=""
+                  width={300}
+                  height={300}
+                  className="h-5 w-5 shrink-0 object-contain"
+                />
+              </span>
+              {t('orcid')}
             </a>
           )}
           {r.website && (
