@@ -138,6 +138,37 @@
       object-fit: contain;
       flex-shrink: 0;
     }
+
+    /* ===================================================================
+       PRINT a PDF — fuerza tamaño de página 1080×1080 sin márgenes.
+       Cómo usar:
+         1. Cmd+P (Imprimir)
+         2. Destination: "Save as PDF"
+         3. "More settings" → Margins: None
+         4. Scale: 100% (Default)
+         5. Background graphics: ON (importante para que aparezcan
+            los colores y el grafo)
+         6. Save
+       =================================================================== */
+    @page {
+      size: 1080px 1080px;
+      margin: 0;
+    }
+    @media print {
+      body {
+        background: none;
+        padding: 0;
+        margin: 0;
+        display: block;
+        min-height: 0;
+      }
+      .flyer {
+        box-shadow: none;
+        margin: 0;
+        width: 1080px;
+        height: 1080px;
+      }
+    }
   </style>
 </head>
 <body>
