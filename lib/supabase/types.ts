@@ -88,6 +88,51 @@ export type Congress = {
   updated_at: string;
 };
 
+export type SubmissionStatus =
+  | 'draft'
+  | 'submitted'
+  | 'under_review'
+  | 'accepted'
+  | 'rejected'
+  | 'withdrawn';
+
+export type SubmissionType = 'oral' | 'poster' | 'symposium';
+
+export type Submission = {
+  id: string;
+  congress_id: string;
+  track_id: string | null;
+  title: string;
+  abs_context: string;
+  abs_framework: string;
+  abs_methods: string;
+  abs_results: string;
+  abs_discussion: string;
+  keywords: string[];
+  methodologies: string[];
+  type: SubmissionType;
+  status: SubmissionStatus;
+  decision_note: string | null;
+  created_at: string;
+  submitted_at: string | null;
+  decision_at: string | null;
+  updated_at: string;
+};
+
+export type SubmissionAuthor = {
+  id: string;
+  submission_id: string;
+  user_id: string | null;
+  full_name: string;
+  email: string;
+  institution_id: string | null;
+  external_institution_name: string | null;
+  is_corresponding: boolean;
+  is_presenter: boolean;
+  display_order: number;
+  created_at: string;
+};
+
 export type CongressSubscriber = {
   id: string;
   congress_id: string;
@@ -184,6 +229,40 @@ export type Database = {
           },
         ];
       };
+      submissions: {
+        Row: Submission;
+        Insert: Partial<Submission> & {
+          congress_id: string;
+          title: string;
+        };
+        Update: Partial<Submission>;
+        Relationships: [
+          {
+            foreignKeyName: 'submissions_congress_id_fkey';
+            columns: ['congress_id'];
+            isOneToOne: false;
+            referencedRelation: 'congresses';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'submissions_track_id_fkey';
+            columns: ['track_id'];
+            isOneToOne: false;
+            referencedRelation: 'congress_tracks';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      submission_authors: {
+        Row: SubmissionAuthor;
+        Insert: Partial<SubmissionAuthor> & {
+          submission_id: string;
+          full_name: string;
+          email: string;
+        };
+        Update: Partial<SubmissionAuthor>;
+        Relationships: [];
+      };
       congress_subscribers: {
         Row: CongressSubscriber;
         Insert: Partial<CongressSubscriber> & {
@@ -267,6 +346,31 @@ export type Database = {
           p_email: string;
           p_name?: string | null;
         };
+        Returns: string;
+      };
+      create_submission_with_self_as_author: {
+        Args: { p_congress_id: string };
+        Returns: string;
+      };
+      add_submission_author_by_email: {
+        Args: { p_submission_id: string; p_email: string };
+        Returns: string;
+      };
+      add_external_submission_author: {
+        Args: {
+          p_submission_id: string;
+          p_full_name: string;
+          p_email: string;
+          p_institution_name: string | null;
+        };
+        Returns: string;
+      };
+      submit_submission_atomic: {
+        Args: { p_submission_id: string };
+        Returns: string;
+      };
+      withdraw_submission_atomic: {
+        Args: { p_submission_id: string };
         Returns: string;
       };
     };

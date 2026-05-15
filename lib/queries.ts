@@ -589,6 +589,92 @@ export async function countCongressSubscribers(
   return count ?? 0;
 }
 
+// ---------------------------------------------------------------------
+// Submissions + authors — para el flujo de postulación
+// ---------------------------------------------------------------------
+
+import type { Submission, SubmissionAuthor } from '@/lib/supabase/types';
+
+export interface SubmissionListItem {
+  id: string;
+  title: string;
+  status: Submission['status'];
+  type: Submission['type'];
+  track_name: string | null;
+  updated_at: string;
+  submitted_at: string | null;
+}
+
+// Devuelve las postulaciones del usuario actual para un congreso.
+// Por RLS, las submissions solo son visibles si el usuario es autor.
+export async function listMySubmissionsForCongress(
+  congressId: string,
+  userId: string
+): Promise<SubmissionListItem[]> {
+  const supabase = await createSupabaseServerClient();
+  // Sacamos los submission_ids donde soy autor.
+  const { data: authorRows, error: authorErr } = await supabase
+    .from('submission_authors')
+    .select('submission_id')
+    .eq('user_id', userId);
+  if (authorErr) {
+    console.error('listMySubmissionsForCongress (authors)', authorErr);
+    return [];
+  }
+  const ids = (authorRows ?? []).map((r) => r.submission_id);
+  if (ids.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from('submissions')
+    .select(
+      'id, title, status, type, updated_at, submitted_at, track_id, congress_tracks(name)'
+    )
+    .eq('congress_id', congressId)
+    .in('id', ids)
+    .order('updated_at', { ascending: false });
+  if (error) {
+    console.error('listMySubmissionsForCongress (submissions)', error);
+    return [];
+  }
+  return (data ?? []).map((s) => ({
+    id: s.id,
+    title: s.title,
+    status: s.status,
+    type: s.type,
+    track_name: (s.congress_tracks as { name: string } | null)?.name ?? null,
+    updated_at: s.updated_at,
+    submitted_at: s.submitted_at,
+  }));
+}
+
+export interface FullSubmission extends Submission {
+  authors: SubmissionAuthor[];
+}
+
+export async function getSubmission(
+  id: string
+): Promise<FullSubmission | null> {
+  const supabase = await createSupabaseServerClient();
+  const { data: s, error } = await supabase
+    .from('submissions')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) {
+    console.error('getSubmission', error);
+    return null;
+  }
+  if (!s) return null;
+
+  const { data: authors } = await supabase
+    .from('submission_authors')
+    .select('*')
+    .eq('submission_id', id)
+    .order('display_order', { ascending: true });
+
+  return { ...(s as Submission), authors: (authors as SubmissionAuthor[]) ?? [] };
+}
+
 export async function distinctTopics(): Promise<string[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
