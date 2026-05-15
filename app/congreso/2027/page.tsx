@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getCongressBySlug } from '@/lib/queries';
+import { CongressCountdown } from '@/components/congress-countdown';
 
 const SLUG = 'epa-2027';
 
@@ -26,6 +27,23 @@ export default async function CongressEpa2027Page() {
     !!c.cfp_close_at && new Date(c.cfp_close_at) < new Date();
   const canSubmit = cfpOpen && !deadlinePassed;
 
+  // Countdown: si el CFP aún no abre, contamos hasta la apertura.
+  // Si ya está abierto, contamos hasta el cierre.
+  const countdown: { targetDate: string; prefix: string; suffix: string } | null =
+    c.status === 'draft' && c.cfp_open_at
+      ? {
+          targetDate: c.cfp_open_at,
+          prefix: 'Faltan',
+          suffix: 'para que abra la convocatoria',
+        }
+      : cfpOpen && c.cfp_close_at && !deadlinePassed
+        ? {
+            targetDate: c.cfp_close_at,
+            prefix: 'Faltan',
+            suffix: 'para el cierre de postulaciones',
+          }
+        : null;
+
   return (
     <div>
       {/* Hero */}
@@ -38,6 +56,16 @@ export default async function CongressEpa2027Page() {
           <p className="mt-6 text-base leading-relaxed text-[var(--muted)] sm:text-lg">
             {formatDateRange(c.start_date, c.end_date)}
           </p>
+
+          {countdown && (
+            <div className="mt-6">
+              <CongressCountdown
+                targetDate={countdown.targetDate}
+                prefix={countdown.prefix}
+                suffix={countdown.suffix}
+              />
+            </div>
+          )}
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             {canSubmit && (
@@ -174,6 +202,38 @@ export default async function CongressEpa2027Page() {
         </div>
       </section>
 
+      {/* Preguntas frecuentes */}
+      <section className="bg-white">
+        <div className="mx-auto max-w-4xl px-4 py-20 sm:px-6 sm:py-24">
+          <p className="eyebrow">Preguntas frecuentes</p>
+          <h2 className="mt-2 text-2xl font-bold tracking-tight text-[var(--epa-green)] sm:text-3xl">
+            Antes de postular
+          </h2>
+
+          <div className="mt-10 divide-y divide-[var(--border)] border-y border-[var(--border)]">
+            {FAQ.map((item, i) => (
+              <details
+                key={i}
+                className="group py-5 [&_summary::-webkit-details-marker]:hidden"
+              >
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-base font-semibold text-[var(--foreground)]">
+                  <span>{item.q}</span>
+                  <span
+                    aria-hidden="true"
+                    className="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[var(--border)] text-[var(--epa-blue)] transition-transform group-open:rotate-45"
+                  >
+                    +
+                  </span>
+                </summary>
+                <div className="mt-3 text-sm leading-relaxed text-[var(--muted)]">
+                  {item.a}
+                </div>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA final si CFP abierto */}
       {canSubmit && <FinalCta year={c.year} />}
     </div>
@@ -293,5 +353,36 @@ const STEPS: string[] = [
   'Agrega co-autores: los del directorio se autocompletan; los externos solo necesitan nombre, institución y correo.',
   'Importante: no menciones tu nombre ni tu institución dentro del texto del abstract. El proceso es de revisión doble ciega.',
   'Antes del deadline puedes editar tu envío cuantas veces necesites. El plazo es estricto: después del cierre no se aceptan modificaciones ni envíos nuevos.',
+];
+
+const FAQ: { q: string; a: string }[] = [
+  {
+    q: '¿Quién puede postular?',
+    a: 'Cualquier persona que investigue en educación en América Latina, sin importar etapa de carrera ni filiación institucional. Para presentarse como autor o autora principal hay que tener cuenta en redepa.net. Los co-autores externos se agregan solo con nombre, institución y correo.',
+  },
+  {
+    q: '¿En qué idioma se postula?',
+    a: 'Solo en español. La edición 2027 no recibe trabajos en otros idiomas.',
+  },
+  {
+    q: '¿Qué formato tiene el abstract?',
+    a: 'Se llena directamente en el formulario, en 5 campos estructurados: contexto y problema, marco teórico, metodología, resultados o hallazgos, y discusión / aporte al aula. Cada campo tiene un máximo aproximado de 500 caracteres. No se suben PDFs.',
+  },
+  {
+    q: '¿Cómo funciona la revisión doble ciega?',
+    a: 'Las evaluadoras y evaluadores ven solo el contenido del abstract, sin saber quién lo escribió. Por eso es importante no mencionar tu nombre ni tu institución dentro del texto. Los datos de autoría se ingresan en una sección separada y no son visibles para los pares revisores.',
+  },
+  {
+    q: '¿Cuántos trabajos puedo presentar?',
+    a: 'Puedes presentar más de un trabajo como autor o co-autor, pero te recomendamos concentrarte en los que aporten un avance real. Cada envío pasa por revisión independiente.',
+  },
+  {
+    q: '¿Puedo editar mi envío después de enviarlo?',
+    a: 'Sí, mientras el CFP esté abierto puedes editar tu envío cuantas veces necesites. Después del cierre del plazo no se aceptan modificaciones ni envíos nuevos: el deadline es estricto.',
+  },
+  {
+    q: '¿La asistencia al congreso es paga?',
+    a: 'Sí, la asistencia presencial al congreso tiene un valor de inscripción. Los detalles se anunciarán cuando se abra la inscripción.',
+  },
 ];
 
