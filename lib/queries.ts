@@ -12,7 +12,7 @@ const RESEARCHER_COLUMNS =
   'research_topics, methodologies, representative_dois, ' +
   'country, city, ' +
   'linkedin_url, google_scholar_url, researchgate_url, orcid, website, ' +
-  'photo_url, status, created_at, updated_at, ' +
+  'photo_url, status, available_for_review, created_at, updated_at, ' +
   'institutions(id, name, name_en, country, city)';
 
 export const SORTABLE_COLUMNS = [
