@@ -124,6 +124,24 @@ export default async function AdminPage({ searchParams }: Props) {
         </p>
       </header>
 
+      {/* Calidad del directorio: solo super-admin */}
+      {user.isSuperAdmin && (
+        <section className="mb-6 flex flex-wrap gap-3">
+          <Link
+            href="/admin/perfiles-incompletos"
+            className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-white px-4 py-2 text-sm font-medium hover:bg-[var(--accent)]"
+          >
+            ✉ Perfiles incompletos
+          </Link>
+          <Link
+            href="/admin/instituciones/duplicadas"
+            className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-white px-4 py-2 text-sm font-medium hover:bg-[var(--accent)]"
+          >
+            🔀 Instituciones duplicadas
+          </Link>
+        </section>
+      )}
+
       <div className="mb-6">
         <AdminTabs
           current={tab}

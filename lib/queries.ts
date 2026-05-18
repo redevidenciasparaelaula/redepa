@@ -1313,6 +1313,151 @@ function topicCanonicalKey(topic: string): string {
     .join(' ');
 }
 
+// ---------------------------------------------------------------------
+// Perfiles incompletos — para el super-admin que envía recordatorios
+// ---------------------------------------------------------------------
+
+import {
+  computeCompleteness,
+  type CompletenessResult,
+} from '@/lib/profile-completeness';
+
+export interface IncompleteProfileRow {
+  id: string;
+  full_name: string;
+  email: string;
+  institution_name: string | null;
+  completeness: CompletenessResult;
+  created_at: string;
+}
+
+export async function listIncompleteProfiles(): Promise<IncompleteProfileRow[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('researchers')
+    .select(
+      `id, full_name, email, institution_id, title_es, title_en,
+       phd_year, master_year, photo_url, linkedin_url, google_scholar_url,
+       researchgate_url, orcid, representative_dois, research_topics,
+       methodologies, created_at, institutions(name)`
+    )
+    .eq('status', 'approved')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('listIncompleteProfiles', error);
+    return [];
+  }
+
+  return (data ?? [])
+    .map((r) => {
+      const completeness = computeCompleteness(r);
+      return {
+        id: r.id,
+        full_name: r.full_name,
+        email: r.email,
+        institution_name: (r.institutions as { name: string } | null)?.name ?? null,
+        completeness,
+        created_at: r.created_at,
+      };
+    })
+    .filter((r) => !r.completeness.isComplete);
+}
+
+// ---------------------------------------------------------------------
+// Instituciones duplicadas — detección por clave normalizada
+// ---------------------------------------------------------------------
+
+export interface DuplicateGroup {
+  key: string; // clave canónica del grupo
+  institutions: {
+    id: string;
+    name: string;
+    name_en: string | null;
+    country: string;
+    city: string | null;
+    researcher_count: number;
+    created_at: string;
+  }[];
+}
+
+// Normaliza el nombre de una institución para detección de duplicados:
+//   - strip accents + lowercase
+//   - colapsa whitespace
+//   - quita prefijos/sufijos legales comunes (S.A., Ltda, etc.)
+//   - quita la palabra "universidad" inicial si es muy genérico (NO, esto
+//     produciría falsos match; mejor mantener todo)
+function normalizeInstitutionKey(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[.,]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export async function findDuplicateInstitutionGroups(): Promise<
+  DuplicateGroup[]
+> {
+  const supabase = await createSupabaseServerClient();
+  const { data: insts, error } = await supabase
+    .from('institutions')
+    .select('id, name, name_en, country, city, created_at');
+  if (error) {
+    console.error('findDuplicateInstitutionGroups', error);
+    return [];
+  }
+
+  // Cuenta researchers por institución
+  const { data: researchers } = await supabase
+    .from('researchers')
+    .select('institution_id')
+    .not('institution_id', 'is', null);
+  const counts = new Map<string, number>();
+  for (const r of researchers ?? []) {
+    if (r.institution_id) {
+      counts.set(r.institution_id, (counts.get(r.institution_id) ?? 0) + 1);
+    }
+  }
+
+  // Agrupa por clave normalizada
+  const groups = new Map<string, DuplicateGroup>();
+  for (const inst of insts ?? []) {
+    const key = normalizeInstitutionKey(inst.name);
+    if (!key) continue;
+    if (!groups.has(key)) {
+      groups.set(key, { key, institutions: [] });
+    }
+    groups.get(key)!.institutions.push({
+      id: inst.id,
+      name: inst.name,
+      name_en: inst.name_en,
+      country: inst.country,
+      city: inst.city,
+      researcher_count: counts.get(inst.id) ?? 0,
+      created_at: inst.created_at,
+    });
+  }
+
+  // Solo devuelve grupos con duplicados (más de 1) — ordenados por
+  // mayor número de researchers afectados, para que el super-admin
+  // priorice los grupos con más impacto.
+  return [...groups.values()]
+    .filter((g) => g.institutions.length > 1)
+    .map((g) => ({
+      ...g,
+      institutions: g.institutions.sort(
+        (a, b) => b.researcher_count - a.researcher_count
+      ),
+    }))
+    .sort((a, b) => {
+      const aTotal = a.institutions.reduce((s, i) => s + i.researcher_count, 0);
+      const bTotal = b.institutions.reduce((s, i) => s + i.researcher_count, 0);
+      return bTotal - aTotal;
+    });
+}
+
 export async function distinctTopics(): Promise<string[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase

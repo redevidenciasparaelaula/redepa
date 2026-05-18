@@ -143,6 +143,45 @@ export function reviewerAssignedTemplate(args: {
 }
 
 // =====================================================================
+// 4) Recordatorio de perfil incompleto — a investigadores del directorio
+// =====================================================================
+export function incompleteProfileReminderTemplate(args: {
+  researcherName: string;
+  researcherId: string;
+  missingHtml: string; // viene de missingCategoriesAsHtml()
+}): { subject: string; html: string } {
+  const url = `${BASE_URL}/researcher/${args.researcherId}/edit`;
+  return {
+    subject: 'Completá tu perfil en Red EPA',
+    html: shell(
+      'Tu perfil en Red EPA está casi listo',
+      `
+      <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">Hola ${escapeHtml(args.researcherName)},</p>
+      <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">
+        Gracias por ser parte de la Red Latinoamericana Evidencias Para el
+        Aula. Notamos que a tu perfil le faltan algunos campos que ayudan a
+        que otras y otros investigadores te encuentren y reconozcan tu
+        trabajo:
+      </p>
+      ${args.missingHtml}
+      <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">
+        Completar tu perfil te ayuda a:
+      </p>
+      <ul style="margin:0 0 16px 0;padding-left:20px;font-size:14px;line-height:1.6">
+        <li>Aparecer en los filtros de búsqueda del directorio (por tema, metodología, país, etc.)</li>
+        <li>Ser identificado/a por colegas que trabajan en líneas similares</li>
+        <li>Recibir invitaciones a Congresos EPA acordes a tu experticia</li>
+        <li>Visibilizar tus publicaciones representativas</li>
+      </ul>
+      ${ctaButton('Completar mi perfil', url)}
+      <p style="margin:0;font-size:13px;color:#78716c;line-height:1.5">
+        Si ya completaste estos campos recientemente, ignorá este correo.
+      </p>`
+    ),
+  };
+}
+
+// =====================================================================
 // 3) Decisión emitida — para los autores
 // =====================================================================
 export function decisionEmittedTemplate(args: {
