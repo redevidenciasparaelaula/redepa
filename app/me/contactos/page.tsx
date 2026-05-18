@@ -45,7 +45,7 @@ export default async function MyContactsPage({ searchParams }: Props) {
           Mis contactos
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
-          Investigadoras e investigadores que guardaste desde el directorio. Cada
+          Investigadoras e investigadores que has guardado desde el directorio. Cada
           contacto se puede etiquetar con tags libres (ej.{' '}
           <code className="rounded bg-[var(--accent)] px-1">posibles-coautores</code>
           ,{' '}
@@ -222,7 +222,7 @@ function EmptyState({ anyFilter }: { anyFilter: boolean }) {
   return (
     <div className="mt-4 rounded-lg border border-dashed border-[var(--border)] bg-[var(--card)] p-8 text-center text-sm">
       <p className="text-[var(--muted)]">
-        Todavía no guardaste contactos.
+        Todavía no has guardado contactos.
       </p>
       <Link
         href="/directorio"
