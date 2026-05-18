@@ -123,18 +123,17 @@ export default async function DirectoryPage({ searchParams }: PageProps) {
       </header>
 
       {view === 'table' ? (
-        // Vista tabla: SIN sidebar — la tabla necesita ancho completo
-        // para que no quede empujada a la derecha. Filtros como collapsible
-        // arriba (siempre colapsado por default).
+        // Vista tabla: SIN sidebar. Filtros siempre visibles arriba con
+        // layout horizontal (grid 2-3 columnas) para que el panel no sea
+        // tan alto.
         <div className="space-y-4">
-          <CollapsibleFilters alwaysCollapsible>
-            <SearchFilters
-              initial={filters}
-              institutions={institutions}
-              countries={countries}
-              topicSuggestions={topicSuggestions}
-            />
-          </CollapsibleFilters>
+          <SearchFilters
+            layout="horizontal"
+            initial={filters}
+            institutions={institutions}
+            countries={countries}
+            topicSuggestions={topicSuggestions}
+          />
 
           <section>
             {rows.length === 0 ? (

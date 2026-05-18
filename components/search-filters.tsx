@@ -29,6 +29,11 @@ interface Props {
   // Título opcional que se muestra arriba del formulario (en cualquier
   // viewport). El directorio no lo usa; /me/contactos sí.
   title?: string;
+  // Layout interno de los campos.
+  //   'sidebar' (default): apilados en una columna (para el aside)
+  //   'horizontal': grid 2/3 columnas (para el directorio en vista tabla,
+  //                 donde el panel ocupa todo el ancho)
+  layout?: 'sidebar' | 'horizontal';
 }
 
 function toggle(arr: string[], value: string): string[] {
@@ -50,6 +55,7 @@ export function SearchFilters({
   initial,
   basePath = '/directorio',
   title,
+  layout = 'sidebar',
 }: Props) {
   const t = useTranslations('search');
   const locale = useLocale() as Locale;
@@ -141,16 +147,22 @@ export function SearchFilters({
   const inputClass =
     'w-full rounded-md border border-[var(--border)] bg-[var(--background)] px-3 py-2';
 
+  const fieldsClass =
+    layout === 'horizontal'
+      ? 'grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-cols-3'
+      : 'space-y-4';
+
   return (
     <form
       onSubmit={apply}
-      className="space-y-4 rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 text-sm"
+      className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 text-sm space-y-4"
     >
       {title && (
         <h2 className="-mb-1 text-base font-semibold text-[var(--foreground)]">
           {title}
         </h2>
       )}
+      <div className={fieldsClass}>
       <div>
         <label className="mb-1 block font-medium">{t('queryPlaceholder')}</label>
         <input
@@ -402,6 +414,7 @@ export function SearchFilters({
         </div>
       </fieldset>
 
+      </div>
       <div className="flex gap-2 pt-1">
         <button
           type="submit"
