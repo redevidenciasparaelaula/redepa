@@ -70,7 +70,7 @@ export function ContactNoteEditor({ researcherId, initialNote }: Props) {
         rows={4}
         maxLength={2000}
         autoFocus
-        placeholder="ej. Conversamos en SEPA 2024, le interesa evaluación formativa en escuelas rurales"
+        placeholder="Conversamos en EPA 2025, le interesa evaluación formativa, experiencia en escuelas rurales, etc."
         className="mt-1 block w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm focus:border-[var(--epa-blue)] focus:outline-none focus:ring-1 focus:ring-[var(--epa-blue)]"
       />
       <div className="mt-2 flex items-center gap-2">
