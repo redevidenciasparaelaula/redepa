@@ -54,7 +54,10 @@ export async function searchResearchers(
 ): Promise<SearchResult> {
   const supabase = await createSupabaseServerClient();
   const page = Math.max(1, filters.page ?? 1);
-  const pageSize = Math.max(1, Math.min(50, filters.pageSize ?? 20));
+  // Page sizes válidas: 25, 50, 100, o 'todos' (representado como 1000 para
+  // tener un techo razonable). Default 25.
+  const requested = filters.pageSize ?? 25;
+  const pageSize = Math.max(1, Math.min(1000, requested));
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 

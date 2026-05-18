@@ -17,7 +17,22 @@ import { ResearcherCard } from '@/components/researcher-card';
 import { ResearcherTable } from '@/components/researcher-table';
 import { ViewToggle } from '@/components/view-toggle';
 import { CollapsibleFilters } from '@/components/collapsible-filters';
+import { PageSizeSelector } from '@/components/page-size-selector';
 import type { Locale } from '@/i18n/config';
+
+// Mapea el query param ?per= a un page size numérico para searchResearchers.
+// 'todos' → 1000 (techo razonable, alcanza para todo el directorio).
+function parsePageSize(raw: string | undefined): {
+  numeric: number;
+  selector: string;
+} {
+  const allowed = ['25', '50', '100', 'todos'] as const;
+  const value = (allowed as readonly string[]).includes(raw ?? '')
+    ? (raw as string)
+    : '25';
+  const numeric = value === 'todos' ? 1000 : parseInt(value, 10);
+  return { numeric, selector: value };
+}
 
 interface PageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -52,6 +67,9 @@ export default async function DirectoryPage({ searchParams }: PageProps) {
     ? (sortByRaw as SortColumn)
     : 'full_name';
   const sortDir: SortDir = pickString(sp.dir) === 'desc' ? 'desc' : 'asc';
+  const { numeric: pageSizeNum, selector: pageSizeSelector } = parsePageSize(
+    pickString(sp.per)
+  );
 
   const filters = {
     q: pickString(sp.q),
@@ -67,6 +85,7 @@ export default async function DirectoryPage({ searchParams }: PageProps) {
     sortBy,
     sortDir,
     page: pickInt(sp.page),
+    pageSize: pageSizeNum,
   };
 
   const [{ rows, total, page, pageSize }, institutions, countries, topicSuggestions] = await Promise.all([
@@ -89,7 +108,10 @@ export default async function DirectoryPage({ searchParams }: PageProps) {
             {t('subtitle', { count: total })}
           </p>
         </div>
-        <ViewToggle view={view} searchParams={sp} />
+        <div className="flex flex-wrap items-center gap-3">
+          <PageSizeSelector current={pageSizeSelector} />
+          <ViewToggle view={view} searchParams={sp} />
+        </div>
       </header>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
