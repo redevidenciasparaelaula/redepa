@@ -43,16 +43,31 @@ function capitalizeWord(word: string): string {
     .join('');
 }
 
-export function toTitleCase(input: string): string {
+export interface TitleCaseOptions {
+  // Si true, preserva palabras 2-5 chars en mayúsculas (UDD, MIT, PUC).
+  // Útil para INSTITUCIONES.
+  // Si false, "VERA" se trata como apellido y se title-casea a "Vera".
+  // Usar false para nombres de personas y ciudades.
+  // Default true para compatibilidad con código viejo.
+  preserveAcronyms?: boolean;
+}
+
+export function toTitleCase(
+  input: string,
+  opts: TitleCaseOptions = {}
+): string {
   if (!input) return input;
   const trimmed = input.trim().replace(/\s+/g, ' ');
   if (!trimmed) return trimmed;
 
+  const preserveAcronyms = opts.preserveAcronyms ?? true;
   const words = trimmed.split(' ');
   return words
     .map((word, i) => {
       // Preservar acrónimos cortos en mayúsculas (UDD, MIT, UNESCO, etc.)
-      if (ACRONYM_RE.test(word)) return word;
+      // SOLO si preserveAcronyms está activo. Si el input es un nombre o
+      // ciudad, queremos que "VERA" → "Vera" (no es un acrónimo real).
+      if (preserveAcronyms && ACRONYM_RE.test(word)) return word;
 
       const lower = word.toLocaleLowerCase('es');
 
@@ -66,10 +81,25 @@ export function toTitleCase(input: string): string {
     .join(' ');
 }
 
-// Variante: aplica title case solo si el input está vacío.
+// Variante: aplica title case solo si el input no está vacío.
 // Útil cuando queremos null en lugar de string vacío.
-export function toTitleCaseOrNull(input: string | null | undefined): string | null {
+export function toTitleCaseOrNull(
+  input: string | null | undefined,
+  opts: TitleCaseOptions = {}
+): string | null {
   if (!input) return null;
-  const result = toTitleCase(input);
+  const result = toTitleCase(input, opts);
   return result || null;
+}
+
+// Atajo semántico: title case para nombres de personas (no preserva acrónimos).
+// Útil para que las llamadas desde los formularios sean explícitas.
+export function toTitleCaseName(input: string): string {
+  return toTitleCase(input, { preserveAcronyms: false });
+}
+
+export function toTitleCaseNameOrNull(
+  input: string | null | undefined
+): string | null {
+  return toTitleCaseOrNull(input, { preserveAcronyms: false });
 }

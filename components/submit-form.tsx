@@ -9,7 +9,11 @@ import { POSITIONS, positionByEs } from '@/lib/positions';
 import { normalizeDoi } from '@/lib/doi';
 import { normalizeUrl } from '@/lib/normalize-url';
 import { parseYear } from '@/lib/parse-year';
-import { toTitleCase, toTitleCaseOrNull } from '@/lib/title-case';
+import {
+  toTitleCase,
+  toTitleCaseName,
+  toTitleCaseOrNull,
+} from '@/lib/title-case';
 import { InstitutionCombobox } from './institution-combobox';
 
 // Este formulario es siempre en español, independiente del idioma de la UI.
@@ -202,7 +206,7 @@ export function SubmitForm({ institutions, countries }: Props) {
     }
 
     const payload = {
-      full_name: toTitleCase(form.full_name),
+      full_name: toTitleCaseName(form.full_name),
       email: cleanedEmail,
       institution_id: institutionId,
       title_es: form.title.trim(),
@@ -215,7 +219,7 @@ export function SubmitForm({ institutions, countries }: Props) {
       methodologies: form.methodologies,
       representative_dois: dois,
       country: form.country.trim(),
-      city: toTitleCase(form.city),
+      city: toTitleCaseName(form.city),
       linkedin_url: normalizeUrl(form.linkedin_url),
       google_scholar_url: normalizeUrl(form.google_scholar_url),
       researchgate_url: normalizeUrl(form.researchgate_url),

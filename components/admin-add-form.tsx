@@ -10,7 +10,7 @@ import { POSITIONS, positionByEs } from '@/lib/positions';
 import { normalizeDoi } from '@/lib/doi';
 import { normalizeUrl } from '@/lib/normalize-url';
 import { parseYear } from '@/lib/parse-year';
-import { toTitleCase, toTitleCaseOrNull } from '@/lib/title-case';
+import { toTitleCaseName, toTitleCaseOrNull } from '@/lib/title-case';
 import { InstitutionCombobox } from './institution-combobox';
 
 interface Props {
@@ -124,7 +124,7 @@ export function AdminAddForm({
 
     const cleanedEmail = form.email.trim().toLowerCase();
     const result = await adminCreateResearcherAction({
-      full_name: toTitleCase(form.full_name),
+      full_name: toTitleCaseName(form.full_name),
       email: cleanedEmail,
       institution_id: form.institution_id,
       title_es: form.title.trim(),
@@ -137,7 +137,7 @@ export function AdminAddForm({
       methodologies: form.methodologies,
       representative_dois: dois,
       country: form.country.trim(),
-      city: toTitleCase(form.city),
+      city: toTitleCaseName(form.city),
       linkedin_url: normalizeUrl(form.linkedin_url),
       google_scholar_url: normalizeUrl(form.google_scholar_url),
       researchgate_url: normalizeUrl(form.researchgate_url),
