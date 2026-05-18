@@ -32,6 +32,7 @@ export async function Header() {
   const authItems = user
     ? [
         { href: '/me', label: t('nav.myProfile') },
+        { href: '/me/contactos', label: t('nav.myContacts') },
         ...(showAdmin ? [{ href: '/admin', label: t('nav.admin') }] : []),
       ]
     : [];
