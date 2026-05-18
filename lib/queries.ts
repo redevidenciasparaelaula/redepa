@@ -3,7 +3,7 @@ import {
   createSupabaseAdminClient,
   hasServiceRoleKey,
 } from '@/lib/supabase/admin';
-import { stripAccents } from '@/lib/text';
+import { stripAccents, singularize } from '@/lib/text';
 import type { Institution, ResearcherWithInstitution } from '@/lib/supabase/types';
 
 const RESEARCHER_COLUMNS =
@@ -75,18 +75,39 @@ export async function searchResearchers(
   if (filters.city) query = query.ilike('city', `%${filters.city}%`);
   if (filters.institutionId) query = query.eq('institution_id', filters.institutionId);
 
-  // Topics: cada topic es un OR con substring matching, ignorando tildes y
-  // mayúsculas. La columna research_topics_text guarda los topics ya
-  // normalizados (lower + unaccent), así que al hacer ilike contra el mismo
-  // formato, "politica" matchea "políticas educativas".
+  // Topics: cada topic se descompone en palabras singularizadas y se exige
+  // que TODAS las palabras estén presentes en research_topics_text. Múltiples
+  // topics del usuario se OR-ean entre sí. La columna almacena los temas ya
+  // unaccent+lower (migración 008), así que comparamos ya normalizado.
+  //
+  // Por qué singularizar: "política educativa" debe matchear "políticas
+  // educativas" (y viceversa). Como ilike de una palabra singular coincide
+  // como substring contra la plural (politica ⊂ politicas), basta
+  // singularizar la query y hacer AND entre las palabras de cada topic.
   if (filters.topics && filters.topics.length > 0) {
-    const conds = filters.topics
+    const groups = filters.topics
       .map((t) => {
-        const v = stripAccents(t).replace(/[,()]/g, ' ').trim();
-        return `research_topics_text.ilike.%${v}%`;
+        const normalized = stripAccents(t).replace(/[,()]/g, ' ').trim();
+        const words = normalized
+          .split(/\s+/)
+          .filter(Boolean)
+          .map(singularize);
+        if (words.length === 0) return null;
+        if (words.length === 1) {
+          return `research_topics_text.ilike.%${words[0]}%`;
+        }
+        // and(...) inside or(...): exige que todas las palabras aparezcan
+        // (pueden estar separadas en el texto del topic guardado).
+        const andClauses = words.map(
+          (w) => `research_topics_text.ilike.%${w}%`
+        );
+        return `and(${andClauses.join(',')})`;
       })
-      .join(',');
-    query = query.or(conds);
+      .filter((g): g is string => g !== null);
+
+    if (groups.length > 0) {
+      query = query.or(groups.join(','));
+    }
   }
   // Metodologías: usan claves canónicas, OR exacto está bien.
   if (filters.methodologies && filters.methodologies.length > 0) {
@@ -1187,13 +1208,24 @@ export async function listSavedContacts(
   }
 
   if (filters.topics && filters.topics.length > 0) {
-    const wants = filters.topics.map((t) => stripAccents(t.toLowerCase()));
+    // Mismo comportamiento que el directorio: cada topic se descompone en
+    // palabras singularizadas y se exige que TODAS estén presentes en el
+    // texto combinado de los temas del investigador.
+    const wordGroups = filters.topics
+      .map((t) => {
+        const norm = stripAccents(t).replace(/[,()]/g, ' ').trim();
+        return norm.split(/\s+/).filter(Boolean).map(singularize);
+      })
+      .filter((g) => g.length > 0);
+
     rows = rows.filter((r) => {
-      const has = (r.researcher.research_topics ?? []).map((t) =>
-        stripAccents((t ?? '').toLowerCase())
+      const haystack = (r.researcher.research_topics ?? [])
+        .map((t) => stripAccents(t ?? ''))
+        .join(' || ');
+      // OR entre topics del filtro; AND entre las palabras de un topic
+      return wordGroups.some((words) =>
+        words.every((w) => haystack.includes(w))
       );
-      // OR: matchea si al menos uno coincide (como en el directorio)
-      return wants.some((w) => has.some((h) => h.includes(w)));
     });
   }
 
