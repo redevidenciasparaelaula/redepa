@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth';
 import {
   distinctCountries,
   distinctTopics,
+  getSavedContactIds,
   listInstitutionsInUse,
   searchResearchers,
   SORTABLE_COLUMNS,
@@ -88,11 +89,18 @@ export default async function DirectoryPage({ searchParams }: PageProps) {
     pageSize: pageSizeNum,
   };
 
-  const [{ rows, total, page, pageSize }, institutions, countries, topicSuggestions] = await Promise.all([
+  const [
+    { rows, total, page, pageSize },
+    institutions,
+    countries,
+    topicSuggestions,
+    savedContactIds,
+  ] = await Promise.all([
     searchResearchers(filters),
     listInstitutionsInUse(),
     distinctCountries(),
     distinctTopics(),
+    getSavedContactIds(user.id),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -138,12 +146,17 @@ export default async function DirectoryPage({ searchParams }: PageProps) {
               sortBy={sortBy}
               sortDir={sortDir}
               searchParams={sp}
+              savedContactIds={savedContactIds}
             />
           ) : (
             <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
               {rows.map((r) => (
                 <li key={r.id}>
-                  <ResearcherCard researcher={r} locale={locale} />
+                  <ResearcherCard
+                    researcher={r}
+                    locale={locale}
+                    isSaved={savedContactIds.has(r.id)}
+                  />
                 </li>
               ))}
             </ul>

@@ -1057,6 +1057,97 @@ export async function listReviewsForSubmissionAuthorView(
   return data ?? [];
 }
 
+// ---------------------------------------------------------------------
+// Contactos guardados — feature "Mis contactos" del directorio.
+// ---------------------------------------------------------------------
+
+// Conjunto de IDs de investigadores guardados por el usuario actual.
+// Usado para pintar el botón "+" como ✓ en las cards y tabla del directorio
+// sin tener que hacer un round-trip por cada card.
+export async function getSavedContactIds(userId: string): Promise<Set<string>> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('saved_contacts')
+    .select('researcher_id')
+    .eq('user_id', userId);
+  if (error) {
+    console.error('getSavedContactIds', error);
+    return new Set();
+  }
+  return new Set((data ?? []).map((r) => r.researcher_id));
+}
+
+export interface SavedContactWithResearcher {
+  researcher_id: string;
+  tags: string[];
+  note: string | null;
+  saved_at: string;
+  researcher: ResearcherWithInstitution;
+}
+
+export async function listSavedContacts(
+  userId: string,
+  opts: { tag?: string; q?: string } = {}
+): Promise<SavedContactWithResearcher[]> {
+  const supabase = await createSupabaseServerClient();
+  let query = supabase
+    .from('saved_contacts')
+    .select(
+      `researcher_id, tags, note, created_at,
+       researcher:researchers!inner(${RESEARCHER_COLUMNS})`
+    )
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (opts.tag) {
+    // contains: la fila debe tener AL MENOS ese tag
+    query = query.contains('tags', [opts.tag.toLowerCase()]);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    console.error('listSavedContacts', error);
+    return [];
+  }
+
+  let rows = (data ?? []).map((r) => ({
+    researcher_id: r.researcher_id,
+    tags: r.tags ?? [],
+    note: r.note,
+    saved_at: r.created_at,
+    researcher: r.researcher as unknown as ResearcherWithInstitution,
+  }));
+
+  // Filtro por nombre del researcher en JS porque Supabase no permite
+  // ilike sobre la tabla embebida directamente.
+  if (opts.q && opts.q.trim()) {
+    const q = opts.q.trim().toLowerCase();
+    rows = rows.filter((r) =>
+      r.researcher.full_name.toLowerCase().includes(q)
+    );
+  }
+
+  return rows;
+}
+
+// Tags únicos usados por el usuario, ordenados alfabéticamente.
+// Para autocompletado en el editor.
+export async function distinctSavedTags(userId: string): Promise<string[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('saved_contacts')
+    .select('tags')
+    .eq('user_id', userId);
+  if (error) return [];
+  const set = new Set<string>();
+  for (const r of data ?? []) {
+    for (const t of r.tags ?? []) {
+      if (t) set.add(t);
+    }
+  }
+  return [...set].sort((a, b) => a.localeCompare(b));
+}
+
 export async function distinctTopics(): Promise<string[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase

@@ -1,13 +1,14 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getLocale, getTranslations } from 'next-intl/server';
-import { getResearcher } from '@/lib/queries';
+import { getResearcher, getSavedContactIds } from '@/lib/queries';
 import { getCurrentUser } from '@/lib/auth';
 import { canEditResearcher } from '@/lib/permissions';
 import { methodologyLabel } from '@/lib/methodologies';
 import { doiUrl } from '@/lib/doi';
 import Image from 'next/image';
 import { MailIcon } from '@/components/brand-icons';
+import { SaveContactButton } from '@/components/save-contact-button';
 import type { Locale } from '@/i18n/config';
 
 interface Props {
@@ -26,6 +27,8 @@ export default async function ResearcherPage({ params }: Props) {
   if (!r) notFound();
 
   const showEdit = canEditResearcher(user, r);
+  const savedIds = await getSavedContactIds(user.id);
+  const isSaved = savedIds.has(r.id);
 
   const title = locale === 'en' ? r.title_en ?? r.title_es : r.title_es ?? r.title_en;
   const instName =
@@ -42,14 +45,17 @@ export default async function ResearcherPage({ params }: Props) {
         >
           ← {t('back')}
         </Link>
-        {showEdit && (
-          <Link
-            href={`/researcher/${r.id}/edit`}
-            className="rounded-md border border-[var(--border)] px-3 py-1.5 text-sm hover:bg-[var(--accent)]"
-          >
-            ✎ {t('edit')}
-          </Link>
-        )}
+        <div className="flex items-center gap-3">
+          <SaveContactButton researcherId={r.id} initialSaved={isSaved} size="md" />
+          {showEdit && (
+            <Link
+              href={`/researcher/${r.id}/edit`}
+              className="rounded-md border border-[var(--border)] px-3 py-1.5 text-sm hover:bg-[var(--accent)]"
+            >
+              ✎ {t('edit')}
+            </Link>
+          )}
+        </div>
       </div>
 
       <header className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-6">

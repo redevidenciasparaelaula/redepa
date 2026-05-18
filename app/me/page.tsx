@@ -100,6 +100,25 @@ export default async function MyAccountPage() {
             )}
           </section>
 
+          {/* Mi red personal: contactos guardados */}
+          <section className="rounded-2xl bg-white p-8 shadow-sm">
+            <h2 className="mb-5 text-xs font-semibold uppercase tracking-wider text-[var(--epa-blue)]">
+              Mi red personal
+            </h2>
+            <Link
+              href="/me/contactos"
+              className="flex items-center justify-between gap-3 rounded-md border border-[var(--border)] bg-white px-4 py-3 text-sm hover:bg-[var(--accent)]"
+            >
+              <span className="font-medium">Mis contactos guardados</span>
+              <span className="text-[var(--epa-blue)]">→</span>
+            </Link>
+            <p className="mt-3 text-xs text-[var(--muted)]">
+              Guarda investigadoras/es desde el directorio (botón verde{' '}
+              <strong>+</strong>) para volver a contactarlos después. Etiquétalos
+              por proyecto y agrega notas privadas.
+            </p>
+          </section>
+
           {/* Accesos rápidos a Congreso EPA 2027 */}
           {(mySubs.length > 0 || myReviews.length > 0 || (epa2027 && epa2027.status === 'cfp_open')) && (
             <section className="rounded-2xl bg-white p-8 shadow-sm">

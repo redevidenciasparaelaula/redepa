@@ -167,6 +167,15 @@ export type SubmissionAuthor = {
   created_at: string;
 };
 
+export type SavedContact = {
+  user_id: string;
+  researcher_id: string;
+  tags: string[];
+  note: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type CongressSubscriber = {
   id: string;
   congress_id: string;
@@ -318,6 +327,23 @@ export type Database = {
         };
         Update: Partial<Review>;
         Relationships: [];
+      };
+      saved_contacts: {
+        Row: SavedContact;
+        Insert: Partial<SavedContact> & {
+          user_id: string;
+          researcher_id: string;
+        };
+        Update: Partial<SavedContact>;
+        Relationships: [
+          {
+            foreignKeyName: 'saved_contacts_researcher_id_fkey';
+            columns: ['researcher_id'];
+            isOneToOne: false;
+            referencedRelation: 'researchers';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       congress_subscribers: {
         Row: CongressSubscriber;

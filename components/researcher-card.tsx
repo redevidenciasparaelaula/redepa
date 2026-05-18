@@ -5,17 +5,19 @@ import type { Locale } from '@/i18n/config';
 import type { ResearcherWithInstitution } from '@/lib/supabase/types';
 import { methodologyLabel } from '@/lib/methodologies';
 import { MailIcon } from './brand-icons';
+import { SaveContactButton } from './save-contact-button';
 
 interface Props {
   researcher: ResearcherWithInstitution;
   locale: Locale;
+  isSaved?: boolean;
 }
 
 function orcidUrl(value: string): string {
   return value.startsWith('http') ? value : `https://orcid.org/${value}`;
 }
 
-export async function ResearcherCard({ researcher, locale }: Props) {
+export async function ResearcherCard({ researcher, locale, isSaved = false }: Props) {
   const t = await getTranslations('card');
   const tProfile = await getTranslations('profile');
   const r = researcher;
@@ -48,7 +50,8 @@ export async function ResearcherCard({ researcher, locale }: Props) {
             {[r.city, r.country].filter(Boolean).join(', ')}
           </p>
         </div>
-        <div className="shrink-0 text-right text-xs text-[var(--muted)]">
+        <div className="relative z-10 flex shrink-0 flex-col items-end gap-2 text-right text-xs text-[var(--muted)]">
+          <SaveContactButton researcherId={r.id} initialSaved={isSaved} size="md" />
           {r.phd_year && <div>{t('phdAt', { year: r.phd_year })}</div>}
           {!r.phd_year && r.master_year && (
             <div>{t('masterAt', { year: r.master_year })}</div>

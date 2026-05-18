@@ -6,6 +6,7 @@ import type { ResearcherWithInstitution } from '@/lib/supabase/types';
 import { SORTABLE_COLUMNS, type SortColumn, type SortDir } from '@/lib/queries';
 import { buildHref } from '@/lib/url';
 import { MailIcon } from './brand-icons';
+import { SaveContactButton } from './save-contact-button';
 
 interface Props {
   researchers: ResearcherWithInstitution[];
@@ -13,6 +14,7 @@ interface Props {
   sortBy: SortColumn;
   sortDir: SortDir;
   searchParams: Record<string, string | string[] | undefined>;
+  savedContactIds?: Set<string>;
 }
 
 function orcidUrl(value: string): string {
@@ -25,6 +27,7 @@ export async function ResearcherTable({
   sortBy,
   sortDir,
   searchParams,
+  savedContactIds,
 }: Props) {
   const tCol = await getTranslations('table');
   const tProfile = await getTranslations('profile');
@@ -97,6 +100,9 @@ export async function ResearcherTable({
             <HeaderCell col={null}>{tCol('topics')}</HeaderCell>
             <HeaderCell col={null} align="right">
               {tCol('contact')}
+            </HeaderCell>
+            <HeaderCell col={null} align="right">
+              <span className="sr-only">Guardar</span>
             </HeaderCell>
           </tr>
         </thead>
@@ -237,6 +243,13 @@ export async function ResearcherTable({
                       </a>
                     )}
                   </div>
+                </td>
+                <td className="px-3 py-2 align-top text-right">
+                  <SaveContactButton
+                    researcherId={r.id}
+                    initialSaved={savedContactIds?.has(r.id) ?? false}
+                    size="sm"
+                  />
                 </td>
               </tr>
             );
