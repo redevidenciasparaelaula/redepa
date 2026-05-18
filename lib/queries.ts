@@ -1302,6 +1302,17 @@ export async function distinctSavedTags(userId: string): Promise<string[]> {
   return [...set].sort((a, b) => a.localeCompare(b));
 }
 
+// Devuelve la clave canónica de un tema: sin tildes + cada palabra
+// singularizada. Dos temas con distinta forma pero igual clave se consideran
+// el mismo (ej. "política educativa" / "politicas educativas" → "politica educativa").
+function topicCanonicalKey(topic: string): string {
+  return stripAccents(topic)
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(singularize)
+    .join(' ');
+}
+
 export async function distinctTopics(): Promise<string[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
@@ -1309,11 +1320,45 @@ export async function distinctTopics(): Promise<string[]> {
     .select('research_topics')
     .eq('status', 'approved');
   if (error) return [];
-  const set = new Set<string>();
+
+  // Cuenta cada variante exacta tal como está guardada
+  const counts = new Map<string, number>();
   for (const r of data ?? []) {
     for (const t of r.research_topics ?? []) {
-      if (t) set.add(t);
+      if (!t) continue;
+      counts.set(t, (counts.get(t) ?? 0) + 1);
     }
   }
+
+  // Agrupa por clave canónica
+  const clusters = new Map<string, { variant: string; count: number }[]>();
+  for (const [variant, count] of counts) {
+    const key = topicCanonicalKey(variant);
+    if (!key) continue;
+    if (!clusters.has(key)) clusters.set(key, []);
+    clusters.get(key)!.push({ variant, count });
+  }
+
+  // Por cada cluster, elige UNA variante representativa para mostrar al usuario:
+  //   1. la más usada en el directorio
+  //   2. en empate, la que tiene tildes (más natural)
+  //   3. en empate, la más corta (suele ser la singular o sin "de/los")
+  //   4. en empate final, orden alfabético (determinístico)
+  const representatives: string[] = [];
+  for (const variants of clusters.values()) {
+    variants.sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count;
+      const aHasAccent = a.variant !== stripAccents(a.variant);
+      const bHasAccent = b.variant !== stripAccents(b.variant);
+      if (aHasAccent !== bHasAccent) return aHasAccent ? -1 : 1;
+      if (a.variant.length !== b.variant.length)
+        return a.variant.length - b.variant.length;
+      return a.variant.localeCompare(b.variant);
+    });
+    representatives.push(variants[0].variant);
+  }
+
+  // Set para compatibilidad con el sort final
+  const set = new Set<string>(representatives);
   return [...set].sort((a, b) => a.localeCompare(b));
 }
