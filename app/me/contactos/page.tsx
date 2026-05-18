@@ -229,6 +229,38 @@ export default async function MyContactsPage({ searchParams }: Props) {
                           {' · Guardado '}
                           {formatDate(c.saved_at)}
                         </p>
+                        {(r.phd_year || r.master_year) && (
+                          <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[var(--muted)]">
+                            {r.phd_year && (
+                              <span>
+                                <span className="text-[var(--muted)]">Doctorado:</span>{' '}
+                                <span className="text-[var(--foreground)]">
+                                  {r.phd_year}
+                                </span>
+                                {r.phd_institution && (
+                                  <span className="text-[var(--muted)]">
+                                    {' · '}
+                                    {r.phd_institution}
+                                  </span>
+                                )}
+                              </span>
+                            )}
+                            {r.master_year && (
+                              <span>
+                                <span className="text-[var(--muted)]">Magíster:</span>{' '}
+                                <span className="text-[var(--foreground)]">
+                                  {r.master_year}
+                                </span>
+                                {r.master_institution && (
+                                  <span className="text-[var(--muted)]">
+                                    {' · '}
+                                    {r.master_institution}
+                                  </span>
+                                )}
+                              </span>
+                            )}
+                          </p>
+                        )}
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
                         <SaveContactButton
