@@ -1085,24 +1085,57 @@ export interface SavedContactWithResearcher {
   researcher: ResearcherWithInstitution;
 }
 
+export type SavedContactsSort =
+  | 'recent'      // guardados más recientes primero (default)
+  | 'oldest'      // guardados más antiguos primero
+  | 'name-asc'    // nombre A→Z
+  | 'name-desc'   // nombre Z→A
+  | 'phd-recent'  // doctorado más reciente
+  | 'phd-oldest'; // doctorado más antiguo
+
+export interface SavedContactsFilters {
+  q?: string;
+  tags?: string[];         // multi: la fila debe tener TODOS los tags listados
+  countries?: string[];
+  city?: string;
+  institutionId?: string;
+  topics?: string[];
+  methodologies?: string[];
+  phdYearFrom?: number;
+  phdYearTo?: number;
+  masterYearFrom?: number;
+  masterYearTo?: number;
+  withNote?: 'yes' | 'no'; // filtro por tener/no tener nota privada
+  sort?: SavedContactsSort;
+}
+
 export async function listSavedContacts(
   userId: string,
-  opts: { tag?: string; q?: string } = {}
+  filters: SavedContactsFilters = {}
 ): Promise<SavedContactWithResearcher[]> {
   const supabase = await createSupabaseServerClient();
+
+  // Traemos TODOS los guardados del usuario y filtramos en JS. El set
+  // por usuario es pequeño (típicamente <500), así que es más simple y
+  // permite búsqueda full-text local (nombre + institución + tags + nota).
   let query = supabase
     .from('saved_contacts')
     .select(
       `researcher_id, tags, note, created_at,
        researcher:researchers!inner(${RESEARCHER_COLUMNS})`
     )
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+    .eq('user_id', userId);
 
-  if (opts.tag) {
-    // contains: la fila debe tener AL MENOS ese tag
-    query = query.contains('tags', [opts.tag.toLowerCase()]);
+  // Pre-filtros que SÍ se pueden hacer en SQL (más rápido si hay muchos):
+  if (filters.tags && filters.tags.length > 0) {
+    // contains: la fila debe contener TODOS los tags listados
+    query = query.contains(
+      'tags',
+      filters.tags.map((t) => t.toLowerCase())
+    );
   }
+  if (filters.withNote === 'yes') query = query.not('note', 'is', null);
+  if (filters.withNote === 'no') query = query.is('note', null);
 
   const { data, error } = await query;
   if (error) {
@@ -1118,14 +1151,103 @@ export async function listSavedContacts(
     researcher: r.researcher as unknown as ResearcherWithInstitution,
   }));
 
-  // Filtro por nombre del researcher en JS porque Supabase no permite
-  // ilike sobre la tabla embebida directamente.
-  if (opts.q && opts.q.trim()) {
-    const q = opts.q.trim().toLowerCase();
+  // Filtros aplicados en JS sobre la tabla embebida
+  if (filters.q && filters.q.trim()) {
+    const q = stripAccents(filters.q.trim().toLowerCase());
+    rows = rows.filter((r) => {
+      const haystacks = [
+        r.researcher.full_name,
+        r.researcher.institutions?.name ?? '',
+        r.researcher.city ?? '',
+        r.researcher.country ?? '',
+        r.note ?? '',
+        r.tags.join(' '),
+        (r.researcher.research_topics ?? []).join(' '),
+      ];
+      return haystacks.some((h) => stripAccents(h.toLowerCase()).includes(q));
+    });
+  }
+
+  if (filters.countries && filters.countries.length > 0) {
+    const set = new Set(filters.countries);
+    rows = rows.filter((r) => r.researcher.country && set.has(r.researcher.country));
+  }
+
+  if (filters.city) {
+    const q = stripAccents(filters.city.toLowerCase());
     rows = rows.filter((r) =>
-      r.researcher.full_name.toLowerCase().includes(q)
+      r.researcher.city
+        ? stripAccents(r.researcher.city.toLowerCase()).includes(q)
+        : false
     );
   }
+
+  if (filters.institutionId) {
+    rows = rows.filter((r) => r.researcher.institution_id === filters.institutionId);
+  }
+
+  if (filters.topics && filters.topics.length > 0) {
+    const wants = filters.topics.map((t) => stripAccents(t.toLowerCase()));
+    rows = rows.filter((r) => {
+      const has = (r.researcher.research_topics ?? []).map((t) =>
+        stripAccents((t ?? '').toLowerCase())
+      );
+      // OR: matchea si al menos uno coincide (como en el directorio)
+      return wants.some((w) => has.some((h) => h.includes(w)));
+    });
+  }
+
+  if (filters.methodologies && filters.methodologies.length > 0) {
+    const set = new Set(filters.methodologies);
+    rows = rows.filter((r) =>
+      (r.researcher.methodologies ?? []).some((m) => set.has(m))
+    );
+  }
+
+  if (filters.phdYearFrom != null) {
+    rows = rows.filter(
+      (r) => (r.researcher.phd_year ?? -1) >= filters.phdYearFrom!
+    );
+  }
+  if (filters.phdYearTo != null) {
+    rows = rows.filter(
+      (r) => (r.researcher.phd_year ?? Infinity) <= filters.phdYearTo!
+    );
+  }
+  if (filters.masterYearFrom != null) {
+    rows = rows.filter(
+      (r) => (r.researcher.master_year ?? -1) >= filters.masterYearFrom!
+    );
+  }
+  if (filters.masterYearTo != null) {
+    rows = rows.filter(
+      (r) => (r.researcher.master_year ?? Infinity) <= filters.masterYearTo!
+    );
+  }
+
+  // Sort final
+  const sort: SavedContactsSort = filters.sort ?? 'recent';
+  rows.sort((a, b) => {
+    switch (sort) {
+      case 'recent':
+        return b.saved_at.localeCompare(a.saved_at);
+      case 'oldest':
+        return a.saved_at.localeCompare(b.saved_at);
+      case 'name-asc':
+        return a.researcher.full_name.localeCompare(b.researcher.full_name);
+      case 'name-desc':
+        return b.researcher.full_name.localeCompare(a.researcher.full_name);
+      case 'phd-recent':
+        return (b.researcher.phd_year ?? -1) - (a.researcher.phd_year ?? -1);
+      case 'phd-oldest':
+        return (
+          (a.researcher.phd_year ?? Infinity) -
+          (b.researcher.phd_year ?? Infinity)
+        );
+      default:
+        return 0;
+    }
+  });
 
   return rows;
 }
