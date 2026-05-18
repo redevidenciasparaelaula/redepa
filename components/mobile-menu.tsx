@@ -8,6 +8,7 @@ interface NavItem {
   href: string;
   label: string;
   muted?: boolean;
+  exact?: boolean;
 }
 
 interface Props {
@@ -33,9 +34,9 @@ export function MobileMenu({
     setOpen(false);
   }, [pathname]);
 
-  function isActive(href: string): boolean {
-    if (href === '/') return pathname === '/';
-    return pathname === href || pathname.startsWith(href + '/');
+  function isActive(item: NavItem): boolean {
+    if (item.href === '/' || item.exact) return pathname === item.href;
+    return pathname === item.href || pathname.startsWith(item.href + '/');
   }
 
   const itemBase =
@@ -45,7 +46,7 @@ export function MobileMenu({
   const itemMuted = `${itemBase} text-[var(--muted)] hover:bg-[var(--accent)]`;
 
   function classFor(item: NavItem): string {
-    if (isActive(item.href)) return itemActive;
+    if (isActive(item)) return itemActive;
     if (item.muted) return itemMuted;
     return itemDefault;
   }

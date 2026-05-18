@@ -31,7 +31,9 @@ export async function Header() {
 
   const authItems = user
     ? [
-        { href: '/me', label: t('nav.myProfile') },
+        // exact: /me también es prefijo de /me/contactos y /me/revisiones,
+        // pero no queremos que esté "activo" en esas otras páginas.
+        { href: '/me', label: t('nav.myProfile'), exact: true },
         { href: '/me/contactos', label: t('nav.myContacts') },
         ...(showAdmin ? [{ href: '/admin', label: t('nav.admin') }] : []),
       ]
@@ -75,6 +77,7 @@ export async function Header() {
                 <NavLink
                   key={item.href}
                   href={item.href}
+                  exact={'exact' in item ? item.exact : false}
                   className={linkClass}
                 >
                   {item.label}
