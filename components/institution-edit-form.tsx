@@ -16,6 +16,10 @@ export function InstitutionEditForm({ institution, countries }: Props) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [propagated, setPropagated] = useState<{
+    phdUpdated: number;
+    masterUpdated: number;
+  } | null>(null);
 
   const [form, setForm] = useState({
     name: institution.name,
@@ -28,11 +32,13 @@ export function InstitutionEditForm({ institution, countries }: Props) {
   function update<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
     setForm((f) => ({ ...f, [k]: v }));
     setSaved(false);
+    setPropagated(null);
   }
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setPropagated(null);
     startTransition(async () => {
       const result = await updateInstitutionAction(institution.id, form);
       if (!result.ok) {
@@ -40,6 +46,10 @@ export function InstitutionEditForm({ institution, countries }: Props) {
         return;
       }
       setSaved(true);
+      setPropagated({
+        phdUpdated: result.phdUpdated,
+        masterUpdated: result.masterUpdated,
+      });
       router.refresh();
     });
   }
@@ -59,6 +69,30 @@ export function InstitutionEditForm({ institution, countries }: Props) {
       {saved && !error && (
         <div className="rounded-md border border-[var(--success-border)] bg-[var(--success-bg)] px-3 py-2 text-sm text-[var(--success-text)]">
           Cambios guardados.
+          {propagated &&
+            propagated.phdUpdated + propagated.masterUpdated > 0 && (
+              <p className="mt-1 text-xs">
+                También propagamos el nuevo nombre a{' '}
+                {propagated.phdUpdated > 0 && (
+                  <>
+                    <strong>{propagated.phdUpdated}</strong> perfil
+                    {propagated.phdUpdated === 1 ? '' : 'es'} en el campo
+                    "institución de doctorado"
+                  </>
+                )}
+                {propagated.phdUpdated > 0 &&
+                  propagated.masterUpdated > 0 &&
+                  ' y '}
+                {propagated.masterUpdated > 0 && (
+                  <>
+                    <strong>{propagated.masterUpdated}</strong> perfil
+                    {propagated.masterUpdated === 1 ? '' : 'es'} en
+                    "institución de magíster"
+                  </>
+                )}
+                .
+              </p>
+            )}
         </div>
       )}
 

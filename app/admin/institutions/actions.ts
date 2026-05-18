@@ -10,6 +10,13 @@ type SimpleResult =
   | { ok: true }
   | { ok: false; error: string };
 
+// Resultado especial para updateInstitutionAction: incluye contadores
+// de cuántos perfiles tenían el nombre antiguo como texto libre en
+// phd_institution / master_institution y se les propagó el rename.
+export type UpdateInstitutionResult =
+  | { ok: true; phdUpdated: number; masterUpdated: number }
+  | { ok: false; error: string };
+
 type AddResult =
   | { ok: true; invited: boolean }
   | { ok: false; error: string };
@@ -107,7 +114,7 @@ export async function updateInstitutionAction(
     city?: string | null;
     website?: string | null;
   }
-): Promise<SimpleResult> {
+): Promise<UpdateInstitutionResult> {
   const user = await getCurrentUser();
   if (!user || !user.isSuperAdmin) {
     return { ok: false, error: 'Solo super admin puede editar instituciones.' };
@@ -119,11 +126,24 @@ export async function updateInstitutionAction(
     return { ok: false, error: 'El país es obligatorio.' };
   }
 
+  const newName = patch.name.trim();
+
   const supabase = await createSupabaseServerClient();
+
+  // Leer el nombre actual ANTES de actualizar, para poder propagar el
+  // cambio a researchers.phd_institution / master_institution (que son
+  // texto libre, no FK a institutions).
+  const { data: current } = await supabase
+    .from('institutions')
+    .select('name')
+    .eq('id', id)
+    .maybeSingle();
+  const oldName = current?.name?.trim() ?? null;
+
   const { error } = await supabase
     .from('institutions')
     .update({
-      name: patch.name.trim(),
+      name: newName,
       name_en: patch.name_en?.trim() || null,
       country: patch.country.trim(),
       city: patch.city?.trim() || null,
@@ -135,9 +155,46 @@ export async function updateInstitutionAction(
     console.error('updateInstitution error', error);
     return { ok: false, error: error.message };
   }
+
+  // Si el nombre cambió, propagar el rename a los campos de texto libre
+  // de doctorado/magíster. Match case-insensitive sobre trim para que
+  // capture variantes simples (ej. "Universidad De Chile" vs "Universidad
+  // de Chile"). Si alguien tipeó "U. de Chile" con otra forma queda fuera
+  // y se trata como otra institución distinta, lo que es semánticamente
+  // correcto (no son lo mismo necesariamente).
+  let phdUpdated = 0;
+  let masterUpdated = 0;
+  if (oldName && oldName.toLowerCase() !== newName.toLowerCase()) {
+    const { data: phdRows, error: phdErr } = await supabase
+      .from('researchers')
+      .update({ phd_institution: newName })
+      .ilike('phd_institution', oldName)
+      .select('id');
+    if (phdErr) {
+      console.error('propagate phd_institution failed', phdErr);
+    } else {
+      phdUpdated = phdRows?.length ?? 0;
+    }
+
+    const { data: masterRows, error: masterErr } = await supabase
+      .from('researchers')
+      .update({ master_institution: newName })
+      .ilike('master_institution', oldName)
+      .select('id');
+    if (masterErr) {
+      console.error('propagate master_institution failed', masterErr);
+    } else {
+      masterUpdated = masterRows?.length ?? 0;
+    }
+  }
+
   revalidatePath('/admin');
   revalidatePath(`/admin/institutions/${id}`);
-  return { ok: true };
+  // Si tocamos researchers, invalidar también vistas que los listan
+  if (phdUpdated + masterUpdated > 0) {
+    revalidatePath('/directorio');
+  }
+  return { ok: true, phdUpdated, masterUpdated };
 }
 
 // ---------------------------------------------------------------------
