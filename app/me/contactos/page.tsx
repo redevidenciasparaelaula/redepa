@@ -9,7 +9,6 @@ import {
 } from '@/lib/queries';
 import { methodologyLabel } from '@/lib/methodologies';
 import { ContactsTagBar } from '@/components/contacts-tag-bar';
-import { ContactsSearchBar } from '@/components/contacts-search-bar';
 import { ContactsSortDropdown } from '@/components/contacts-sort-dropdown';
 import { CollapsibleFilters } from '@/components/collapsible-filters';
 import { SearchFilters } from '@/components/search-filters';
@@ -142,10 +141,15 @@ export default async function MyContactsPage({ searchParams }: Props) {
       </section>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
-        {/* Sidebar de filtros (reutiliza SearchFilters del directorio) */}
+        {/* Sidebar de filtros: reutiliza SearchFilters pero con basePath
+            apuntando a /me/contactos para que NO redirija al directorio
+            al aplicar / limpiar. Las facetas (países, instituciones, temas)
+            vienen solo del set guardado del usuario. */}
         <aside>
-          <CollapsibleFilters>
+          <CollapsibleFilters label="Buscar entre mis contactos">
             <SearchFilters
+              basePath="/me/contactos"
+              title="Buscar entre mis contactos"
               initial={{
                 q: filters.q,
                 countries: filters.countries,
@@ -166,10 +170,10 @@ export default async function MyContactsPage({ searchParams }: Props) {
         </aside>
 
         <section>
-          {/* Barra de control: búsqueda + tags + sort */}
+          {/* Barra de control: sort + tags (la búsqueda 'q' vive en el
+              sidebar de filtros) */}
           <div className="mb-4 space-y-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <ContactsSearchBar initialQ={filters.q ?? ''} />
+            <div className="flex flex-wrap items-center justify-end gap-2">
               <ContactsSortDropdown current={sort} />
             </div>
             {allTags.length > 0 && (

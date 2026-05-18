@@ -23,6 +23,12 @@ interface Props {
     masterYearFrom?: number;
     masterYearTo?: number;
   };
+  // Ruta destino al aplicar / limpiar. Default '/directorio' para el caso
+  // estándar. /me/contactos pasa '/me/contactos' para no salirse de su vista.
+  basePath?: string;
+  // Título opcional que se muestra arriba del formulario (en cualquier
+  // viewport). El directorio no lo usa; /me/contactos sí.
+  title?: string;
 }
 
 function toggle(arr: string[], value: string): string[] {
@@ -42,6 +48,8 @@ export function SearchFilters({
   countries,
   topicSuggestions,
   initial,
+  basePath = '/directorio',
+  title,
 }: Props) {
   const t = useTranslations('search');
   const locale = useLocale() as Locale;
@@ -110,7 +118,7 @@ export function SearchFilters({
     if (masterYearFrom) params.set('masterYearFrom', masterYearFrom);
     if (masterYearTo) params.set('masterYearTo', masterYearTo);
     const qs = params.toString();
-    router.push(qs ? `/directorio?${qs}` : '/directorio');
+    router.push(qs ? `${basePath}?${qs}` : basePath);
   }
 
   function clear() {
@@ -125,7 +133,7 @@ export function SearchFilters({
     setPhdYearTo('');
     setMasterYearFrom('');
     setMasterYearTo('');
-    router.push('/');
+    router.push(basePath);
   }
 
   void sp;
@@ -138,6 +146,11 @@ export function SearchFilters({
       onSubmit={apply}
       className="space-y-4 rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 text-sm"
     >
+      {title && (
+        <h2 className="-mb-1 text-base font-semibold text-[var(--foreground)]">
+          {title}
+        </h2>
+      )}
       <div>
         <label className="mb-1 block font-medium">{t('queryPlaceholder')}</label>
         <input
