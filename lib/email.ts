@@ -58,22 +58,10 @@ export async function sendEmail(opts: SendEmailOptions): Promise<EmailResult> {
     return { ok: false, error: 'Sin destinatarios.' };
   }
 
-  // Modo test: si BREVO_TEST_ONLY_EMAIL está seteada, TODOS los emails se
-  // redirigen a esa dirección, sin importar quién era el destinatario real.
-  // Útil para verificar el flujo en producción sin tocar usuarios reales.
-  // El subject lleva el detalle de a quién hubiera ido en modo real.
-  const testOnlyEmail = process.env.BREVO_TEST_ONLY_EMAIL?.trim();
-  const finalRecipients = testOnlyEmail
-    ? [{ email: testOnlyEmail }]
-    : recipients;
-  const finalSubject = testOnlyEmail
-    ? `[TEST → ${recipients.map((r) => r.email).join(', ')}] ${opts.subject}`
-    : opts.subject;
-
   const body = {
     sender: getSender(),
-    to: finalRecipients,
-    subject: finalSubject,
+    to: recipients,
+    subject: opts.subject,
     htmlContent: opts.html,
     textContent: opts.text ?? stripHtml(opts.html),
     replyTo: opts.replyTo,
@@ -113,27 +101,6 @@ export async function sendBulkEmail(
   if (!apiKey) {
     console.warn('[email] BREVO_API_KEY no configurada; skip bulk envío.');
     return { sent: 0, failed: recipients.length };
-  }
-
-  // Modo test: enviar UN solo email representativo (con el primer destinatario
-  // como muestra). El subject indica cuántos destinatarios reales había.
-  // sendEmail() además redirige todo a BREVO_TEST_ONLY_EMAIL, así que nadie
-  // del listado real recibe nada.
-  const testOnlyEmail = process.env.BREVO_TEST_ONLY_EMAIL?.trim();
-  if (testOnlyEmail && recipients.length > 0) {
-    const sample = recipients[0];
-    const opts = build(sample);
-    const res = await sendEmail({
-      ...opts,
-      to: sample,
-      subject: `[TEST · bulk a ${recipients.length} destinatarios] ${opts.subject}`,
-    });
-    console.info(
-      `[email] TEST MODE: 1 email enviado a ${testOnlyEmail} en vez de ${recipients.length} reales`
-    );
-    return res.ok
-      ? { sent: 1, failed: 0 }
-      : { sent: 0, failed: 1 };
   }
 
   const results = await Promise.allSettled(
