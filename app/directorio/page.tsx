@@ -122,9 +122,12 @@ export default async function DirectoryPage({ searchParams }: PageProps) {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
-        <aside>
-          <CollapsibleFilters>
+      {view === 'table' ? (
+        // Vista tabla: SIN sidebar — la tabla necesita ancho completo
+        // para que no quede empujada a la derecha. Filtros como collapsible
+        // arriba (siempre colapsado por default).
+        <div className="space-y-4">
+          <CollapsibleFilters alwaysCollapsible>
             <SearchFilters
               initial={filters}
               institutions={institutions}
@@ -132,41 +135,67 @@ export default async function DirectoryPage({ searchParams }: PageProps) {
               topicSuggestions={topicSuggestions}
             />
           </CollapsibleFilters>
-        </aside>
 
-        <section>
-          {rows.length === 0 ? (
-            <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-8 text-center text-sm text-[var(--muted)]">
-              {t('noResults')}
-            </div>
-          ) : view === 'table' ? (
-            <ResearcherTable
-              researchers={rows}
-              locale={locale}
-              sortBy={sortBy}
-              sortDir={sortDir}
-              searchParams={sp}
-              savedContactIds={savedContactIds}
-            />
-          ) : (
-            <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              {rows.map((r) => (
-                <li key={r.id}>
-                  <ResearcherCard
-                    researcher={r}
-                    locale={locale}
-                    isSaved={savedContactIds.has(r.id)}
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
+          <section>
+            {rows.length === 0 ? (
+              <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-8 text-center text-sm text-[var(--muted)]">
+                {t('noResults')}
+              </div>
+            ) : (
+              <ResearcherTable
+                researchers={rows}
+                locale={locale}
+                sortBy={sortBy}
+                sortDir={sortDir}
+                searchParams={sp}
+                savedContactIds={savedContactIds}
+              />
+            )}
 
-          {totalPages > 1 && (
-            <Pagination page={page} totalPages={totalPages} searchParams={sp} />
-          )}
-        </section>
-      </div>
+            {totalPages > 1 && (
+              <Pagination page={page} totalPages={totalPages} searchParams={sp} />
+            )}
+          </section>
+        </div>
+      ) : (
+        // Vista cards: sidebar de filtros a la izquierda (desktop)
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
+          <aside>
+            <CollapsibleFilters>
+              <SearchFilters
+                initial={filters}
+                institutions={institutions}
+                countries={countries}
+                topicSuggestions={topicSuggestions}
+              />
+            </CollapsibleFilters>
+          </aside>
+
+          <section>
+            {rows.length === 0 ? (
+              <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-8 text-center text-sm text-[var(--muted)]">
+                {t('noResults')}
+              </div>
+            ) : (
+              <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {rows.map((r) => (
+                  <li key={r.id}>
+                    <ResearcherCard
+                      researcher={r}
+                      locale={locale}
+                      isSaved={savedContactIds.has(r.id)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {totalPages > 1 && (
+              <Pagination page={page} totalPages={totalPages} searchParams={sp} />
+            )}
+          </section>
+        </div>
+      )}
     </div>
   );
 }

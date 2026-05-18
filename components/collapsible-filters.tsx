@@ -5,11 +5,27 @@ import { useState } from 'react';
 export function CollapsibleFilters({
   children,
   label = 'Filtros',
+  // Si true, el panel está siempre colapsable (en todos los viewports).
+  // Útil para vistas que no tienen sidebar fijo, ej. la tabla del directorio.
+  alwaysCollapsible = false,
 }: {
   children: React.ReactNode;
   label?: string;
+  alwaysCollapsible?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+
+  const buttonClass = alwaysCollapsible
+    ? 'mb-3 flex w-full items-center justify-between rounded-md border border-[var(--border)] bg-white px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--accent)]'
+    : 'mb-3 flex w-full items-center justify-between rounded-md border border-[var(--border)] bg-white px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--accent)] lg:hidden';
+
+  const panelClass = alwaysCollapsible
+    ? open
+      ? 'block'
+      : 'hidden'
+    : open
+      ? 'block'
+      : 'hidden lg:block';
 
   return (
     <>
@@ -17,7 +33,7 @@ export function CollapsibleFilters({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="mb-3 flex w-full items-center justify-between rounded-md border border-[var(--border)] bg-white px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--accent)] lg:hidden"
+        className={buttonClass}
       >
         <span className="inline-flex items-center gap-2">
           <svg
@@ -51,7 +67,7 @@ export function CollapsibleFilters({
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </button>
-      <div className={open ? 'block' : 'hidden lg:block'}>{children}</div>
+      <div className={panelClass}>{children}</div>
     </>
   );
 }
