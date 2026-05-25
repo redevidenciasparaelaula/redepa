@@ -132,7 +132,12 @@ export default async function AdminCongresoPage({ params }: Props) {
 
       {/* Datos básicos */}
       <Section title="Datos básicos">
-        <CongressBasicsForm id={c.id} name={c.name} theme={c.theme} />
+        <CongressBasicsForm
+          id={c.id}
+          name={c.name}
+          theme={c.theme}
+          location={c.location}
+        />
       </Section>
 
       {/* Fechas */}

@@ -77,6 +77,7 @@ export type Congress = {
   name: string;
   slug: string;
   theme: string | null;
+  location: string | null;
   start_date: string;
   end_date: string;
   cfp_open_at: string | null;

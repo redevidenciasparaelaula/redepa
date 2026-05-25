@@ -56,6 +56,12 @@ export default async function CongressEpa2027Page() {
           </h1>
           <p className="mt-6 text-base leading-relaxed text-[var(--muted)] sm:text-lg">
             {formatDateRange(c.start_date, c.end_date)}
+            {c.location && (
+              <>
+                <span className="mx-2">·</span>
+                {c.location}
+              </>
+            )}
           </p>
 
           {countdown && (

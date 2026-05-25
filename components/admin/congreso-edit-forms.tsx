@@ -109,16 +109,18 @@ export function CongressStatusControls({
 }
 
 // =====================================================================
-// CongressBasicsForm: nombre + tema
+// CongressBasicsForm: nombre + tema + ubicación
 // =====================================================================
 export function CongressBasicsForm({
   id,
   name,
   theme,
+  location,
 }: {
   id: string;
   name: string;
   theme: string | null;
+  location: string | null;
 }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -156,6 +158,15 @@ export function CongressBasicsForm({
           name="theme"
           defaultValue={theme ?? ''}
           rows={3}
+          className={inputCls}
+        />
+      </Field>
+      <Field label="Ubicación (opcional)">
+        <input
+          name="location"
+          type="text"
+          defaultValue={location ?? ''}
+          placeholder="ej. Pontificia Universidad Católica, Santiago, Chile"
           className={inputCls}
         />
       </Field>

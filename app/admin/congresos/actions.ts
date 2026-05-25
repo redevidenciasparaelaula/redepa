@@ -71,13 +71,14 @@ export async function updateCongressBasicsAction(
 
   const name = trimOrNull(formData.get('name'));
   const theme = trimOrNull(formData.get('theme'));
+  const location = trimOrNull(formData.get('location'));
 
   if (!name) return { ok: false, error: 'El nombre es obligatorio.' };
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase
     .from('congresses')
-    .update({ name, theme })
+    .update({ name, theme, location })
     .eq('id', id);
 
   if (error) return { ok: false, error: error.message };

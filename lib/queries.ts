@@ -317,6 +317,7 @@ export interface CongressWithTracks {
   name: string;
   slug: string;
   theme: string | null;
+  location: string | null;
   start_date: string;
   end_date: string;
   cfp_open_at: string | null;
@@ -340,7 +341,7 @@ export async function getCongressBySlug(
   const { data, error } = await supabase
     .from('congresses')
     .select(
-      'id, year, name, slug, theme, start_date, end_date, cfp_open_at, cfp_close_at, notification_at, registration_open_at, status, congress_tracks(id, name, description, display_order)'
+      'id, year, name, slug, theme, location, start_date, end_date, cfp_open_at, cfp_close_at, notification_at, registration_open_at, status, congress_tracks(id, name, description, display_order)'
     )
     .eq('slug', slug)
     .maybeSingle();
@@ -363,6 +364,7 @@ export async function getCongressBySlug(
     name: data.name,
     slug: data.slug,
     theme: data.theme,
+    location: data.location ?? null,
     start_date: data.start_date,
     end_date: data.end_date,
     cfp_open_at: data.cfp_open_at,
