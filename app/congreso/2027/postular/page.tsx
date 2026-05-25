@@ -45,6 +45,8 @@ export default async function PostularPage() {
   const deadlinePassed =
     !!c.cfp_close_at && new Date(c.cfp_close_at) < new Date();
   const canCreate = cfpOpen && !deadlinePassed;
+  // Super-admin puede crear postulaciones de prueba aunque el CFP esté cerrado
+  const isAdminTestMode = user.isSuperAdmin && !canCreate;
 
   const submissions = await listMySubmissionsForCongress(c.id, user.id);
 
@@ -93,14 +95,34 @@ export default async function PostularPage() {
         </div>
       )}
 
+      {isAdminTestMode && (
+        <div className="mb-6 rounded-lg border border-[var(--epa-blue)] bg-[var(--card)] p-4 text-sm">
+          <p className="font-semibold text-[var(--epa-blue)]">
+            🔧 Modo prueba (super-admin)
+          </p>
+          <p className="mt-1 text-[var(--muted)]">
+            Como super-admin puedes crear postulaciones aunque el CFP no esté
+            abierto. Sirve para ver cómo se verá el formulario. Recuerda
+            eliminar los borradores de prueba cuando termines.
+          </p>
+        </div>
+      )}
+
       <section className="mb-6">
-        {canCreate && (
+        {(canCreate || isAdminTestMode) && (
           <form action={createDraftSubmissionAction}>
             <button
               type="submit"
-              className="rounded-md bg-[var(--epa-green)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[var(--epa-green-dark)]"
+              className={
+                'rounded-md px-5 py-2.5 text-sm font-semibold text-white shadow-sm ' +
+                (isAdminTestMode
+                  ? 'bg-[var(--epa-blue)] hover:opacity-90'
+                  : 'bg-[var(--epa-green)] hover:bg-[var(--epa-green-dark)]')
+              }
             >
-              + Nueva postulación
+              {isAdminTestMode
+                ? '+ Nueva postulación de prueba'
+                : '+ Nueva postulación'}
             </button>
           </form>
         )}

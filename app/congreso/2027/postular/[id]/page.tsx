@@ -49,11 +49,15 @@ export default async function SubmissionEditPage({ params }: Props) {
   const deadlinePassed =
     !!c.cfp_close_at && new Date(c.cfp_close_at) < new Date();
   const cfpOpen = c.status === 'cfp_open';
-  // Solo se puede editar si: CFP abierto + deadline no pasado + status en draft/withdrawn/submitted
-  const readOnly =
-    !cfpOpen ||
-    deadlinePassed ||
-    ['accepted', 'rejected', 'under_review'].includes(submission.status);
+  // Solo se puede editar si: CFP abierto + deadline no pasado + status en draft/withdrawn/submitted.
+  // Super-admin: puede editar siempre, salvo cuando ya hay decisión.
+  const decisionStates = ['accepted', 'rejected'];
+  const isAdminTestMode = user.isSuperAdmin && (!cfpOpen || deadlinePassed);
+  const readOnly = user.isSuperAdmin
+    ? decisionStates.includes(submission.status)
+    : !cfpOpen ||
+      deadlinePassed ||
+      ['accepted', 'rejected', 'under_review'].includes(submission.status);
 
   // Si el comité ya emitió decisión, traemos las reviews anonimizadas para
   // mostrárselas al autor.
@@ -72,6 +76,19 @@ export default async function SubmissionEditPage({ params }: Props) {
           ← Mis postulaciones
         </Link>
       </div>
+
+      {/* Banner modo prueba super-admin */}
+      {isAdminTestMode && (
+        <div className="mb-6 rounded-lg border border-[var(--epa-blue)] bg-[var(--card)] p-4 text-sm">
+          <p className="font-semibold text-[var(--epa-blue)]">
+            🔧 Modo prueba (super-admin)
+          </p>
+          <p className="mt-1 text-[var(--muted)]">
+            Estás editando como super-admin con el CFP cerrado. Esta
+            postulación es de prueba: elimínala cuando termines.
+          </p>
+        </div>
+      )}
 
       {/* Decisión del comité + reviews anonimizadas (al autor) */}
       {decisionEmitted && (
