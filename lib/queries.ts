@@ -331,6 +331,11 @@ export interface CongressWithTracks {
     | 'program'
     | 'live'
     | 'closed';
+  // Config del formulario de postulación
+  submission_intro: string | null;
+  submission_max_chars: number | null;
+  submission_types_allowed: ('oral' | 'poster' | 'symposium')[];
+  abstract_field_labels: Record<string, string> | null;
   tracks: CongressTrack[];
 }
 
@@ -341,7 +346,7 @@ export async function getCongressBySlug(
   const { data, error } = await supabase
     .from('congresses')
     .select(
-      'id, year, name, slug, theme, location, start_date, end_date, cfp_open_at, cfp_close_at, notification_at, registration_open_at, status, congress_tracks(id, name, description, display_order)'
+      'id, year, name, slug, theme, location, start_date, end_date, cfp_open_at, cfp_close_at, notification_at, registration_open_at, status, submission_intro, submission_max_chars, submission_types_allowed, abstract_field_labels, congress_tracks(id, name, description, display_order)'
     )
     .eq('slug', slug)
     .maybeSingle();
@@ -372,6 +377,15 @@ export async function getCongressBySlug(
     notification_at: data.notification_at,
     registration_open_at: data.registration_open_at,
     status: data.status as CongressWithTracks['status'],
+    submission_intro: data.submission_intro ?? null,
+    submission_max_chars: data.submission_max_chars ?? null,
+    submission_types_allowed: (data.submission_types_allowed ?? [
+      'oral',
+      'poster',
+      'symposium',
+    ]) as ('oral' | 'poster' | 'symposium')[],
+    abstract_field_labels:
+      (data.abstract_field_labels as Record<string, string> | null) ?? null,
     tracks,
   };
 }

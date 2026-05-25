@@ -85,6 +85,11 @@ export type Congress = {
   notification_at: string | null;
   registration_open_at: string | null;
   status: CongressStatus;
+  // Configuración del formulario de postulación (editable por chair)
+  submission_intro: string | null;
+  submission_max_chars: number | null;
+  submission_types_allowed: ('oral' | 'poster' | 'symposium')[];
+  abstract_field_labels: Record<string, string> | null;
   created_at: string;
   updated_at: string;
 };

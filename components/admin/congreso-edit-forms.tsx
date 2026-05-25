@@ -9,8 +9,13 @@ import {
   createTrackAction,
   updateTrackAction,
   deleteTrackAction,
+  updateCongressSubmissionFormAction,
 } from '@/app/admin/congresos/actions';
 import type { CongressTrack, CongressWithTracks } from '@/lib/queries';
+import {
+  DEFAULT_ABSTRACT_FIELDS,
+  DEFAULT_SUBMISSION_MAX_CHARS,
+} from '@/lib/abstract-fields';
 
 type Status = CongressWithTracks['status'];
 
@@ -474,6 +479,132 @@ export function AddTrackForm({ congressId }: { congressId: string }) {
 }
 
 // =====================================================================
+// CongressSubmissionFormSettings: configura el formulario de postulación
+// (texto intro, max chars, tipos permitidos, etiquetas custom)
+// =====================================================================
+export function CongressSubmissionFormSettings({
+  id,
+  submissionIntro,
+  submissionMaxChars,
+  submissionTypesAllowed,
+  abstractFieldLabels,
+}: {
+  id: string;
+  submissionIntro: string | null;
+  submissionMaxChars: number | null;
+  submissionTypesAllowed: ('oral' | 'poster' | 'symposium')[];
+  abstractFieldLabels: Record<string, string> | null;
+}) {
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [okMsg, setOkMsg] = useState<string | null>(null);
+  const router = useRouter();
+
+  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    setError(null);
+    setOkMsg(null);
+    startTransition(async () => {
+      const res = await updateCongressSubmissionFormAction(id, formData);
+      if (!res.ok) setError(res.error);
+      else {
+        setOkMsg('Guardado.');
+        router.refresh();
+      }
+    });
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <Field
+        label="Texto introductorio del formulario"
+        hint="Aparece arriba del form en /congreso/.../postular. Útil para dar instrucciones específicas de esta edición."
+      >
+        <textarea
+          name="submission_intro"
+          defaultValue={submissionIntro ?? ''}
+          rows={4}
+          maxLength={2000}
+          placeholder="Ej. Para esta edición pedimos abstracts en español. Recuerda no incluir tu nombre ni el de tu institución dentro del texto."
+          className={inputCls}
+        />
+      </Field>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field
+          label="Límite por campo del abstract (caracteres)"
+          hint="Default: 500. Se aplica como recomendación visible al usuario."
+        >
+          <input
+            type="number"
+            name="submission_max_chars"
+            min={100}
+            max={2000}
+            defaultValue={submissionMaxChars ?? DEFAULT_SUBMISSION_MAX_CHARS}
+            className={inputCls}
+          />
+        </Field>
+        <Field
+          label="Tipos de presentación permitidos"
+          hint="Define qué opciones ve el postulante en el dropdown 'Tipo'."
+        >
+          <div className="mt-2 space-y-1">
+            {(['oral', 'poster', 'symposium'] as const).map((t) => (
+              <label
+                key={t}
+                className="flex cursor-pointer items-center gap-2 text-sm"
+              >
+                <input
+                  type="checkbox"
+                  name={`type_${t}`}
+                  defaultChecked={submissionTypesAllowed.includes(t)}
+                  className="h-4 w-4"
+                />
+                {t === 'oral'
+                  ? 'Oral'
+                  : t === 'poster'
+                    ? 'Póster'
+                    : 'Simposio'}
+              </label>
+            ))}
+          </div>
+        </Field>
+      </div>
+
+      <div>
+        <p className="text-sm font-medium text-[var(--foreground)]">
+          Etiquetas de los 5 campos del abstract
+        </p>
+        <p className="mt-1 text-xs text-[var(--muted)]">
+          Si dejas en blanco, se usa la etiqueta por defecto que aparece como
+          placeholder.
+        </p>
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {DEFAULT_ABSTRACT_FIELDS.map((f) => (
+            <label key={f.name} className="block">
+              <span className="text-xs font-medium text-[var(--foreground)]">
+                {f.name}
+              </span>
+              <input
+                type="text"
+                name={`label_${f.name}`}
+                defaultValue={abstractFieldLabels?.[f.name] ?? ''}
+                maxLength={100}
+                placeholder={f.label}
+                className={inputCls}
+              />
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <SubmitRow isPending={isPending} okMsg={okMsg} error={error} />
+    </form>
+  );
+}
+
+// =====================================================================
 // Helpers compartidos
 // =====================================================================
 const inputCls =
@@ -481,9 +612,11 @@ const inputCls =
 
 function Field({
   label,
+  hint,
   children,
 }: {
   label: string;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -491,6 +624,9 @@ function Field({
       <span className="text-sm font-medium text-[var(--foreground)]">
         {label}
       </span>
+      {hint && (
+        <span className="block text-xs text-[var(--muted)]">{hint}</span>
+      )}
       {children}
     </label>
   );

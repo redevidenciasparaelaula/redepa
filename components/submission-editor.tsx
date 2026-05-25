@@ -11,54 +11,50 @@ import {
 import type { CongressTrack, FullSubmission } from '@/lib/queries';
 import { methodologiesAlphabetical } from '@/lib/methodologies';
 import { SubmissionAuthorsEditor } from './submission-authors-editor';
+import {
+  DEFAULT_SUBMISSION_MAX_CHARS,
+  DEFAULT_SUBMISSION_TYPES_ALLOWED,
+  resolveAbstractFields,
+} from '@/lib/abstract-fields';
 
 interface Props {
   submission: FullSubmission;
   tracks: CongressTrack[];
   readOnly: boolean;
+  // Config del formulario (viene del congreso). Si null → defaults.
+  submissionIntro?: string | null;
+  submissionMaxChars?: number | null;
+  submissionTypesAllowed?: ('oral' | 'poster' | 'symposium')[] | null;
+  abstractFieldLabels?: Record<string, string> | null;
 }
 
-const TYPE_OPTIONS: { value: 'oral' | 'poster' | 'symposium'; label: string }[] = [
+const ALL_TYPE_OPTIONS: { value: 'oral' | 'poster' | 'symposium'; label: string }[] = [
   { value: 'oral', label: 'Oral' },
   { value: 'poster', label: 'Póster' },
   { value: 'symposium', label: 'Simposio' },
 ];
 
-const ABSTRACT_FIELDS: {
-  name: keyof FullSubmission;
-  label: string;
-  hint: string;
-}[] = [
-  {
-    name: 'abs_context',
-    label: 'Contexto y problema',
-    hint: '¿De dónde viene esta investigación y qué problema aborda?',
-  },
-  {
-    name: 'abs_framework',
-    label: 'Marco teórico',
-    hint: 'Conceptos, autores o líneas teóricas en que se apoya.',
-  },
-  {
-    name: 'abs_methods',
-    label: 'Metodología',
-    hint: 'Cómo se llevó a cabo el estudio (diseño, participantes, técnicas).',
-  },
-  {
-    name: 'abs_results',
-    label: 'Resultados o hallazgos',
-    hint: 'Resultados principales o esperados según etapa.',
-  },
-  {
-    name: 'abs_discussion',
-    label: 'Discusión / aporte al aula',
-    hint: 'Qué implicancias tiene para la enseñanza y la práctica docente.',
-  },
-];
+export function SubmissionEditor({
+  submission,
+  tracks,
+  readOnly,
+  submissionIntro,
+  submissionMaxChars,
+  submissionTypesAllowed,
+  abstractFieldLabels,
+}: Props) {
+  // Resolver config del congreso con fallback a defaults
+  const ABSTRACT_FIELDS = resolveAbstractFields(abstractFieldLabels ?? null);
+  const SOFT_LIMIT = submissionMaxChars ?? DEFAULT_SUBMISSION_MAX_CHARS;
+  const MAX_ABSTRACT_LEN = Math.max(SOFT_LIMIT + 100, SOFT_LIMIT); // pequeño margen sobre el límite suave
+  const allowedTypes =
+    submissionTypesAllowed && submissionTypesAllowed.length > 0
+      ? submissionTypesAllowed
+      : DEFAULT_SUBMISSION_TYPES_ALLOWED;
+  const TYPE_OPTIONS = ALL_TYPE_OPTIONS.filter((o) =>
+    allowedTypes.includes(o.value)
+  );
 
-const MAX_ABSTRACT_LEN = 600; // suave: la DB tiene 1500, mostramos contador a partir de 500
-
-export function SubmissionEditor({ submission, tracks, readOnly }: Props) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [okMsg, setOkMsg] = useState<string | null>(null);
@@ -155,6 +151,13 @@ export function SubmissionEditor({ submission, tracks, readOnly }: Props) {
         </p>
       </header>
 
+      {/* Texto introductorio configurable por el chair */}
+      {submissionIntro && submissionIntro.trim() && (
+        <div className="whitespace-pre-wrap rounded-lg border-l-4 border-[var(--epa-blue)] bg-[var(--accent)] p-4 text-sm leading-relaxed">
+          {submissionIntro}
+        </div>
+      )}
+
       {/* Datos básicos */}
       <Section title="Datos básicos">
         <Field label="Título" required>
@@ -207,13 +210,13 @@ export function SubmissionEditor({ submission, tracks, readOnly }: Props) {
       {/* Abstract en 5 campos */}
       <Section
         title="Abstract estructurado"
-        sub="Mínimo 50 caracteres por campo. Recomendado: hasta 500 caracteres."
+        sub={`Mínimo 50 caracteres por campo. Recomendado: hasta ${SOFT_LIMIT} caracteres.`}
       >
         <div className="space-y-4">
           {ABSTRACT_FIELDS.map((f) => {
             const value = (submission[f.name] as string) ?? '';
             const current = counts[f.name] ?? value.length;
-            const over = current > 500;
+            const over = current > SOFT_LIMIT;
             return (
               <Field
                 key={f.name as string}
@@ -243,7 +246,7 @@ export function SubmissionEditor({ submission, tracks, readOnly }: Props) {
                       : 'text-[var(--muted)]')
                   }
                 >
-                  {current} / 500
+                  {current} / {SOFT_LIMIT}
                   {over && ' (revisa si puedes acortar)'}
                 </p>
               </Field>

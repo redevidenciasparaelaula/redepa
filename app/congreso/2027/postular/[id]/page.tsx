@@ -115,6 +115,10 @@ export default async function SubmissionEditPage({ params }: Props) {
         submission={submission}
         tracks={c.tracks}
         readOnly={readOnly}
+        submissionIntro={c.submission_intro}
+        submissionMaxChars={c.submission_max_chars}
+        submissionTypesAllowed={c.submission_types_allowed}
+        abstractFieldLabels={c.abstract_field_labels}
       />
     </div>
   );

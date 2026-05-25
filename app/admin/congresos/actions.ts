@@ -91,6 +91,84 @@ export async function updateCongressBasicsAction(
 }
 
 // =====================================================================
+// updateCongressSubmissionFormAction
+//   Edita la config del formulario de postulación:
+//     - Texto introductorio (submission_intro)
+//     - Límite máximo de caracteres por campo abstract
+//     - Tipos de presentación permitidos
+//     - Etiquetas custom de los 5 campos del abstract
+// =====================================================================
+export async function updateCongressSubmissionFormAction(
+  id: string,
+  formData: FormData
+): Promise<ActionResult> {
+  const auth = await requireSuperAdmin();
+  if (!auth.ok) return auth;
+
+  const submission_intro = trimOrNull(formData.get('submission_intro'));
+
+  const maxCharsRaw = formData.get('submission_max_chars');
+  const maxChars =
+    typeof maxCharsRaw === 'string' && maxCharsRaw.trim()
+      ? parseInt(maxCharsRaw, 10)
+      : null;
+  if (maxChars !== null && (Number.isNaN(maxChars) || maxChars < 100 || maxChars > 2000)) {
+    return {
+      ok: false,
+      error: 'El límite por campo debe ser un número entre 100 y 2000.',
+    };
+  }
+
+  // Tipos permitidos: checkboxes oral/poster/symposium
+  const types: ('oral' | 'poster' | 'symposium')[] = [];
+  for (const t of ['oral', 'poster', 'symposium'] as const) {
+    if (formData.get(`type_${t}`) === 'on') types.push(t);
+  }
+  if (types.length === 0) {
+    return {
+      ok: false,
+      error: 'Debe permitirse al menos un tipo de presentación.',
+    };
+  }
+
+  // Etiquetas de los 5 campos: si vienen vacías, no incluimos esa key
+  // (así el resolver usa el default).
+  const fields = [
+    'abs_context',
+    'abs_framework',
+    'abs_methods',
+    'abs_results',
+    'abs_discussion',
+  ] as const;
+  const labels: Record<string, string> = {};
+  for (const f of fields) {
+    const v = formData.get(`label_${f}`);
+    if (typeof v === 'string' && v.trim()) {
+      labels[f] = v.trim().slice(0, 100);
+    }
+  }
+  const abstract_field_labels = Object.keys(labels).length > 0 ? labels : null;
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase
+    .from('congresses')
+    .update({
+      submission_intro,
+      submission_max_chars: maxChars,
+      submission_types_allowed: types,
+      abstract_field_labels,
+    })
+    .eq('id', id);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath('/admin/congresos');
+  revalidatePath('/congreso/[year]', 'page');
+  revalidatePath('/congreso/[year]/postular', 'page');
+  return { ok: true };
+}
+
+// =====================================================================
 // 2) Editar fechas del congreso
 // =====================================================================
 export async function updateCongressDatesAction(

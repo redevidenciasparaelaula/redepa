@@ -13,7 +13,9 @@ import {
   CongressStatusControls,
   TrackList,
   AddTrackForm,
+  CongressSubmissionFormSettings,
 } from '@/components/admin/congreso-edit-forms';
+import { CongressSubmissionsMetrics } from '@/components/admin/congress-submissions-metrics';
 
 const STATUS_LABEL: Record<CongressWithTracks['status'], string> = {
   draft: 'Borrador',
@@ -103,14 +105,35 @@ export default async function AdminCongresoPage({ params }: Props) {
         <StatCard label="Suscriptores pre-CFP" value={subscribersCount} />
       </section>
 
-      {/* Sub-paneles */}
+      {/* Postulaciones: tarjeta destacada con métricas + acceso prominente */}
+      <section className="mb-6 rounded-2xl border-2 border-[var(--epa-green)] bg-[var(--card)] p-6">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="eyebrow !text-[var(--epa-green-dark)]">Postulaciones</p>
+            <h2 className="mt-1 text-xl font-bold tracking-tight">
+              Métricas y acceso rápido
+            </h2>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={`/admin/congresos/${c.slug}/postulaciones`}
+              className="inline-flex items-center gap-2 rounded-md bg-[var(--epa-green)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--epa-green-dark)]"
+            >
+              Ver todas las postulaciones →
+            </Link>
+            <Link
+              href={`/admin/congresos/${c.slug}/preview-form`}
+              className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-white px-4 py-2.5 text-sm font-medium hover:bg-[var(--accent)]"
+            >
+              👁 Previsualizar formulario
+            </Link>
+          </div>
+        </div>
+        <CongressSubmissionsMetrics congressId={c.id} tracks={c.tracks} />
+      </section>
+
+      {/* Otros sub-paneles */}
       <section className="mb-8 flex flex-wrap gap-3">
-        <Link
-          href={`/admin/congresos/${c.slug}/postulaciones`}
-          className="inline-flex items-center gap-2 rounded-md bg-[var(--epa-green)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--epa-green-dark)]"
-        >
-          Ver postulaciones →
-        </Link>
         <Link
           href={`/admin/congresos/${c.slug}/revisores`}
           className="inline-flex items-center gap-2 rounded-md bg-[var(--epa-blue)] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
@@ -159,6 +182,22 @@ export default async function AdminCongresoPage({ params }: Props) {
         <div className="mt-6 border-t border-[var(--border)] pt-6">
           <AddTrackForm congressId={c.id} />
         </div>
+      </Section>
+
+      {/* Formulario de postulación: config editable */}
+      <Section title="Formulario de postulación">
+        <p className="mb-4 text-sm text-[var(--muted)]">
+          Personaliza qué ven los autores cuando entran a postular en{' '}
+          <code className="rounded bg-[var(--accent)] px-1">/congreso/{c.year}/postular</code>
+          . Cambios se reflejan al instante después de guardar.
+        </p>
+        <CongressSubmissionFormSettings
+          id={c.id}
+          submissionIntro={c.submission_intro}
+          submissionMaxChars={c.submission_max_chars}
+          submissionTypesAllowed={c.submission_types_allowed}
+          abstractFieldLabels={c.abstract_field_labels}
+        />
       </Section>
     </div>
   );
