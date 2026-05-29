@@ -139,6 +139,12 @@ export default async function AdminPage({ searchParams }: Props) {
           >
             🔀 Instituciones duplicadas
           </Link>
+          <a
+            href="/admin/researchers/export"
+            className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-white px-4 py-2 text-sm font-medium hover:bg-[var(--accent)]"
+          >
+            ↓ Descargar directorio (Excel)
+          </a>
         </section>
       )}
 

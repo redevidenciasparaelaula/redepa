@@ -1474,6 +1474,79 @@ export async function findDuplicateInstitutionGroups(): Promise<
     });
 }
 
+// ---------------------------------------------------------------------
+// Export completo del directorio (solo super-admin) — para xlsx
+// ---------------------------------------------------------------------
+
+export interface ResearcherExportRow {
+  full_name: string;
+  email: string;
+  title_es: string | null;
+  institution_name: string | null;
+  country: string | null;
+  city: string | null;
+  research_topics: string[];
+  methodologies: string[];
+  phd_year: number | null;
+  phd_institution: string | null;
+  master_year: number | null;
+  master_institution: string | null;
+  linkedin_url: string | null;
+  google_scholar_url: string | null;
+  researchgate_url: string | null;
+  orcid: string | null;
+  website: string | null;
+  representative_dois: string[];
+  available_for_review: boolean;
+  status: string;
+  created_at: string;
+}
+
+export async function listAllResearchersForExport(): Promise<
+  ResearcherExportRow[]
+> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('researchers')
+    .select(
+      `full_name, email, title_es, country, city, research_topics, methodologies,
+       phd_year, phd_institution, master_year, master_institution,
+       linkedin_url, google_scholar_url, researchgate_url, orcid, website,
+       representative_dois, available_for_review, status, created_at,
+       institutions(name)`
+    )
+    .order('full_name', { ascending: true });
+
+  if (error) {
+    console.error('listAllResearchersForExport', error);
+    return [];
+  }
+
+  return (data ?? []).map((r) => ({
+    full_name: r.full_name,
+    email: r.email,
+    title_es: r.title_es,
+    institution_name: (r.institutions as { name: string } | null)?.name ?? null,
+    country: r.country,
+    city: r.city,
+    research_topics: r.research_topics ?? [],
+    methodologies: r.methodologies ?? [],
+    phd_year: r.phd_year,
+    phd_institution: r.phd_institution,
+    master_year: r.master_year,
+    master_institution: r.master_institution,
+    linkedin_url: r.linkedin_url,
+    google_scholar_url: r.google_scholar_url,
+    researchgate_url: r.researchgate_url,
+    orcid: r.orcid,
+    website: r.website,
+    representative_dois: r.representative_dois ?? [],
+    available_for_review: r.available_for_review,
+    status: r.status,
+    created_at: r.created_at,
+  }));
+}
+
 export async function distinctTopics(): Promise<string[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
