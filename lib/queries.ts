@@ -1385,7 +1385,10 @@ export async function listIncompleteProfiles(): Promise<IncompleteProfileRow[]> 
 // ---------------------------------------------------------------------
 
 export interface DuplicateGroup {
-  key: string; // clave canónica del grupo
+  key: string; // clave canónica representativa del grupo
+  // 'exact'   = mismo nombre normalizado (alta confianza)
+  // 'similar' = nombres relacionados por subconjunto de tokens (revisar a mano)
+  matchType: 'exact' | 'similar';
   institutions: {
     id: string;
     name: string;
@@ -1400,9 +1403,7 @@ export interface DuplicateGroup {
 // Normaliza el nombre de una institución para detección de duplicados:
 //   - strip accents + lowercase
 //   - colapsa whitespace
-//   - quita prefijos/sufijos legales comunes (S.A., Ltda, etc.)
-//   - quita la palabra "universidad" inicial si es muy genérico (NO, esto
-//     produciría falsos match; mejor mantener todo)
+//   - quita puntuación
 function normalizeInstitutionKey(name: string): string {
   return name
     .normalize('NFD')
@@ -1411,6 +1412,50 @@ function normalizeInstitutionKey(name: string): string {
     .replace(/[.,]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+// Palabras genéricas de nombres de institución (no aportan a la identidad).
+const INSTITUTION_STOPWORDS = new Set([
+  'universidad', 'universidade', 'university', 'instituto', 'institucion',
+  'institución', 'centro', 'escuela', 'facultad', 'colegio', 'fundacion',
+  'corporacion', 'pontificia',
+  'de', 'del', 'la', 'las', 'los', 'el', 'y', 'e', 'en', 'da', 'do', 'das', 'dos',
+]);
+
+// Topónimos (países y ciudades comunes, sin tildes) — tokens de bajo poder
+// distintivo. Si una institución, tras quitar stopwords, SOLO queda con
+// topónimos (ej. "Universidad de Chile" → {chile}), NO se la marca como
+// subconjunto de otra (evita el falso positivo U. de Chile ⊂ U. de Santiago).
+const PLACE_WORDS = new Set([
+  'chile', 'argentina', 'peru', 'colombia', 'uruguay', 'brasil', 'brazil',
+  'brasilia', 'ecuador', 'bolivia', 'paraguay', 'venezuela', 'mexico',
+  'cuba', 'honduras', 'salvador', 'guatemala', 'panama', 'nicaragua',
+  'costa', 'rica', 'republica', 'dominicana', 'espana', 'puerto', 'rico',
+  'santiago', 'valparaiso', 'concepcion', 'temuco', 'antofagasta', 'coquimbo',
+  'lima', 'bogota', 'medellin', 'cali', 'montevideo', 'quito', 'guayaquil',
+  'buenos', 'aires', 'sao', 'paulo', 'rio', 'janeiro', 'norte', 'sur',
+]);
+
+// Tokens significativos: normaliza, tokeniza y quita stopwords.
+function coreTokens(name: string): Set<string> {
+  return new Set(
+    normalizeInstitutionKey(name)
+      .split(' ')
+      .filter((t) => t && !INSTITUTION_STOPWORDS.has(t))
+  );
+}
+
+// ¿Dos cores están relacionados por subconjunto? El más chico debe estar
+// contenido en el más grande Y tener al menos un token distintivo (no
+// topónimo). Así "autonoma" ⊂ "autonoma chile" matchea, pero "chile" sola
+// no matchea contra "santiago chile".
+function coresSubsetRelated(a: Set<string>, b: Set<string>): boolean {
+  if (a.size === 0 || b.size === 0) return false;
+  const [small, big] = a.size <= b.size ? [a, b] : [b, a];
+  for (const t of small) if (!big.has(t)) return false;
+  // requiere al menos un token distintivo en el set chico
+  for (const t of small) if (!PLACE_WORDS.has(t)) return true;
+  return false;
 }
 
 export async function findDuplicateInstitutionGroups(): Promise<
@@ -1437,41 +1482,84 @@ export async function findDuplicateInstitutionGroups(): Promise<
     }
   }
 
-  // Agrupa por clave normalizada
-  const groups = new Map<string, DuplicateGroup>();
-  for (const inst of insts ?? []) {
-    const key = normalizeInstitutionKey(inst.name);
-    if (!key) continue;
-    if (!groups.has(key)) {
-      groups.set(key, { key, institutions: [] });
+  const list = (insts ?? []).map((inst) => ({
+    id: inst.id,
+    name: inst.name,
+    name_en: inst.name_en,
+    country: inst.country,
+    city: inst.city,
+    researcher_count: counts.get(inst.id) ?? 0,
+    created_at: inst.created_at,
+    key: normalizeInstitutionKey(inst.name),
+    core: coreTokens(inst.name),
+  }));
+
+  // --- Union-Find para clusterizar ---
+  const parent = list.map((_, i) => i);
+  const find = (i: number): number => {
+    while (parent[i] !== i) {
+      parent[i] = parent[parent[i]];
+      i = parent[i];
     }
-    groups.get(key)!.institutions.push({
-      id: inst.id,
-      name: inst.name,
-      name_en: inst.name_en,
-      country: inst.country,
-      city: inst.city,
-      researcher_count: counts.get(inst.id) ?? 0,
-      created_at: inst.created_at,
+    return i;
+  };
+  const union = (a: number, b: number) => {
+    const ra = find(a);
+    const rb = find(b);
+    if (ra !== rb) parent[ra] = rb;
+  };
+
+  // Comparación pairwise O(n²) — ok para algunos cientos de instituciones.
+  for (let i = 0; i < list.length; i++) {
+    for (let j = i + 1; j < list.length; j++) {
+      const a = list[i];
+      const b = list[j];
+      if (!a.key || !b.key) continue;
+      // Exacto (mismo nombre normalizado) o similar (subconjunto de tokens)
+      if (a.key === b.key || coresSubsetRelated(a.core, b.core)) {
+        union(i, j);
+      }
+    }
+  }
+
+  // Agrupar por raíz
+  const clusters = new Map<number, typeof list>();
+  for (let i = 0; i < list.length; i++) {
+    const root = find(i);
+    if (!clusters.has(root)) clusters.set(root, []);
+    clusters.get(root)!.push(list[i]);
+  }
+
+  const result: DuplicateGroup[] = [];
+  for (const members of clusters.values()) {
+    if (members.length < 2) continue;
+    // exact si todos comparten exactamente la misma clave normalizada
+    const firstKey = members[0].key;
+    const allExact = members.every((m) => m.key === firstKey);
+    result.push({
+      key: firstKey,
+      matchType: allExact ? 'exact' : 'similar',
+      institutions: members
+        .map((m) => ({
+          id: m.id,
+          name: m.name,
+          name_en: m.name_en,
+          country: m.country,
+          city: m.city,
+          researcher_count: m.researcher_count,
+          created_at: m.created_at,
+        }))
+        .sort((x, y) => y.researcher_count - x.researcher_count),
     });
   }
 
-  // Solo devuelve grupos con duplicados (más de 1) — ordenados por
-  // mayor número de researchers afectados, para que el super-admin
-  // priorice los grupos con más impacto.
-  return [...groups.values()]
-    .filter((g) => g.institutions.length > 1)
-    .map((g) => ({
-      ...g,
-      institutions: g.institutions.sort(
-        (a, b) => b.researcher_count - a.researcher_count
-      ),
-    }))
-    .sort((a, b) => {
-      const aTotal = a.institutions.reduce((s, i) => s + i.researcher_count, 0);
-      const bTotal = b.institutions.reduce((s, i) => s + i.researcher_count, 0);
-      return bTotal - aTotal;
-    });
+  // Orden: exactos primero, luego por researchers afectados (desc)
+  return result.sort((a, b) => {
+    if (a.matchType !== b.matchType) return a.matchType === 'exact' ? -1 : 1;
+    const aTotal = a.institutions.reduce((s, i) => s + i.researcher_count, 0);
+    const bTotal = b.institutions.reduce((s, i) => s + i.researcher_count, 0);
+    return bTotal - aTotal;
+  });
 }
 
 // ---------------------------------------------------------------------
