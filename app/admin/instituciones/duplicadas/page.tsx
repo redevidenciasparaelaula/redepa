@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { findDuplicateInstitutionGroups } from '@/lib/queries';
 import { DuplicateInstitutionsManager } from '@/components/admin/duplicate-institutions-manager';
+import { RefreshAnalysisButton } from '@/components/admin/refresh-analysis-button';
 
 export default async function DuplicateInstitutionsPage() {
   const user = await getCurrentUser();
@@ -31,18 +32,22 @@ export default async function DuplicateInstitutionsPage() {
         </Link>
       </div>
 
-      <header className="mb-8">
-        <p className="eyebrow">Calidad del directorio</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight">
-          Instituciones duplicadas
-        </h1>
-        <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
-          Grupos de instituciones cuyo nombre normalizado (sin tildes,
-          minúsculas, sin puntos) coincide. Suelen ser duplicados creados
-          cuando un investigador escribió la institución a mano con variantes
-          (ej. "U. de Chile" vs "Universidad de Chile"). Elegí cuál mantener y
-          fusioná las demás dentro.
-        </p>
+      <header className="mb-8 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="eyebrow">Calidad del directorio</p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight">
+            Instituciones duplicadas
+          </h1>
+          <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+            Grupos de instituciones cuyo nombre normalizado (sin tildes,
+            minúsculas, sin puntos) coincide. Suelen ser duplicados creados
+            cuando un investigador escribió la institución a mano con variantes
+            (ej. "U. de Chile" vs "Universidad de Chile"). Elegí cuál mantener
+            y fusioná las demás dentro. El análisis se recalcula al cargar la
+            página o al tocar "Refrescar análisis".
+          </p>
+        </div>
+        <RefreshAnalysisButton />
       </header>
 
       <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
