@@ -25,6 +25,7 @@ export const MEMBERS: Member[] = [
   { name: 'Universidad Alberto Hurtado', logo: '/logos/uah.png', country: 'Chile' },
   { name: 'Universidad de los Andes', logo: '/logos/uandes.png', country: 'Chile' },
   { name: 'Universidad Bernardo O’Higgins', logo: '/logos/ubo.png', country: 'Chile' },
+  { name: 'Universidad Católica del Maule', logo: '/logos/ucm_nobg.png', country: 'Chile' },
   { name: 'Universidad Católica Silva Henríquez', logo: '/logos/ucsh.png', country: 'Chile' },
   { name: 'Universidad Católica de Temuco', logo: '/logos/uct.png', country: 'Chile' },
   { name: 'Universidad Diego Portales', logo: '/logos/udp.png', country: 'Chile' },
