@@ -108,7 +108,11 @@ export function SubmissionEditor({
   // Función pura que arma el FormData desde el estado local y guarda.
   // Se usa desde onSave y también desde SubmissionAuthorsEditor antes de
   // agregar/reordenar autores, para no perder texto no guardado.
-  function save(): Promise<{ ok: boolean }> {
+  // Si `refreshAfter` es false, no dispara router.refresh() — útil cuando
+  // el llamador va a hacer otra mutación seguida (evita dedupe del refresh).
+  function save(
+    refreshAfter: boolean = true
+  ): Promise<{ ok: boolean }> {
     return new Promise((resolve) => {
       const formData = new FormData();
       formData.set('title', title);
@@ -130,12 +134,17 @@ export function SubmissionEditor({
           resolve({ ok: false });
         } else {
           setOkMsg('Guardado.');
-          router.refresh();
+          if (refreshAfter) router.refresh();
           resolve({ ok: true });
         }
       });
     });
   }
+
+  // Wrapper para pasar al AuthorsEditor: guarda SIN refrescar (el
+  // AuthorsEditor va a refrescar después de su propia mutación, y así
+  // evitamos el dedupe de Next.js sobre 2 router.refresh() consecutivos).
+  const saveWithoutRefresh = () => save(false);
 
   function onSubmit() {
     if (
@@ -372,7 +381,7 @@ export function SubmissionEditor({
           submissionId={submission.id}
           authors={submission.authors}
           readOnly={readOnly}
-          onBeforeMutate={save}
+          onBeforeMutate={saveWithoutRefresh}
         />
       </Section>
 
