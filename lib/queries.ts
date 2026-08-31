@@ -793,6 +793,109 @@ export async function listAssignmentsForSubmission(
 }
 
 // ---------------------------------------------------------------------
+// loadAutoAssignData: carga en un solo llamado todo lo necesario para
+// correr el algoritmo de auto-asignación (lib/auto-assign.ts).
+// ---------------------------------------------------------------------
+
+import type {
+  AutoAssignPoolMember,
+  AutoAssignSubmission,
+} from '@/lib/auto-assign';
+
+export async function loadAutoAssignData(congressId: string): Promise<{
+  pool: AutoAssignPoolMember[];
+  submissions: AutoAssignSubmission[];
+}> {
+  const supabase = await createSupabaseServerClient();
+
+  // 1) Pool + info de directorio en paralelo con los submissions
+  const [poolMembersRes, submissionsRes] = await Promise.all([
+    getReviewerPoolForCongress(congressId),
+    supabase
+      .from('submissions')
+      .select(
+        'id, title, status, track_id, keywords, congress_tracks(name)'
+      )
+      .eq('congress_id', congressId)
+      .in('status', ['submitted', 'under_review']),
+  ]);
+
+  const submissionRows =
+    (submissionsRes.data as
+      | {
+          id: string;
+          title: string;
+          status: AutoAssignSubmission['status'];
+          track_id: string | null;
+          keywords: string[] | null;
+          congress_tracks: { name: string } | null;
+        }[]
+      | null) ?? [];
+
+  if (submissionRows.length === 0) {
+    return {
+      pool: poolMembersRes.map(toAutoAssignPoolMember),
+      submissions: [],
+    };
+  }
+
+  const submissionIds = submissionRows.map((s) => s.id);
+
+  // 2) Asignaciones existentes + autores en paralelo
+  const [assignmentsRes, authorsRes] = await Promise.all([
+    supabase
+      .from('review_assignments')
+      .select('submission_id, reviewer_user_id')
+      .in('submission_id', submissionIds),
+    supabase
+      .from('submission_authors')
+      .select('submission_id, user_id')
+      .in('submission_id', submissionIds),
+  ]);
+
+  const assignmentsBySub = new Map<string, string[]>();
+  for (const a of assignmentsRes.data ?? []) {
+    const list = assignmentsBySub.get(a.submission_id) ?? [];
+    list.push(a.reviewer_user_id);
+    assignmentsBySub.set(a.submission_id, list);
+  }
+
+  const authorsBySub = new Map<string, string[]>();
+  for (const a of authorsRes.data ?? []) {
+    if (!a.user_id) continue; // autores externos no tienen user_id
+    const list = authorsBySub.get(a.submission_id) ?? [];
+    list.push(a.user_id);
+    authorsBySub.set(a.submission_id, list);
+  }
+
+  return {
+    pool: poolMembersRes.map(toAutoAssignPoolMember),
+    submissions: submissionRows.map((s) => ({
+      id: s.id,
+      title: s.title,
+      status: s.status,
+      track_id: s.track_id,
+      track_name: s.congress_tracks?.name ?? null,
+      keywords: s.keywords ?? [],
+      existing_reviewer_ids: assignmentsBySub.get(s.id) ?? [],
+      author_user_ids: authorsBySub.get(s.id) ?? [],
+    })),
+  };
+}
+
+function toAutoAssignPoolMember(m: ReviewerPoolMember): AutoAssignPoolMember {
+  return {
+    user_id: m.user_id,
+    email: m.email,
+    full_name: m.researcher?.full_name ?? m.email.split('@')[0] ?? m.email,
+    active: m.active,
+    max_load: m.max_load,
+    current_load: m.assignments_count,
+    topics: m.topics,
+  };
+}
+
+// ---------------------------------------------------------------------
 // suggestReviewersForSubmission: ranking del pool por match con el
 // submission. La lógica vive en JS para que sea fácil iterar y depurar.
 // ---------------------------------------------------------------------

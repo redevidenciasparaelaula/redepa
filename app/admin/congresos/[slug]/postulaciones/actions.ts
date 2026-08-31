@@ -144,6 +144,128 @@ export async function unassignReviewerAction(
 }
 
 // =====================================================================
+// bulkAssignReviewersAction: aplica una lista de asignaciones en un solo
+// paso. Se usa desde el preview de auto-asignación.
+//
+// Comportamiento:
+//   - Cada asignación se aplica vía el mismo RPC assign_reviewer_to_submission
+//     (respeta las mismas validaciones: conflicto, capacidad, pool activo).
+//   - Los errores por fila se reportan pero NO abortan las demás.
+//   - Emails: se envía UNA notificación consolidada por revisor (aunque
+//     tenga varias postulaciones asignadas en esta corrida), en background.
+// =====================================================================
+
+export interface BulkAssignItem {
+  submission_id: string;
+  reviewer_user_id: string;
+}
+
+export interface BulkAssignRowResult {
+  submission_id: string;
+  reviewer_user_id: string;
+  ok: boolean;
+  error?: string;
+}
+
+export interface BulkAssignResult {
+  ok: boolean;
+  applied: number;
+  failed: number;
+  rows: BulkAssignRowResult[];
+  error?: string;
+}
+
+export async function bulkAssignReviewersAction(
+  items: BulkAssignItem[],
+  deadline?: string | null
+): Promise<BulkAssignResult> {
+  const auth = await requireSuperAdmin();
+  if (!auth.ok)
+    return { ok: false, applied: 0, failed: items.length, rows: [], error: auth.error };
+
+  if (!Array.isArray(items) || items.length === 0)
+    return { ok: false, applied: 0, failed: 0, rows: [], error: 'Sin asignaciones a aplicar.' };
+
+  const supabase = await createSupabaseServerClient();
+  const rows: BulkAssignRowResult[] = [];
+  let applied = 0;
+  let failed = 0;
+
+  // Aplicar secuencialmente para no golpear demasiado la DB y para poder
+  // capturar errores individuales sin que uno frene los demás.
+  for (const it of items) {
+    const { data, error } = await supabase.rpc(
+      'assign_reviewer_to_submission',
+      {
+        p_submission_id: it.submission_id,
+        p_reviewer_user_id: it.reviewer_user_id,
+        p_deadline_at: deadline ?? null,
+      }
+    );
+    if (error) {
+      failed++;
+      rows.push({
+        submission_id: it.submission_id,
+        reviewer_user_id: it.reviewer_user_id,
+        ok: false,
+        error: error.message,
+      });
+      continue;
+    }
+    if (data !== 'ok') {
+      failed++;
+      rows.push({
+        submission_id: it.submission_id,
+        reviewer_user_id: it.reviewer_user_id,
+        ok: false,
+        error: ASSIGN_ERRORS[data ?? ''] ?? `Error (${data}).`,
+      });
+      continue;
+    }
+    applied++;
+    rows.push({
+      submission_id: it.submission_id,
+      reviewer_user_id: it.reviewer_user_id,
+      ok: true,
+    });
+  }
+
+  // Notificaciones consolidadas: agrupamos por reviewer y disparamos un
+  // solo email con todas las nuevas asignaciones. Fire-and-forget.
+  if (applied > 0) {
+    const byReviewer = new Map<string, string[]>();
+    for (const r of rows) {
+      if (!r.ok) continue;
+      const list = byReviewer.get(r.reviewer_user_id) ?? [];
+      list.push(r.submission_id);
+      byReviewer.set(r.reviewer_user_id, list);
+    }
+    for (const [reviewerId, submissionIds] of byReviewer) {
+      void notifyReviewerAssignedBulk(reviewerId, submissionIds);
+    }
+  }
+
+  revalidatePath('/admin/congresos/[slug]/postulaciones', 'page');
+  revalidatePath('/admin/congresos/[slug]/postulaciones/[id]', 'page');
+  return { ok: applied > 0, applied, failed, rows };
+}
+
+async function notifyReviewerAssignedBulk(
+  reviewerUserId: string,
+  submissionIds: string[]
+): Promise<void> {
+  try {
+    // Reutilizamos el flujo individual: 1 email por asignación. Si en el
+    // futuro queremos un template "resumen", basta cambiar acá.
+    for (const submissionId of submissionIds) {
+      await notifyReviewerAssigned(submissionId, reviewerUserId);
+    }
+  } catch (err) {
+    console.error('notifyReviewerAssignedBulk failed', err);
+  }
+}
+
+// =====================================================================
 // updateAssignmentDeadlineAction
 // =====================================================================
 export async function updateAssignmentDeadlineAction(

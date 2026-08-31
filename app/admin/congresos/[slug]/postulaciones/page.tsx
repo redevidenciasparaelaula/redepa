@@ -82,16 +82,26 @@ export default async function AdminSubmissionsPage({
         </Link>
       </div>
 
-      <header className="mb-8">
-        <p className="eyebrow">Congreso EPA · {c.year}</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight">
-          Postulaciones
-        </h1>
-        <p className="mt-2 text-sm text-[var(--muted)]">
-          Todas las postulaciones recibidas, incluso borradores. Como
-          super-admin / chair tienes acceso a los datos de autoría que están
-          ocultos para los revisores.
-        </p>
+      <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <p className="eyebrow">Congreso EPA · {c.year}</p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight">
+            Postulaciones
+          </h1>
+          <p className="mt-2 text-sm text-[var(--muted)]">
+            Todas las postulaciones recibidas, incluso borradores. Como
+            super-admin / chair tienes acceso a los datos de autoría que están
+            ocultos para los revisores.
+          </p>
+        </div>
+        {(totals.submitted > 0 || totals.under_review > 0) && (
+          <Link
+            href={`/admin/congresos/${c.slug}/postulaciones/auto-asignar`}
+            className="shrink-0 rounded-md bg-[var(--epa-blue)] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+          >
+            🎲 Auto-asignar revisores
+          </Link>
+        )}
       </header>
 
       {/* Tarjetas con conteos por estado */}
