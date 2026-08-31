@@ -88,7 +88,11 @@ export default async function ReviewerPoolPage({ params }: Props) {
       {/* Agregar manualmente (crea cuenta + directorio + pool en un paso) */}
       <section className="mb-10">
         <h2 className="mb-3 text-lg font-semibold">Agregar manualmente</h2>
-        <ManualAddToPoolForm congressId={c.id} institutions={institutions} />
+        <ManualAddToPoolForm
+          congressId={c.id}
+          institutions={institutions}
+          tracks={c.tracks}
+        />
       </section>
 
       {/* Investigadores disponibles, aún no en pool */}

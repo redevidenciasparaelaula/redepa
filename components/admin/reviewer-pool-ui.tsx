@@ -14,6 +14,7 @@ import type {
   AvailableReviewerCandidate,
 } from '@/lib/queries';
 import type { Institution } from '@/lib/supabase/types';
+import type { CongressTrack } from '@/lib/queries';
 
 // =====================================================================
 // ReviewerPoolList: lista de quienes están en el pool, con edición inline
@@ -411,19 +412,38 @@ function CandidateRow({
 export function ManualAddToPoolForm({
   congressId,
   institutions,
+  tracks,
 }: {
   congressId: string;
   institutions: Pick<Institution, 'id' | 'name'>[];
+  tracks: Pick<CongressTrack, 'id' | 'name'>[];
 }) {
   const [expanded, setExpanded] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ManualAddResult | null>(null);
+  const [selectedTracks, setSelectedTracks] = useState<string[]>([]);
   const router = useRouter();
+
+  function toggleTrack(name: string) {
+    setSelectedTracks((prev) =>
+      prev.includes(name) ? prev.filter((t) => t !== name) : [...prev, name]
+    );
+  }
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (selectedTracks.length === 0) {
+      setError('Selecciona al menos una línea temática.');
+      return;
+    }
     const formData = new FormData(e.currentTarget);
+    // Los tracks van en el campo `topics` del pool, que es el que se
+    // matchea contra las postulaciones al sugerir revisores.
+    formData.set('topics', selectedTracks.join(', '));
+    // Este flujo no captura metodologías (decisión de producto):
+    // se guardan como vacío.
+    formData.set('methodologies', '');
     setError(null);
     startTransition(async () => {
       const res = await addManuallyToDirectoryAndPoolAction(
@@ -436,6 +456,7 @@ export function ManualAddToPoolForm({
         return;
       }
       setResult(res);
+      setSelectedTracks([]);
       // El form NO se resetea inmediatamente porque el super-admin
       // necesita ver la contraseña temporal. Se limpia cuando cierra.
       router.refresh();
@@ -446,6 +467,7 @@ export function ManualAddToPoolForm({
     setExpanded(false);
     setError(null);
     setResult(null);
+    setSelectedTracks([]);
   }
 
   if (!expanded && !result) {
@@ -595,25 +617,38 @@ export function ManualAddToPoolForm({
             />
           </Field>
         </div>
-        <Field
-          label="Temas de expertise (opcional)"
-          hint="Separados por coma. Se usan para hacer match con las postulaciones."
-        >
-          <input
-            type="text"
-            name="topics"
-            className={inputCls}
-            placeholder="ej. lectura, evaluación formativa"
-          />
-        </Field>
-        <Field label="Metodologías (opcional)" hint="Separadas por coma.">
-          <input
-            type="text"
-            name="methodologies"
-            className={inputCls}
-            placeholder="ej. cuantitativa, cualitativa"
-          />
-        </Field>
+        <fieldset>
+          <legend className="text-sm font-medium text-[var(--foreground)]">
+            Líneas temáticas que puede revisar
+          </legend>
+          <p className="text-xs text-[var(--muted)]">
+            Selecciona una o más. Se usan para hacer match con las postulaciones.
+          </p>
+          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {tracks.map((t) => {
+              const checked = selectedTracks.includes(t.name);
+              return (
+                <label
+                  key={t.id}
+                  className={
+                    'flex cursor-pointer items-start gap-2 rounded-md border px-3 py-2 text-sm ' +
+                    (checked
+                      ? 'border-[var(--epa-blue)] bg-[var(--accent)]'
+                      : 'border-[var(--border)] bg-white hover:bg-[var(--surface)]')
+                  }
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleTrack(t.name)}
+                    className="mt-0.5 h-4 w-4"
+                  />
+                  <span>{t.name}</span>
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
 
         <div className="flex flex-wrap gap-2 pt-2">
           <button
