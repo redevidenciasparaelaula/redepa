@@ -108,7 +108,7 @@ export default async function PostularPage() {
         </div>
       )}
 
-      <section className="mb-6">
+      <section className="mb-6 flex flex-wrap items-start gap-4">
         {(canCreate || isAdminTestMode) && (
           <form action={createDraftSubmissionAction}>
             <button
@@ -126,6 +126,28 @@ export default async function PostularPage() {
             </button>
           </form>
         )}
+      </section>
+
+      {/* Plantilla Word descargable para trabajar el texto antes de enviarlo */}
+      <section className="mb-8 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 text-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <p className="max-w-2xl text-[var(--foreground)]">
+            Si te ayuda, puedes descargar la plantilla en Word para trabajar el
+            texto de tu postulación con calma. Después vas a tener que copiar y
+            pegar el contenido de cada sección en este formulario:{' '}
+            <strong>
+              no se aceptan envíos por correo, PDF ni archivos Word — solo a
+              través del formulario en línea.
+            </strong>
+          </p>
+          <a
+            href="/plantilla-postulacion-epa-2027"
+            download
+            className="shrink-0 self-start rounded-md border border-[var(--epa-blue)] bg-white px-4 py-2 text-sm font-semibold text-[var(--epa-blue)] hover:bg-[var(--epa-blue)] hover:text-white"
+          >
+            ↓ Descargar plantilla (Word)
+          </a>
+        </div>
       </section>
 
       {submissions.length === 0 ? (

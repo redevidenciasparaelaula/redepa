@@ -39,12 +39,12 @@ export const DEFAULT_ABSTRACT_FIELDS: AbstractFieldDef[] = [
   {
     name: 'abs_methods',
     label: 'Metodología',
-    hint: 'Cómo se llevó a cabo el estudio (diseño, participantes, técnicas).',
+    hint: 'Cómo se llevó a cabo el estudio (diseño, participantes, instrumentos, análisis).',
   },
   {
     name: 'abs_results',
-    label: 'Resultados o hallazgos',
-    hint: 'Resultados principales o esperados según etapa.',
+    label: 'Resultados principales',
+    hint: 'Los que ya obtuviste, o los esperados si el estudio está en curso.',
   },
   {
     name: 'abs_discussion',
