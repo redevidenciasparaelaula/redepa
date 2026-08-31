@@ -8,9 +8,12 @@
 -- (policy assignments_read solo deja al reviewer y al super-admin).
 -- Esta RPC SECURITY DEFINER hace el join controlado.
 
+-- Nota: se usa "position" con comillas dobles porque es palabra reservada
+-- en Postgres (nombre de función SQL estándar). El identificador queda
+-- disponible normalmente del lado JS (data.position).
 create or replace function list_reviews_for_author(p_submission_id uuid)
 returns table (
-  position           int,
+  "position"         int,
   score_originality  smallint,
   score_methodology  smallint,
   score_clarity      smallint,
@@ -40,7 +43,7 @@ begin
 
   return query
     select
-      (row_number() over (order by rv.submitted_at))::int as position,
+      (row_number() over (order by rv.submitted_at))::int as "position",
       rv.score_originality,
       rv.score_methodology,
       rv.score_clarity,
