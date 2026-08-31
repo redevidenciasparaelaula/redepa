@@ -179,9 +179,13 @@ export function SubmissionEditor({
   }
 
   function onDelete() {
+    const label =
+      submission.status === 'draft'
+        ? 'este borrador'
+        : 'esta postulación';
     if (
       !confirm(
-        '¿Eliminar este borrador? Esta acción no se puede deshacer.'
+        `¿Eliminar ${label}? Se pierde todo el contenido y no se puede deshacer.`
       )
     )
       return;
@@ -407,7 +411,7 @@ export function SubmissionEditor({
             </button>
           )}
 
-          {status === 'submitted' && (
+          {(status === 'submitted' || status === 'under_review') && (
             <button
               type="button"
               onClick={onWithdraw}
@@ -418,14 +422,17 @@ export function SubmissionEditor({
             </button>
           )}
 
-          {isDraft && (
+          {/* Eliminar disponible para draft/submitted/withdrawn mientras
+              el CFP siga abierto. La action bloquea si ya hay revisores
+              asignados (obligando a retirar en vez de borrar). */}
+          {['draft', 'submitted', 'withdrawn'].includes(status) && (
             <button
               type="button"
               onClick={onDelete}
               disabled={isPending}
               className="ml-auto rounded-md border border-red-200 px-5 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
             >
-              Eliminar borrador
+              {status === 'draft' ? 'Eliminar borrador' : 'Eliminar postulación'}
             </button>
           )}
 

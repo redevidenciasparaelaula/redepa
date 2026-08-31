@@ -255,22 +255,66 @@ export async function withdrawSubmissionAction(id: string): Promise<R> {
 }
 
 // =====================================================================
-// deleteSubmissionAction — solo borradores
+// deleteSubmissionAction — borrar postulación antes del deadline
+//
+// Permite eliminar draft / submitted / withdrawn mientras el CFP siga
+// abierto. Bloquea el borrado si ya existen review_assignments (para
+// proteger el trabajo de las y los revisores). Super-admin puede
+// borrar aunque el CFP esté cerrado (excepto accepted/rejected).
 // =====================================================================
 export async function deleteSubmissionAction(id: string): Promise<R> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, error: 'No autenticado.' };
+
   const supabase = await createSupabaseServerClient();
   const { data: s } = await supabase
     .from('submissions')
-    .select('status')
+    .select('status, congress_id')
     .eq('id', id)
     .maybeSingle();
   if (!s) return { ok: false, error: 'No encontrada.' };
-  if (s.status !== 'draft') {
+
+  // No permitir borrar postulaciones ya decididas — quedan como registro.
+  if (['accepted', 'rejected'].includes(s.status)) {
     return {
       ok: false,
-      error: 'Solo se pueden eliminar postulaciones en borrador.',
+      error:
+        'No se puede eliminar una postulación ya decidida. Contactá al comité si necesitás corregir algo.',
     };
   }
+
+  // Si tiene assignments, obligar a retirar en vez de borrar (protege
+  // el trabajo de los revisores).
+  const { count: assignmentsCount } = await supabase
+    .from('review_assignments')
+    .select('id', { count: 'exact', head: true })
+    .eq('submission_id', id);
+  if ((assignmentsCount ?? 0) > 0) {
+    return {
+      ok: false,
+      error:
+        'Esta postulación ya tiene revisores asignados. Usa "Retirar" en vez de eliminar para no perder el trabajo de la revisión.',
+    };
+  }
+
+  // Chequear que el CFP esté abierto (o que el caller sea super-admin)
+  if (!user.isSuperAdmin) {
+    const { data: c } = await supabase
+      .from('congresses')
+      .select('status, cfp_close_at')
+      .eq('id', s.congress_id)
+      .maybeSingle();
+    const deadlinePassed =
+      !!c?.cfp_close_at && new Date(c.cfp_close_at) < new Date();
+    if (c?.status !== 'cfp_open' || deadlinePassed) {
+      return {
+        ok: false,
+        error:
+          'El plazo de postulación ya cerró; no se puede eliminar. Contactá al comité si necesitás corregir algo.',
+      };
+    }
+  }
+
   const { error } = await supabase.from('submissions').delete().eq('id', id);
   if (error) return { ok: false, error: error.message };
 
