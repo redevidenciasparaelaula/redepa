@@ -230,12 +230,14 @@ export function SubmissionEditor({
                   rows={4}
                   maxLength={MAX_ABSTRACT_LEN}
                   disabled={readOnly}
-                  onChange={(e) =>
-                    setCounts((c) => ({
-                      ...c,
-                      [f.name as string]: e.currentTarget.value.length,
-                    }))
-                  }
+                  onChange={(e) => {
+                    // Leer la longitud SÍNCRONO antes de meterla al updater,
+                    // por si el evento sintético se recicla antes de que corra
+                    // el setState callback.
+                    const len = e.currentTarget.value.length;
+                    const key = f.name as string;
+                    setCounts((c) => ({ ...c, [key]: len }));
+                  }}
                   className={inputCls}
                 />
                 <p
