@@ -491,9 +491,19 @@ export async function getReviewerPoolForCongress(
     p_congress_id: congressId,
   });
   if (error) {
-    console.error('list_reviewer_pool error', error);
+    console.error('[reviewer-pool] list_reviewer_pool error', {
+      congressId,
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+    });
     return [];
   }
+  console.log('[reviewer-pool] list_reviewer_pool', {
+    congressId,
+    count: pool?.length ?? 0,
+  });
   if (!pool || pool.length === 0) return [];
 
   // Enriquecer con datos del directorio: matchear por email.
