@@ -12,24 +12,28 @@ import {
 import type {
   ReviewerPoolMember,
   AvailableReviewerCandidate,
+  PoolMemberOverview,
 } from '@/lib/queries';
 import type { Institution } from '@/lib/supabase/types';
 import type { CongressTrack } from '@/lib/queries';
 
 // =====================================================================
-// ReviewerPoolList: lista de quienes están en el pool, con edición inline
+// ReviewerPoolList: lista enriquecida — muestra por cada revisor sus
+// asignaciones actuales con estado, progreso y última actividad.
 // =====================================================================
 export function ReviewerPoolList({
   pool,
   congressId,
+  slug,
 }: {
-  pool: ReviewerPoolMember[];
+  pool: PoolMemberOverview[];
   congressId: string;
+  slug: string;
 }) {
   if (pool.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-[var(--border)] p-8 text-center text-sm text-[var(--muted)]">
-        Todavía no hay nadie en el pool. Agrega revisores desde la lista de abajo.
+        Todavía no hay nadie en el pool con esos filtros.
       </div>
     );
   }
@@ -37,7 +41,7 @@ export function ReviewerPoolList({
   return (
     <ul className="space-y-3">
       {pool.map((m) => (
-        <PoolRow key={m.user_id} member={m} congressId={congressId} />
+        <PoolRow key={m.user_id} member={m} congressId={congressId} slug={slug} />
       ))}
     </ul>
   );
@@ -46,9 +50,11 @@ export function ReviewerPoolList({
 function PoolRow({
   member,
   congressId,
+  slug,
 }: {
-  member: ReviewerPoolMember;
+  member: PoolMemberOverview;
   congressId: string;
+  slug: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -74,12 +80,7 @@ function PoolRow({
   }
 
   function onRemove() {
-    if (
-      !confirm(
-        `Quitar del pool a ${member.researcher?.full_name ?? member.email}?`
-      )
-    )
-      return;
+    if (!confirm(`Quitar del pool a ${member.full_name}?`)) return;
     setError(null);
     startTransition(async () => {
       const res = await removeFromReviewerPoolAction(member.user_id, congressId);
@@ -88,8 +89,8 @@ function PoolRow({
     });
   }
 
-  const displayName = member.researcher?.full_name ?? member.email;
-  const institution = member.researcher?.institution_name;
+  const displayName = member.full_name;
+  const institution = member.institution_name;
 
   if (editing) {
     return (
@@ -127,8 +128,8 @@ function PoolRow({
             </Field>
           </div>
           <Field
-            label="Temas de expertise"
-            hint="Separados por coma. Se usan para hacer match con las postulaciones."
+            label="Líneas temáticas que puede revisar"
+            hint="Separadas por coma. Se usan para hacer match con las postulaciones."
           >
             <input
               type="text"
@@ -137,14 +138,8 @@ function PoolRow({
               className={inputCls}
             />
           </Field>
-          <Field label="Metodologías de expertise" hint="Separadas por coma.">
-            <input
-              type="text"
-              name="methodologies"
-              defaultValue={member.methodologies.join(', ')}
-              className={inputCls}
-            />
-          </Field>
+          {/* Metodologías: se guardan como vacío en el update (decisión de producto). */}
+          <input type="hidden" name="methodologies" value="" />
 
           <div className="flex flex-wrap gap-2 pt-2">
             <button
@@ -183,11 +178,6 @@ function PoolRow({
                 Inactivo
               </span>
             )}
-            {member.researcher === null && (
-              <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs text-yellow-800">
-                Sin perfil en directorio
-              </span>
-            )}
           </div>
           <p className="text-xs text-[var(--muted)]">
             {member.email}
@@ -195,26 +185,75 @@ function PoolRow({
           </p>
 
           <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4">
-            <Stat label="Carga máx" value={`${member.max_load}`} />
             <Stat
-              label="Asignados"
+              label="Carga"
               value={`${member.assignments_count} / ${member.max_load}`}
+              warning={member.assignments_count > member.max_load}
             />
-            <Stat label="Temas" value={`${member.topics.length}`} />
-            <Stat label="Metodologías" value={`${member.methodologies.length}`} />
+            <Stat
+              label="Entregadas"
+              value={
+                member.assignments_count > 0
+                  ? `${member.reviews_completed} / ${member.assignments_count}`
+                  : '—'
+              }
+            />
+            <Stat label="Líneas que cubre" value={`${member.topics.length}`} />
+            <Stat
+              label="Última actividad"
+              value={
+                member.last_activity_at
+                  ? formatRelative(member.last_activity_at)
+                  : '—'
+              }
+            />
           </dl>
 
           {member.topics.length > 0 && (
             <p className="mt-2 text-xs text-[var(--muted)]">
-              <span className="font-medium">Temas: </span>
+              <span className="font-medium">Líneas: </span>
               {member.topics.join(', ')}
             </p>
           )}
-          {member.methodologies.length > 0 && (
-            <p className="mt-1 text-xs text-[var(--muted)]">
-              <span className="font-medium">Metodologías: </span>
-              {member.methodologies.join(', ')}
-            </p>
+
+          {/* Postulaciones asignadas — chips con estado y link al detalle */}
+          {member.assignments.length > 0 && (
+            <div className="mt-3">
+              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
+                Postulaciones asignadas
+              </p>
+              <ul className="flex flex-wrap gap-1">
+                {member.assignments.map((a) => {
+                  const state = a.review_submitted
+                    ? 'submitted'
+                    : a.assignment_status === 'declined'
+                      ? 'declined'
+                      : a.assignment_status === 'in_progress'
+                        ? 'in_progress'
+                        : 'pending';
+                  const style = ASSIGN_CHIP[state];
+                  return (
+                    <li key={a.submission_id}>
+                      <a
+                        href={`/admin/congresos/${slug}/postulaciones/${a.submission_id}`}
+                        title={`${style.label}${a.deadline_at ? ` · deadline ${formatDate(a.deadline_at)}` : ''}`}
+                        className={
+                          'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] hover:opacity-90 ' +
+                          style.bg +
+                          ' ' +
+                          style.text
+                        }
+                      >
+                        <span>{style.icon}</span>
+                        <span className="max-w-[10rem] truncate">
+                          {a.submission_title}
+                        </span>
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           )}
 
           {error && (
@@ -243,6 +282,57 @@ function PoolRow({
       </div>
     </li>
   );
+}
+
+// Estilos de los chips de asignación
+const ASSIGN_CHIP: Record<
+  'submitted' | 'in_progress' | 'pending' | 'declined',
+  { bg: string; text: string; icon: string; label: string }
+> = {
+  submitted: {
+    bg: 'bg-[var(--epa-green)]',
+    text: 'text-white',
+    icon: '✓',
+    label: 'review entregada',
+  },
+  in_progress: {
+    bg: 'bg-[var(--epa-blue)]',
+    text: 'text-white',
+    icon: '…',
+    label: 'en curso',
+  },
+  pending: {
+    bg: 'bg-[var(--accent)]',
+    text: 'text-[var(--foreground)]',
+    icon: '⏳',
+    label: 'pendiente',
+  },
+  declined: {
+    bg: 'bg-red-100',
+    text: 'text-red-800',
+    icon: '⏸',
+    label: 'declinada',
+  },
+};
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('es', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+function formatRelative(iso: string): string {
+  const then = new Date(iso).getTime();
+  const now = Date.now();
+  const diff = Math.max(0, now - then);
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  if (days === 0) return 'hoy';
+  if (days === 1) return 'ayer';
+  if (days < 30) return `hace ${days} d`;
+  const months = Math.floor(days / 30);
+  return `hace ${months} m`;
 }
 
 // =====================================================================
@@ -705,13 +795,28 @@ function Field({
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({
+  label,
+  value,
+  warning,
+}: {
+  label: string;
+  value: string;
+  warning?: boolean;
+}) {
   return (
     <div>
       <dt className="text-xs uppercase tracking-wide text-[var(--muted)]">
         {label}
       </dt>
-      <dd className="text-sm font-medium text-[var(--foreground)]">{value}</dd>
+      <dd
+        className={
+          'text-sm font-medium ' +
+          (warning ? 'text-red-700' : 'text-[var(--foreground)]')
+        }
+      >
+        {value}
+      </dd>
     </div>
   );
 }

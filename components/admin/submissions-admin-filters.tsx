@@ -4,13 +4,28 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useTransition } from 'react';
 import type { CongressTrack } from '@/lib/queries';
 
+interface Reviewer {
+  user_id: string;
+  full_name: string;
+}
+
 interface Props {
   tracks: CongressTrack[];
-  initial: { status: string; track: string; type: string; q: string };
+  reviewers: Reviewer[];
+  initial: {
+    status: string;
+    track: string;
+    type: string;
+    q: string;
+    assignments: string;
+    reviews: string;
+    reviewer: string;
+    decision: string;
+  };
 }
 
 // Filtros server-side: el form actualiza search params y la página re-renderiza.
-export function SubmissionsAdminFilters({ tracks, initial }: Props) {
+export function SubmissionsAdminFilters({ tracks, reviewers, initial }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [, startTransition] = useTransition();
@@ -34,7 +49,7 @@ export function SubmissionsAdminFilters({ tracks, initial }: Props) {
   return (
     <form
       onSubmit={onSubmit}
-      className="mb-6 grid grid-cols-1 gap-3 rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 sm:grid-cols-2 lg:grid-cols-5"
+      className="mb-6 grid grid-cols-1 gap-3 rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 sm:grid-cols-2 lg:grid-cols-4"
     >
       <label className="block">
         <span className="text-xs font-medium text-[var(--muted)]">Buscar</span>
@@ -78,7 +93,64 @@ export function SubmissionsAdminFilters({ tracks, initial }: Props) {
           <option value="symposium">Simposio</option>
         </select>
       </label>
-      <div className="flex items-end gap-2">
+
+      {/* Segunda fila: filtros del ciclo de revisión */}
+      <label className="block">
+        <span className="text-xs font-medium text-[var(--muted)]">Asignaciones</span>
+        <select
+          name="assignments"
+          defaultValue={initial.assignments}
+          className={inputCls}
+        >
+          <option value="">Todas</option>
+          <option value="none">Sin revisor</option>
+          <option value="incomplete">Incompletas (&lt; 2)</option>
+          <option value="complete">Completas (≥ 2)</option>
+        </select>
+      </label>
+      <label className="block">
+        <span className="text-xs font-medium text-[var(--muted)]">Reviews recibidas</span>
+        <select
+          name="reviews"
+          defaultValue={initial.reviews}
+          className={inputCls}
+        >
+          <option value="">Todas</option>
+          <option value="none">Ninguna entregada</option>
+          <option value="some">Algunas entregadas</option>
+          <option value="all">Todas entregadas</option>
+        </select>
+      </label>
+      <label className="block">
+        <span className="text-xs font-medium text-[var(--muted)]">Revisor específico</span>
+        <select
+          name="reviewer"
+          defaultValue={initial.reviewer}
+          className={inputCls}
+        >
+          <option value="">Cualquier revisor</option>
+          {reviewers.map((r) => (
+            <option key={r.user_id} value={r.user_id}>
+              {r.full_name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="block">
+        <span className="text-xs font-medium text-[var(--muted)]">Decisión del comité</span>
+        <select
+          name="decision"
+          defaultValue={initial.decision}
+          className={inputCls}
+        >
+          <option value="">Todas</option>
+          <option value="pending">Pendiente</option>
+          <option value="accepted">Aceptada</option>
+          <option value="rejected">Rechazada</option>
+        </select>
+      </label>
+
+      <div className="col-span-1 flex items-end gap-2 sm:col-span-2 lg:col-span-4">
         <button
           type="submit"
           className="rounded-md bg-[var(--epa-green)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--epa-green-dark)]"

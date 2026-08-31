@@ -1,9 +1,18 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
-import { getCongressBySlug, listSubmissionsForAdmin } from '@/lib/queries';
+import {
+  getCongressBySlug,
+  getReviewOverviewForCongress,
+  type SubmissionOverview,
+} from '@/lib/queries';
 import { SubmissionsAdminFilters } from '@/components/admin/submissions-admin-filters';
 import { SubmissionsAdminTable } from '@/components/admin/submissions-admin-table';
+
+// Fuerza dinámico: la vista cambia con cada assignment/review y no queremos
+// servir versiones cacheadas post-refresh.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -14,6 +23,8 @@ function pickString(v: string | string[] | undefined): string {
   if (Array.isArray(v)) return v[0] ?? '';
   return v ?? '';
 }
+
+const COMPLETE_TARGET = 2; // umbral para "asignaciones completas" (paridad con auto-asignar default)
 
 export default async function AdminSubmissionsPage({
   params,
@@ -44,8 +55,12 @@ export default async function AdminSubmissionsPage({
   const filterTrack = pickString(sp.track);
   const filterType = pickString(sp.type);
   const filterQ = pickString(sp.q).trim().toLowerCase();
+  const filterAssignments = pickString(sp.assignments);
+  const filterReviews = pickString(sp.reviews);
+  const filterReviewer = pickString(sp.reviewer);
+  const filterDecision = pickString(sp.decision);
 
-  const allRows = await listSubmissionsForAdmin(c.id);
+  const { submissions: allRows, poolMembers } = await getReviewOverviewForCongress(c.id);
 
   const filtered = allRows.filter((r) => {
     if (filterStatus && r.status !== filterStatus) return false;
@@ -54,25 +69,46 @@ export default async function AdminSubmissionsPage({
     if (filterQ) {
       const hay =
         r.title.toLowerCase().includes(filterQ) ||
-        (r.authors_names ?? '').toLowerCase().includes(filterQ);
+        r.authors_names.toLowerCase().includes(filterQ);
       if (!hay) return false;
+    }
+    if (filterAssignments) {
+      const n = r.assignments.length;
+      if (filterAssignments === 'none' && n !== 0) return false;
+      if (filterAssignments === 'incomplete' && n >= COMPLETE_TARGET) return false;
+      if (filterAssignments === 'complete' && n < COMPLETE_TARGET) return false;
+    }
+    if (filterReviews) {
+      const done = r.reviews_completed;
+      const total = r.assignments.length;
+      if (filterReviews === 'none' && done !== 0) return false;
+      if (filterReviews === 'some' && (done === 0 || done === total || total === 0))
+        return false;
+      if (filterReviews === 'all' && (total === 0 || done !== total)) return false;
+    }
+    if (filterReviewer) {
+      if (!r.assignments.some((a) => a.reviewer_user_id === filterReviewer))
+        return false;
+    }
+    if (filterDecision) {
+      if (filterDecision === 'pending' && r.decision_at !== null) return false;
+      if (filterDecision === 'accepted' && r.status !== 'accepted') return false;
+      if (filterDecision === 'rejected' && r.status !== 'rejected') return false;
     }
     return true;
   });
 
-  // Counts agregados sobre TODAS las rows (no las filtradas)
-  const totals = {
-    all: allRows.length,
-    draft: allRows.filter((r) => r.status === 'draft').length,
-    submitted: allRows.filter((r) => r.status === 'submitted').length,
-    under_review: allRows.filter((r) => r.status === 'under_review').length,
-    accepted: allRows.filter((r) => r.status === 'accepted').length,
-    rejected: allRows.filter((r) => r.status === 'rejected').length,
-    withdrawn: allRows.filter((r) => r.status === 'withdrawn').length,
-  };
+  // Conteos agregados sobre TODAS las rows
+  const totals = countByStatus(allRows);
+
+  // Reviewers para el dropdown de filtro (solo los que están activos y tienen nombre)
+  const reviewerOptions = poolMembers
+    .filter((m) => m.active)
+    .map((m) => ({ user_id: m.user_id, full_name: m.full_name }))
+    .sort((a, b) => a.full_name.localeCompare(b.full_name, 'es'));
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <div className="mb-6">
         <Link
           href={`/admin/congresos/${c.slug}`}
@@ -117,17 +153,38 @@ export default async function AdminSubmissionsPage({
 
       <SubmissionsAdminFilters
         tracks={c.tracks}
+        reviewers={reviewerOptions}
         initial={{
           status: filterStatus,
           track: filterTrack,
           type: filterType,
           q: filterQ,
+          assignments: filterAssignments,
+          reviews: filterReviews,
+          reviewer: filterReviewer,
+          decision: filterDecision,
         }}
       />
+
+      <p className="mb-3 text-xs text-[var(--muted)]">
+        Mostrando <strong>{filtered.length}</strong> de {allRows.length} postulaciones.
+      </p>
 
       <SubmissionsAdminTable rows={filtered} slug={c.slug} />
     </div>
   );
+}
+
+function countByStatus(rows: SubmissionOverview[]) {
+  return {
+    all: rows.length,
+    draft: rows.filter((r) => r.status === 'draft').length,
+    submitted: rows.filter((r) => r.status === 'submitted').length,
+    under_review: rows.filter((r) => r.status === 'under_review').length,
+    accepted: rows.filter((r) => r.status === 'accepted').length,
+    rejected: rows.filter((r) => r.status === 'rejected').length,
+    withdrawn: rows.filter((r) => r.status === 'withdrawn').length,
+  };
 }
 
 function StatCard({
