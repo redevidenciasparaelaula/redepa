@@ -156,6 +156,13 @@ export function SubmissionEditor({
     setError(null);
     setOkMsg(null);
     startTransition(async () => {
+      // Primero: guardar todo lo que está en el estado local (por si el
+      // usuario tocó campos y no apretó "Guardar cambios"). Sin esto,
+      // el submit se hace contra la DB con los valores viejos y falla
+      // validaciones (ej. "elige una línea temática" aunque el dropdown
+      // muestre una seleccionada en pantalla).
+      const saved = await save(false);
+      if (!saved.ok) return; // el error ya se seteó dentro de save()
       const res = await submitSubmissionAction(submission.id);
       if (!res.ok) setError(res.error);
       else {
