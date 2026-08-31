@@ -6,11 +6,14 @@ import {
   addToReviewerPoolAction,
   updateReviewerPoolEntryAction,
   removeFromReviewerPoolAction,
+  addManuallyToDirectoryAndPoolAction,
+  type ManualAddResult,
 } from '@/app/admin/congresos/[slug]/revisores/actions';
 import type {
   ReviewerPoolMember,
   AvailableReviewerCandidate,
 } from '@/lib/queries';
+import type { Institution } from '@/lib/supabase/types';
 
 // =====================================================================
 // ReviewerPoolList: lista de quienes están en el pool, con edición inline
@@ -397,6 +400,245 @@ function CandidateRow({
         </form>
       )}
     </li>
+  );
+}
+
+// =====================================================================
+// ManualAddToPoolForm: crea cuenta + directorio + pool en un solo paso.
+// Útil cuando queremos sumar a alguien que todavía no está registrado
+// en redepa.net (ej. una revisora invitada externamente).
+// =====================================================================
+export function ManualAddToPoolForm({
+  congressId,
+  institutions,
+}: {
+  congressId: string;
+  institutions: Pick<Institution, 'id' | 'name'>[];
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<ManualAddResult | null>(null);
+  const router = useRouter();
+
+  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    setError(null);
+    startTransition(async () => {
+      const res = await addManuallyToDirectoryAndPoolAction(
+        congressId,
+        formData
+      );
+      if (!res.ok) {
+        setError(res.error);
+        setResult(null);
+        return;
+      }
+      setResult(res);
+      // El form NO se resetea inmediatamente porque el super-admin
+      // necesita ver la contraseña temporal. Se limpia cuando cierra.
+      router.refresh();
+    });
+  }
+
+  function reset() {
+    setExpanded(false);
+    setError(null);
+    setResult(null);
+  }
+
+  if (!expanded && !result) {
+    return (
+      <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--surface)] p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-medium">Agregar manualmente</p>
+            <p className="mt-1 text-sm text-[var(--muted)]">
+              Suma a alguien que aún no está en redepa.net: se crea la cuenta,
+              se le agrega al directorio y se le suma al pool en un paso.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            className="shrink-0 rounded-md border border-[var(--epa-blue)] bg-white px-4 py-2 text-sm font-semibold text-[var(--epa-blue)] hover:bg-[var(--epa-blue)] hover:text-white"
+          >
+            + Agregar manualmente
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Vista de resultado: cuenta creada, mostrar contraseña
+  if (result && result.ok) {
+    return (
+      <div className="rounded-lg border-2 border-[var(--epa-green)] bg-white p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-[var(--epa-green-dark)]">
+              ✓ Listo
+            </p>
+            <ul className="mt-2 space-y-1 text-sm">
+              <li>
+                {result.createdAuthUser
+                  ? 'Cuenta de acceso creada.'
+                  : 'La persona ya tenía cuenta en redepa.net.'}
+              </li>
+              <li>
+                {result.createdResearcher
+                  ? 'Perfil agregado al directorio.'
+                  : 'La persona ya tenía perfil en el directorio.'}
+              </li>
+              <li>Agregada al pool del congreso.</li>
+            </ul>
+
+            {result.password && (
+              <div className="mt-4 rounded-md border border-[var(--epa-blue)] bg-[var(--accent)] p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--epa-blue)]">
+                  Contraseña temporal — cópiala ahora
+                </p>
+                <p className="mt-1 font-mono text-lg font-bold text-[var(--foreground)]">
+                  {result.password}
+                </p>
+                <p className="mt-1 text-xs text-[var(--muted)]">
+                  Comunícasela al revisor por un canal seguro. No vuelve a
+                  mostrarse. Puede cambiarla desde /me después de ingresar.
+                </p>
+              </div>
+            )}
+
+            {result.warning && (
+              <p className="mt-3 rounded-md border border-yellow-300 bg-yellow-50 p-2 text-sm text-yellow-800">
+                ⚠ {result.warning}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="mt-4 flex gap-2">
+          <button
+            type="button"
+            onClick={reset}
+            className="rounded-md bg-[var(--epa-green)] px-4 py-1.5 text-sm font-medium text-white hover:bg-[var(--epa-green-dark)]"
+          >
+            Agregar otra persona
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-[var(--epa-blue)] bg-white p-5">
+      <form onSubmit={onSubmit} className="space-y-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Nombre completo">
+            <input
+              type="text"
+              name="full_name"
+              required
+              className={inputCls}
+              placeholder="Ej. María González Pérez"
+            />
+          </Field>
+          <Field label="Email">
+            <input
+              type="email"
+              name="email"
+              required
+              className={inputCls}
+              placeholder="revisora@universidad.cl"
+            />
+          </Field>
+        </div>
+        <Field label="Institución" hint="Elige de la lista.">
+          <select name="institution_id" required className={inputCls} defaultValue="">
+            <option value="" disabled>
+              Elige una institución…
+            </option>
+            {institutions.map((i) => (
+              <option key={i.id} value={i.id}>
+                {i.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="País (opcional)">
+            <input
+              type="text"
+              name="country"
+              className={inputCls}
+              placeholder="Chile"
+            />
+          </Field>
+          <Field label="Ciudad (opcional)">
+            <input
+              type="text"
+              name="city"
+              className={inputCls}
+              placeholder="Santiago"
+            />
+          </Field>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <Field label="Carga máx (abstracts)">
+            <input
+              type="number"
+              name="max_load"
+              min={1}
+              max={50}
+              defaultValue={5}
+              required
+              className={inputCls}
+            />
+          </Field>
+        </div>
+        <Field
+          label="Temas de expertise (opcional)"
+          hint="Separados por coma. Se usan para hacer match con las postulaciones."
+        >
+          <input
+            type="text"
+            name="topics"
+            className={inputCls}
+            placeholder="ej. lectura, evaluación formativa"
+          />
+        </Field>
+        <Field label="Metodologías (opcional)" hint="Separadas por coma.">
+          <input
+            type="text"
+            name="methodologies"
+            className={inputCls}
+            placeholder="ej. cuantitativa, cualitativa"
+          />
+        </Field>
+
+        <div className="flex flex-wrap gap-2 pt-2">
+          <button
+            type="submit"
+            disabled={isPending}
+            className="rounded-md bg-[var(--epa-green)] px-4 py-1.5 text-sm font-medium text-white hover:bg-[var(--epa-green-dark)] disabled:opacity-50"
+          >
+            {isPending ? 'Creando…' : 'Crear y agregar al pool'}
+          </button>
+          <button
+            type="button"
+            onClick={reset}
+            disabled={isPending}
+            className="rounded-md border border-[var(--border)] bg-white px-4 py-1.5 text-sm hover:bg-[var(--accent)] disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+        </div>
+        {error && (
+          <p className="text-sm text-red-600" role="alert">
+            {error}
+          </p>
+        )}
+      </form>
+    </div>
   );
 }
 

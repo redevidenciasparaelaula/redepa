@@ -5,8 +5,13 @@ import {
   getCongressBySlug,
   getReviewerPoolForCongress,
   getAvailableReviewersNotInPool,
+  listInstitutions,
 } from '@/lib/queries';
-import { ReviewerPoolList, AvailableReviewersList } from '@/components/admin/reviewer-pool-ui';
+import {
+  ReviewerPoolList,
+  AvailableReviewersList,
+  ManualAddToPoolForm,
+} from '@/components/admin/reviewer-pool-ui';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -33,9 +38,10 @@ export default async function ReviewerPoolPage({ params }: Props) {
   const c = await getCongressBySlug(slug);
   if (!c) notFound();
 
-  const [pool, available] = await Promise.all([
+  const [pool, available, institutions] = await Promise.all([
     getReviewerPoolForCongress(c.id),
     getAvailableReviewersNotInPool(c.id),
+    listInstitutions(),
   ]);
 
   const activeInPool = pool.filter((p) => p.active).length;
@@ -77,6 +83,12 @@ export default async function ReviewerPoolPage({ params }: Props) {
       <section className="mb-10">
         <h2 className="mb-3 text-lg font-semibold">En el pool ({pool.length})</h2>
         <ReviewerPoolList pool={pool} congressId={c.id} />
+      </section>
+
+      {/* Agregar manualmente (crea cuenta + directorio + pool en un paso) */}
+      <section className="mb-10">
+        <h2 className="mb-3 text-lg font-semibold">Agregar manualmente</h2>
+        <ManualAddToPoolForm congressId={c.id} institutions={institutions} />
       </section>
 
       {/* Investigadores disponibles, aún no en pool */}
