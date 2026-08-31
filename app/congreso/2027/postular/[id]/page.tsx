@@ -9,6 +9,12 @@ import {
 import { SubmissionEditor } from '@/components/submission-editor';
 import { AuthorDecisionView } from '@/components/author-decision-view';
 
+// Fuerza a Next a NO cachear esta ruta bajo ningún escenario. La página
+// del editor tiene que mostrar SIEMPRE los últimos datos del servidor
+// (autores, cambios recientes) sin depender de caché del router.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface Props {
   params: Promise<{ id: string }>;
 }
