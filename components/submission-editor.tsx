@@ -65,28 +65,75 @@ export function SubmissionEditor({
   const router = useRouter();
   const methodologies = methodologiesAlphabetical('es');
 
-  // Estado local solo para el contador de caracteres en vivo.
-  const [counts, setCounts] = useState<Record<string, number>>(() =>
-    Object.fromEntries(
-      ABSTRACT_FIELDS.map((f) => [
-        f.name,
-        ((submission[f.name] as string) ?? '').length,
-      ])
-    )
+  // TODOS los campos del abstract son CONTROLADOS (viven en useState).
+  // Motivo: el editor de autores hace router.refresh() al agregar/reordenar,
+  // y con defaultValue el texto no guardado se perdería. Con estado local,
+  // el usuario nunca pierde lo que está escribiendo.
+  const [title, setTitle] = useState<string>(
+    submission.title === 'Sin título' ? '' : submission.title
   );
+  const [trackId, setTrackId] = useState<string>(submission.track_id ?? '');
+  const [subType, setSubType] = useState<'oral' | 'poster' | 'symposium'>(
+    submission.type
+  );
+  const [absContext, setAbsContext] = useState<string>(submission.abs_context);
+  const [absFramework, setAbsFramework] = useState<string>(submission.abs_framework);
+  const [absMethods, setAbsMethods] = useState<string>(submission.abs_methods);
+  const [absResults, setAbsResults] = useState<string>(submission.abs_results);
+  const [absDiscussion, setAbsDiscussion] = useState<string>(submission.abs_discussion);
+  const [keywordsInput, setKeywordsInput] = useState<string>(
+    submission.keywords.join(', ')
+  );
+  const [selectedMethodologies, setSelectedMethodologies] = useState<string[]>(
+    submission.methodologies
+  );
+
+  // Índice por nombre para leer el valor actual dentro del render
+  const absValues: Record<string, [string, (v: string) => void]> = {
+    abs_context: [absContext, setAbsContext],
+    abs_framework: [absFramework, setAbsFramework],
+    abs_methods: [absMethods, setAbsMethods],
+    abs_results: [absResults, setAbsResults],
+    abs_discussion: [absDiscussion, setAbsDiscussion],
+  };
 
   function onSave(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+    e.stopPropagation();
     setError(null);
     setOkMsg(null);
-    startTransition(async () => {
-      const res = await updateSubmissionAction(submission.id, formData);
-      if (!res.ok) setError(res.error);
-      else {
-        setOkMsg('Guardado.');
-        router.refresh();
+    save();
+  }
+
+  // Función pura que arma el FormData desde el estado local y guarda.
+  // Se usa desde onSave y también desde SubmissionAuthorsEditor antes de
+  // agregar/reordenar autores, para no perder texto no guardado.
+  function save(): Promise<{ ok: boolean }> {
+    return new Promise((resolve) => {
+      const formData = new FormData();
+      formData.set('title', title);
+      formData.set('track_id', trackId);
+      formData.set('type', subType);
+      formData.set('abs_context', absContext);
+      formData.set('abs_framework', absFramework);
+      formData.set('abs_methods', absMethods);
+      formData.set('abs_results', absResults);
+      formData.set('abs_discussion', absDiscussion);
+      formData.set('keywords', keywordsInput);
+      for (const m of selectedMethodologies) {
+        formData.append('methodologies', m);
       }
+      startTransition(async () => {
+        const res = await updateSubmissionAction(submission.id, formData);
+        if (!res.ok) {
+          setError(res.error);
+          resolve({ ok: false });
+        } else {
+          setOkMsg('Guardado.');
+          router.refresh();
+          resolve({ ok: true });
+        }
+      });
     });
   }
 
@@ -177,7 +224,8 @@ export function SubmissionEditor({
           <input
             type="text"
             name="title"
-            defaultValue={submission.title === 'Sin título' ? '' : submission.title}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             required
             maxLength={300}
             disabled={readOnly}
@@ -190,7 +238,8 @@ export function SubmissionEditor({
           <Field label="Línea temática" required>
             <select
               name="track_id"
-              defaultValue={submission.track_id ?? ''}
+              value={trackId}
+              onChange={(e) => setTrackId(e.target.value)}
               required
               disabled={readOnly}
               className={inputCls}
@@ -206,7 +255,10 @@ export function SubmissionEditor({
           <Field label="Tipo de presentación">
             <select
               name="type"
-              defaultValue={submission.type}
+              value={subType}
+              onChange={(e) =>
+                setSubType(e.target.value as 'oral' | 'poster' | 'symposium')
+              }
               disabled={readOnly}
               className={inputCls}
             >
@@ -227,8 +279,8 @@ export function SubmissionEditor({
       >
         <div className="space-y-4">
           {ABSTRACT_FIELDS.map((f) => {
-            const value = (submission[f.name] as string) ?? '';
-            const current = counts[f.name] ?? value.length;
+            const [value, setValue] = absValues[f.name as string];
+            const current = value.length;
             const over = current > SOFT_LIMIT;
             return (
               <Field
@@ -239,18 +291,11 @@ export function SubmissionEditor({
               >
                 <textarea
                   name={f.name as string}
-                  defaultValue={value}
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
                   rows={4}
                   maxLength={MAX_ABSTRACT_LEN}
                   disabled={readOnly}
-                  onChange={(e) => {
-                    // Leer la longitud SÍNCRONO antes de meterla al updater,
-                    // por si el evento sintético se recicla antes de que corra
-                    // el setState callback.
-                    const len = e.currentTarget.value.length;
-                    const key = f.name as string;
-                    setCounts((c) => ({ ...c, [key]: len }));
-                  }}
                   className={inputCls}
                 />
                 <p
@@ -280,7 +325,8 @@ export function SubmissionEditor({
           <input
             type="text"
             name="keywords"
-            defaultValue={submission.keywords.join(', ')}
+            value={keywordsInput}
+            onChange={(e) => setKeywordsInput(e.target.value)}
             disabled={readOnly}
             className={inputCls}
             placeholder="ej. lectura, primaria, retroalimentación formativa"
@@ -294,7 +340,13 @@ export function SubmissionEditor({
           <select
             name="methodologies"
             multiple
-            defaultValue={submission.methodologies}
+            value={selectedMethodologies}
+            onChange={(e) => {
+              const values = Array.from(e.target.selectedOptions).map(
+                (o) => o.value
+              );
+              setSelectedMethodologies(values);
+            }}
             disabled={readOnly}
             size={6}
             className={inputCls + ' h-auto'}
@@ -320,6 +372,7 @@ export function SubmissionEditor({
           submissionId={submission.id}
           authors={submission.authors}
           readOnly={readOnly}
+          onBeforeMutate={save}
         />
       </Section>
 

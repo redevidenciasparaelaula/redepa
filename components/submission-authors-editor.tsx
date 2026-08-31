@@ -15,12 +15,17 @@ interface Props {
   submissionId: string;
   authors: SubmissionAuthorEnriched[];
   readOnly: boolean;
+  // Callback opcional que corre ANTES de cualquier mutación de autores.
+  // Sirve para que el editor padre guarde primero los campos que aún no
+  // fueron persistidos y no se pierdan al router.refresh().
+  onBeforeMutate?: () => Promise<{ ok: boolean }>;
 }
 
 export function SubmissionAuthorsEditor({
   submissionId,
   authors,
   readOnly,
+  onBeforeMutate,
 }: Props) {
   const [mode, setMode] = useState<'idle' | 'directory' | 'external'>('idle');
   const [reorderPending, startReorder] = useTransition();
@@ -40,6 +45,14 @@ export function SubmissionAuthorsEditor({
     [newOrder[idx], newOrder[swap]] = [newOrder[swap], newOrder[idx]];
     setReorderErr(null);
     startReorder(async () => {
+      // Guardar primero el resto del formulario si el padre lo pidió
+      if (onBeforeMutate) {
+        const saveRes = await onBeforeMutate();
+        if (!saveRes.ok) {
+          setReorderErr('No se pudieron guardar los cambios previos.');
+          return;
+        }
+      }
       const res = await reorderAuthorsAction(
         submissionId,
         newOrder.map((a) => a.id)
@@ -104,6 +117,7 @@ export function SubmissionAuthorsEditor({
             <AddByDirectoryForm
               submissionId={submissionId}
               onDone={() => setMode('idle')}
+              onBeforeMutate={onBeforeMutate}
             />
           )}
 
@@ -111,6 +125,7 @@ export function SubmissionAuthorsEditor({
             <AddExternalForm
               submissionId={submissionId}
               onDone={() => setMode('idle')}
+              onBeforeMutate={onBeforeMutate}
             />
           )}
         </div>
@@ -262,25 +277,42 @@ function AuthorRow({
 }
 
 // =====================================================================
-// Formulario: agregar autor del directorio (por email)
+// Panel: agregar autor del directorio (por email)
+// Nota: es un <div> (no <form>) para NO anidarse dentro del <form> padre.
+// Los <form> anidados son HTML inválido y causan que se dispare el submit
+// del formulario equivocado (borrando datos no guardados).
 // =====================================================================
 function AddByDirectoryForm({
   submissionId,
   onDone,
+  onBeforeMutate,
 }: {
   submissionId: string;
   onDone: () => void;
+  onBeforeMutate?: () => Promise<{ ok: boolean }>;
 }) {
+  const [email, setEmail] = useState('');
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+  function submit() {
+    if (!email.trim()) {
+      setError('Email requerido.');
+      return;
+    }
     setError(null);
     startTransition(async () => {
-      const res = await addAuthorByEmailAction(submissionId, formData);
+      if (onBeforeMutate) {
+        const saveRes = await onBeforeMutate();
+        if (!saveRes.ok) {
+          setError('No se pudieron guardar los cambios previos.');
+          return;
+        }
+      }
+      const fd = new FormData();
+      fd.set('email', email.trim());
+      const res = await addAuthorByEmailAction(submissionId, fd);
       if (!res.ok) setError(res.error);
       else {
         onDone();
@@ -290,20 +322,24 @@ function AddByDirectoryForm({
   }
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className="space-y-3 rounded-md border border-[var(--border)] bg-white p-4"
-    >
+    <div className="space-y-3 rounded-md border border-[var(--border)] bg-white p-4">
       <p className="text-sm font-medium">Agregar co-autora/o del directorio</p>
       <p className="text-xs text-[var(--muted)]">
         Si la persona tiene cuenta en redepa.net, se autocompletan nombre e
-        institución desde su perfil. Si no aparece, usa "Agregar autor externo".
+        institución desde su perfil. Si no aparece, usa &quot;Agregar autor externo&quot;.
       </p>
       <label className="block">
         <span className="text-sm font-medium">Email</span>
         <input
           type="email"
-          name="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              submit();
+            }
+          }}
           required
           placeholder="ejemplo@universidad.cl"
           className={inputCls}
@@ -311,11 +347,12 @@ function AddByDirectoryForm({
       </label>
       <div className="flex flex-wrap gap-2">
         <button
-          type="submit"
+          type="button"
+          onClick={submit}
           disabled={isPending}
           className="rounded-md bg-[var(--epa-green)] px-4 py-1.5 text-sm font-medium text-white hover:bg-[var(--epa-green-dark)] disabled:opacity-50"
         >
-          Agregar
+          {isPending ? 'Agregando…' : 'Agregar'}
         </button>
         <button
           type="button"
@@ -330,7 +367,7 @@ function AddByDirectoryForm({
           {error}
         </p>
       )}
-    </form>
+    </div>
   );
 }
 
@@ -340,20 +377,36 @@ function AddByDirectoryForm({
 function AddExternalForm({
   submissionId,
   onDone,
+  onBeforeMutate,
 }: {
   submissionId: string;
   onDone: () => void;
+  onBeforeMutate?: () => Promise<{ ok: boolean }>;
 }) {
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [institutionName, setInstitutionName] = useState('');
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+  function submit() {
+    if (!fullName.trim()) { setError('Nombre requerido.'); return; }
+    if (!email.trim()) { setError('Email requerido.'); return; }
     setError(null);
     startTransition(async () => {
-      const res = await addExternalAuthorAction(submissionId, formData);
+      if (onBeforeMutate) {
+        const saveRes = await onBeforeMutate();
+        if (!saveRes.ok) {
+          setError('No se pudieron guardar los cambios previos.');
+          return;
+        }
+      }
+      const fd = new FormData();
+      fd.set('full_name', fullName.trim());
+      fd.set('email', email.trim());
+      if (institutionName.trim()) fd.set('institution_name', institutionName.trim());
+      const res = await addExternalAuthorAction(submissionId, fd);
       if (!res.ok) setError(res.error);
       else {
         onDone();
@@ -363,10 +416,7 @@ function AddExternalForm({
   }
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className="space-y-3 rounded-md border border-[var(--border)] bg-white p-4"
-    >
+    <div className="space-y-3 rounded-md border border-[var(--border)] bg-white p-4">
       <p className="text-sm font-medium">Agregar co-autora/o externo</p>
       <p className="text-xs text-[var(--muted)]">
         Si la persona no está en redepa.net. Solo necesitamos nombre, email e
@@ -376,7 +426,8 @@ function AddExternalForm({
         <span className="text-sm font-medium">Nombre completo</span>
         <input
           type="text"
-          name="full_name"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
           required
           maxLength={200}
           className={inputCls}
@@ -386,7 +437,8 @@ function AddExternalForm({
         <span className="text-sm font-medium">Email</span>
         <input
           type="email"
-          name="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           required
           maxLength={200}
           className={inputCls}
@@ -396,18 +448,20 @@ function AddExternalForm({
         <span className="text-sm font-medium">Institución (opcional)</span>
         <input
           type="text"
-          name="institution_name"
+          value={institutionName}
+          onChange={(e) => setInstitutionName(e.target.value)}
           maxLength={300}
           className={inputCls}
         />
       </label>
       <div className="flex flex-wrap gap-2">
         <button
-          type="submit"
+          type="button"
+          onClick={submit}
           disabled={isPending}
           className="rounded-md bg-[var(--epa-green)] px-4 py-1.5 text-sm font-medium text-white hover:bg-[var(--epa-green-dark)] disabled:opacity-50"
         >
-          Agregar
+          {isPending ? 'Agregando…' : 'Agregar'}
         </button>
         <button
           type="button"
@@ -422,7 +476,7 @@ function AddExternalForm({
           {error}
         </p>
       )}
-    </form>
+    </div>
   );
 }
 
