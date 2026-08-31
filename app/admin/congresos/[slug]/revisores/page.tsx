@@ -13,6 +13,11 @@ import {
   ManualAddToPoolForm,
 } from '@/components/admin/reviewer-pool-ui';
 
+// Forzar renderizado dinámico: el pool cambia con cada add/remove y no
+// queremos servir versiones cacheadas después de router.refresh().
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface Props {
   params: Promise<{ slug: string }>;
 }

@@ -267,6 +267,31 @@ export async function addManuallyToDirectoryAndPoolAction(
       warning: 'Esta persona ya estaba activa en el pool del congreso.',
     };
   }
+  if (poolResult === 'no_user') {
+    // La cuenta la acabamos de crear con admin client; teóricamente no
+    // debería pasar. Puede ocurrir si algún proxy/caché intermedio
+    // demora en propagar la creación. Devolvemos warning explícito
+    // para no ocultar el problema.
+    return {
+      ok: true,
+      createdAuthUser,
+      createdResearcher,
+      password,
+      warning:
+        'La cuenta se creó y el perfil está en el directorio, pero la RPC del pool devolvió "no_user". Actualiza esta página en unos segundos y agrégala manualmente desde la lista de disponibles.',
+    };
+  }
+  if (poolResult !== 'ok') {
+    return {
+      ok: true,
+      createdAuthUser,
+      createdResearcher,
+      password,
+      warning: `La RPC del pool devolvió un resultado inesperado: "${String(
+        poolResult
+      )}". Verificá el pool.`,
+    };
+  }
 
   revalidatePath(`/admin/congresos/[slug]/revisores`, 'page');
   revalidatePath('/admin');
