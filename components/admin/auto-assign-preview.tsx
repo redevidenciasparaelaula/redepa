@@ -257,6 +257,11 @@ export function AutoAssignPreview({
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium">
                         {row.reviewer_name}
+                        {row.institution_conflict && (
+                          <span className="ml-2 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-normal text-yellow-800">
+                            ⚠ misma institución
+                          </span>
+                        )}
                       </p>
                       <p className="text-xs text-[var(--muted)]">
                         {row.reviewer_email} · {row.match_reason}

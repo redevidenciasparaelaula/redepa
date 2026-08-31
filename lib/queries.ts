@@ -841,7 +841,10 @@ export async function loadAutoAssignData(congressId: string): Promise<{
 
   const submissionIds = submissionRows.map((s) => s.id);
 
-  // 2) Asignaciones existentes + autores en paralelo
+  // 2) Asignaciones existentes + autores (con institución) en paralelo.
+  //    Los autores traen institución de dos fuentes:
+  //      - external_institution_name: cuando el autor es externo, escrito a mano.
+  //      - institutions(name) vía institution_id: cuando está enlazado a una del directorio.
   const [assignmentsRes, authorsRes] = await Promise.all([
     supabase
       .from('review_assignments')
@@ -849,7 +852,9 @@ export async function loadAutoAssignData(congressId: string): Promise<{
       .in('submission_id', submissionIds),
     supabase
       .from('submission_authors')
-      .select('submission_id, user_id')
+      .select(
+        'submission_id, user_id, external_institution_name, institutions(name)'
+      )
       .in('submission_id', submissionIds),
   ]);
 
@@ -861,11 +866,22 @@ export async function loadAutoAssignData(congressId: string): Promise<{
   }
 
   const authorsBySub = new Map<string, string[]>();
-  for (const a of authorsRes.data ?? []) {
-    if (!a.user_id) continue; // autores externos no tienen user_id
-    const list = authorsBySub.get(a.submission_id) ?? [];
-    list.push(a.user_id);
-    authorsBySub.set(a.submission_id, list);
+  const authorInstitutionsBySub = new Map<string, (string | null)[]>();
+  for (const a of (authorsRes.data ?? []) as unknown as {
+    submission_id: string;
+    user_id: string | null;
+    external_institution_name: string | null;
+    institutions: { name: string } | null;
+  }[]) {
+    if (a.user_id) {
+      const list = authorsBySub.get(a.submission_id) ?? [];
+      list.push(a.user_id);
+      authorsBySub.set(a.submission_id, list);
+    }
+    const instName = a.external_institution_name ?? a.institutions?.name ?? null;
+    const instList = authorInstitutionsBySub.get(a.submission_id) ?? [];
+    instList.push(instName);
+    authorInstitutionsBySub.set(a.submission_id, instList);
   }
 
   return {
@@ -879,6 +895,7 @@ export async function loadAutoAssignData(congressId: string): Promise<{
       keywords: s.keywords ?? [],
       existing_reviewer_ids: assignmentsBySub.get(s.id) ?? [],
       author_user_ids: authorsBySub.get(s.id) ?? [],
+      author_institutions: authorInstitutionsBySub.get(s.id) ?? [],
     })),
   };
 }
@@ -892,6 +909,7 @@ function toAutoAssignPoolMember(m: ReviewerPoolMember): AutoAssignPoolMember {
     max_load: m.max_load,
     current_load: m.assignments_count,
     topics: m.topics,
+    institution_name: m.researcher?.institution_name ?? null,
   };
 }
 

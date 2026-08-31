@@ -1,3 +1,5 @@
+import { findInstitutionMatch } from './institution-match';
+
 // Algoritmo puro de auto-asignación de revisores a postulaciones.
 //
 // Recibe los datos ya cargados (pool + submissions + asignaciones actuales
@@ -27,6 +29,7 @@ export interface AutoAssignPoolMember {
   max_load: number;
   current_load: number; // asignaciones vigentes ANTES de esta corrida
   topics: string[];     // nombres de líneas temáticas del congreso
+  institution_name: string | null; // para chequeo de conflicto institucional (fuzzy)
 }
 
 export interface AutoAssignSubmission {
@@ -44,6 +47,7 @@ export interface AutoAssignSubmission {
   keywords: string[];
   existing_reviewer_ids: string[];
   author_user_ids: string[]; // user_ids de autores (para conflicto)
+  author_institutions: (string | null)[]; // nombres de instituciones de los autores (fuzzy)
 }
 
 export interface AutoAssignConfig {
@@ -58,6 +62,8 @@ export interface ProposedAssignment {
   reviewer_name: string;
   match_score: number;         // 0..∞ (más alto = mejor match)
   match_reason: string;        // texto breve para mostrar en el preview
+  institution_conflict: boolean;         // ⚠ misma institución (fuzzy) que algún autor
+  institution_conflict_note: string | null; // ej. "misma institución que Universidad del Desarrollo"
 }
 
 export interface AutoAssignSummary {
@@ -125,7 +131,7 @@ export function computeAutoAssignments(input: {
 
     const candidates = input.pool
       .filter((p) => p.active)
-      .filter((p) => !authorSet.has(p.user_id)) // sin conflicto de interés
+      .filter((p) => !authorSet.has(p.user_id)) // sin conflicto de interés (autor)
       .filter((p) => !already.has(p.user_id))    // sin duplicar
       .filter((p) => (load.get(p.user_id) ?? 0) < p.max_load) // capacidad
       .map((p) => {
@@ -133,19 +139,37 @@ export function computeAutoAssignments(input: {
         const trackMatch = trackNameLc && topicsLc.includes(trackNameLc);
         const kwMatches = topicsLc.filter((t) => keywordSet.has(t));
 
+        // Chequeo fuzzy de institución vs autores.
+        const instMatchedAuthorInst = findInstitutionMatch(
+          p.institution_name,
+          sub.author_institutions
+        );
+        const institutionConflict = instMatchedAuthorInst !== null;
+
         // Track match pesa mucho más que match por keyword.
-        const score = (trackMatch ? 10 : 0) + kwMatches.length;
+        // Institución compartida penaliza fuerte (pero no excluye:
+        // si es el único match posible, sigue siendo elegible).
+        const score =
+          (trackMatch ? 10 : 0) +
+          kwMatches.length +
+          (institutionConflict ? -5 : 0);
 
         const reasons: string[] = [];
         if (trackMatch) reasons.push(`revisa "${sub.track_name}"`);
         if (kwMatches.length > 0)
           reasons.push(`keywords: ${kwMatches.slice(0, 2).join(', ')}`);
         if (reasons.length === 0) reasons.push('sin match temático');
+        if (institutionConflict)
+          reasons.push(`⚠ misma institución que autor (${instMatchedAuthorInst})`);
 
         return {
           member: p,
           score,
           reason: reasons.join(' · '),
+          institution_conflict: institutionConflict,
+          institution_conflict_note: institutionConflict
+            ? `misma institución que autor (${instMatchedAuthorInst})`
+            : null,
         };
       })
       // Orden:
@@ -177,6 +201,8 @@ export function computeAutoAssignments(input: {
         reviewer_name: c.member.full_name,
         match_score: c.score,
         match_reason: c.reason,
+        institution_conflict: c.institution_conflict,
+        institution_conflict_note: c.institution_conflict_note,
       });
       load.set(c.member.user_id, (load.get(c.member.user_id) ?? 0) + 1);
       filled++;
