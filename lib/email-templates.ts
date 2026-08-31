@@ -143,6 +143,71 @@ export function reviewerAssignedTemplate(args: {
 }
 
 // =====================================================================
+// 5) Postulación recibida — al autor/a principal después de enviar
+// =====================================================================
+export function submissionReceivedTemplate(args: {
+  congressName: string;
+  year: number;
+  authorName: string | null;
+  submissionId: string;
+  submissionTitle: string;
+  trackName: string | null;
+  type: 'oral' | 'poster' | 'symposium';
+  keywords: string[];
+  authorsNames: string[];       // en orden de display_order
+  notificationDate: string | null; // ISO string
+}): { subject: string; html: string } {
+  const url = `${BASE_URL}/congreso/${args.year}/postular/${args.submissionId}`;
+  const greeting = args.authorName ? `Hola ${args.authorName}` : 'Hola';
+  const typeLabel =
+    args.type === 'oral'
+      ? 'Ponencia oral'
+      : args.type === 'poster'
+        ? 'Póster'
+        : 'Simposio';
+  const notif = args.notificationDate
+    ? new Date(args.notificationDate).toLocaleDateString('es', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : null;
+
+  const body = `
+    <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">${escapeHtml(greeting)},</p>
+    <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">
+      Recibimos tu postulación al <strong>${escapeHtml(args.congressName)}</strong>. Gracias por participar.
+    </p>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0;background:#fafaf9;border:1px solid #e7e5e4;border-radius:8px;width:100%">
+      <tr><td style="padding:16px">
+        <p style="margin:0 0 6px 0;font-size:13px;color:#78716c">Título</p>
+        <p style="margin:0 0 12px 0;font-size:15px;font-weight:600">${escapeHtml(args.submissionTitle)}</p>
+        ${args.trackName ? `<p style="margin:0 0 6px 0;font-size:13px;color:#78716c">Línea temática</p><p style="margin:0 0 12px 0;font-size:14px">${escapeHtml(args.trackName)}</p>` : ''}
+        <p style="margin:0 0 6px 0;font-size:13px;color:#78716c">Formato</p>
+        <p style="margin:0 0 12px 0;font-size:14px">${escapeHtml(typeLabel)}</p>
+        ${args.authorsNames.length > 0 ? `<p style="margin:0 0 6px 0;font-size:13px;color:#78716c">Autoras y autores</p><p style="margin:0 0 12px 0;font-size:14px">${escapeHtml(args.authorsNames.join(', '))}</p>` : ''}
+        ${args.keywords.length > 0 ? `<p style="margin:0 0 6px 0;font-size:13px;color:#78716c">Palabras clave</p><p style="margin:0;font-size:14px">${escapeHtml(args.keywords.join(', '))}</p>` : ''}
+      </td></tr>
+    </table>
+    <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">
+      A partir de ahora tu propuesta entra a revisión doble ciega por pares.
+      ${notif ? `Te avisaremos por este correo la decisión del comité el <strong>${escapeHtml(notif)}</strong>.` : 'Te avisaremos por este correo cuando el comité emita la decisión.'}
+    </p>
+    <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">
+      Mientras la convocatoria siga abierta puedes editar tu postulación las veces que necesites.
+    </p>
+    ${ctaButton('Ver mi postulación', url)}
+    <p style="margin:0;font-size:13px;color:#78716c;line-height:1.5">
+      Este correo es una confirmación automática de recepción. Guardalo como comprobante.
+    </p>`;
+
+  return {
+    subject: `Confirmación de postulación — ${args.congressName}`,
+    html: shell(`Recibimos tu postulación`, body),
+  };
+}
+
+// =====================================================================
 // 4) Recordatorio de perfil incompleto — a investigadores del directorio
 // =====================================================================
 export function incompleteProfileReminderTemplate(args: {

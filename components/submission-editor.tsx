@@ -7,6 +7,7 @@ import {
   submitSubmissionAction,
   withdrawSubmissionAction,
   deleteSubmissionAction,
+  type SubmissionSubmitData,
 } from '@/app/congreso/2027/postular/actions';
 import type { CongressTrack, FullSubmission } from '@/lib/queries';
 import { methodologiesAlphabetical } from '@/lib/methodologies';
@@ -58,6 +59,9 @@ export function SubmissionEditor({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [okMsg, setOkMsg] = useState<string | null>(null);
+  const [submittedInfo, setSubmittedInfo] = useState<SubmissionSubmitData | null>(
+    null
+  );
   const router = useRouter();
   const methodologies = methodologiesAlphabetical('es');
 
@@ -99,8 +103,10 @@ export function SubmissionEditor({
       const res = await submitSubmissionAction(submission.id);
       if (!res.ok) setError(res.error);
       else {
-        setOkMsg('Postulación enviada.');
+        setSubmittedInfo(res.data);
         router.refresh();
+        // Sube al inicio para que el banner sea lo primero que se vea
+        if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     });
   }
@@ -136,6 +142,13 @@ export function SubmissionEditor({
 
   return (
     <form onSubmit={onSave} className="space-y-8">
+      {submittedInfo && (
+        <SubmittedBanner
+          info={submittedInfo}
+          onDismiss={() => setSubmittedInfo(null)}
+        />
+      )}
+
       <header>
         <p className="eyebrow">Postulación · Congreso EPA 2027</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight">
@@ -298,6 +311,19 @@ export function SubmissionEditor({
         </Field>
       </Section>
 
+      {/* Autores: editor aparte (no envía al form de arriba) */}
+      <Section
+        title="Autoras y autores"
+        sub="Los datos de autoría se separan del abstract: NUNCA son visibles para los pares revisores (doble ciega). El primer autor aparece como principal."
+      >
+        <SubmissionAuthorsEditor
+          submissionId={submission.id}
+          authors={submission.authors}
+          readOnly={readOnly}
+        />
+      </Section>
+
+      {/* Botones de acción: al final, después de todo */}
       {!readOnly && (
         <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center gap-3 border-t border-[var(--border)] bg-white px-4 py-3 sm:mx-0 sm:rounded-md sm:border">
           <button
@@ -353,19 +379,67 @@ export function SubmissionEditor({
           )}
         </div>
       )}
-
-      {/* Autores: editor aparte (no envía al form de arriba) */}
-      <Section
-        title="Autoras y autores"
-        sub="Los datos de autoría se separan del abstract: NUNCA son visibles para los pares revisores (doble ciega)."
-      >
-        <SubmissionAuthorsEditor
-          submissionId={submission.id}
-          authors={submission.authors}
-          readOnly={readOnly}
-        />
-      </Section>
     </form>
+  );
+}
+
+// =====================================================================
+// Banner de confirmación después de enviar
+// =====================================================================
+function SubmittedBanner({
+  info,
+  onDismiss,
+}: {
+  info: SubmissionSubmitData;
+  onDismiss: () => void;
+}) {
+  const notif = info.notificationDate
+    ? new Date(info.notificationDate).toLocaleDateString('es', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : null;
+
+  return (
+    <div
+      role="status"
+      className="rounded-2xl border-2 border-[var(--epa-green)] bg-white p-6 sm:p-8"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="eyebrow !text-[var(--epa-green-dark)]">
+            ✓ Postulación enviada
+          </p>
+          <h2 className="mt-2 text-2xl font-bold tracking-tight text-[var(--epa-green-dark)] sm:text-3xl">
+            ¡Gracias por postular al {info.congressName}!
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-[var(--foreground)]">
+            Recibimos tu propuesta y a partir de ahora entra a un proceso de{' '}
+            <strong>revisión doble ciega</strong> por pares. Te enviamos un
+            correo de confirmación con el resumen de la postulación.
+          </p>
+          {notif && (
+            <p className="mt-2 text-sm leading-relaxed text-[var(--foreground)]">
+              El comité te avisará por correo la decisión el{' '}
+              <strong>{notif}</strong>.
+            </p>
+          )}
+          <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+            Mientras la convocatoria siga abierta puedes seguir editando tu
+            postulación las veces que necesites.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label="Cerrar aviso"
+          className="shrink-0 rounded-full p-1 text-[var(--muted)] hover:bg-[var(--accent)] hover:text-[var(--foreground)]"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
   );
 }
 

@@ -7,12 +7,13 @@ import {
   addExternalAuthorAction,
   removeAuthorAction,
   setPresenterAction,
+  reorderAuthorsAction,
 } from '@/app/congreso/2027/postular/actions';
-import type { SubmissionAuthor } from '@/lib/supabase/types';
+import type { SubmissionAuthorEnriched } from '@/lib/queries';
 
 interface Props {
   submissionId: string;
-  authors: SubmissionAuthor[];
+  authors: SubmissionAuthorEnriched[];
   readOnly: boolean;
 }
 
@@ -22,25 +23,61 @@ export function SubmissionAuthorsEditor({
   readOnly,
 }: Props) {
   const [mode, setMode] = useState<'idle' | 'directory' | 'external'>('idle');
+  const [reorderPending, startReorder] = useTransition();
+  const [reorderErr, setReorderErr] = useState<string | null>(null);
+  const router = useRouter();
 
   const sorted = [...authors].sort(
     (a, b) => a.display_order - b.display_order
   );
 
+  function move(id: string, direction: 'up' | 'down') {
+    const idx = sorted.findIndex((a) => a.id === id);
+    if (idx < 0) return;
+    const swap = direction === 'up' ? idx - 1 : idx + 1;
+    if (swap < 0 || swap >= sorted.length) return;
+    const newOrder = [...sorted];
+    [newOrder[idx], newOrder[swap]] = [newOrder[swap], newOrder[idx]];
+    setReorderErr(null);
+    startReorder(async () => {
+      const res = await reorderAuthorsAction(
+        submissionId,
+        newOrder.map((a) => a.id)
+      );
+      if (!res.ok) setReorderErr(res.error);
+      else router.refresh();
+    });
+  }
+
   return (
     <div>
+      {!readOnly && sorted.length > 1 && (
+        <p className="mb-2 text-xs text-[var(--muted)]">
+          Usa las flechas ↑ ↓ para reordenar las y los autores. El primero
+          aparecerá como principal en la portada del abstract.
+        </p>
+      )}
       <ul className="space-y-2">
         {sorted.map((a, i) => (
           <AuthorRow
             key={a.id}
             author={a}
             index={i}
+            total={sorted.length}
             submissionId={submissionId}
             readOnly={readOnly}
             canRemove={!readOnly && sorted.length > 1 && !a.is_corresponding}
+            onMoveUp={() => move(a.id, 'up')}
+            onMoveDown={() => move(a.id, 'down')}
+            reorderBusy={reorderPending}
           />
         ))}
       </ul>
+      {reorderErr && (
+        <p className="mt-2 text-xs text-red-600" role="alert">
+          {reorderErr}
+        </p>
+      )}
 
       {!readOnly && (
         <div className="mt-6 border-t border-[var(--border)] pt-6">
@@ -88,15 +125,23 @@ export function SubmissionAuthorsEditor({
 function AuthorRow({
   author,
   index,
+  total,
   submissionId,
   readOnly,
   canRemove,
+  onMoveUp,
+  onMoveDown,
+  reorderBusy,
 }: {
-  author: SubmissionAuthor;
+  author: SubmissionAuthorEnriched;
   index: number;
+  total: number;
   submissionId: string;
   readOnly: boolean;
   canRemove: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  reorderBusy: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -122,46 +167,70 @@ function AuthorRow({
     });
   }
 
-  const institution =
-    author.external_institution_name ??
-    (author.institution_id ? 'En directorio' : '—');
+  const institution = author.institution_name ?? null;
 
   return (
     <li className="rounded-md border border-[var(--border)] bg-white p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold text-[var(--muted)]">
-              #{index + 1}
-            </span>
-            <p className="font-medium text-[var(--foreground)]">
-              {author.full_name}
+        <div className="flex min-w-0 flex-1 items-start gap-2">
+          {!readOnly && total > 1 && (
+            <div className="flex flex-col gap-1">
+              <button
+                type="button"
+                aria-label="Subir en el orden"
+                title="Subir"
+                onClick={onMoveUp}
+                disabled={reorderBusy || index === 0}
+                className="inline-flex h-6 w-6 items-center justify-center rounded border border-[var(--border)] text-xs text-[var(--muted)] hover:bg-[var(--accent)] hover:text-[var(--foreground)] disabled:opacity-30"
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                aria-label="Bajar en el orden"
+                title="Bajar"
+                onClick={onMoveDown}
+                disabled={reorderBusy || index === total - 1}
+                className="inline-flex h-6 w-6 items-center justify-center rounded border border-[var(--border)] text-xs text-[var(--muted)] hover:bg-[var(--accent)] hover:text-[var(--foreground)] disabled:opacity-30"
+              >
+                ↓
+              </button>
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold text-[var(--muted)]">
+                #{index + 1}
+              </span>
+              <p className="font-medium text-[var(--foreground)]">
+                {author.full_name}
+              </p>
+              {index === 0 && (
+                <span className="rounded-full bg-[var(--epa-blue)] px-2 py-0.5 text-xs font-medium text-white">
+                  Principal
+                </span>
+              )}
+              {author.is_presenter && (
+                <span className="rounded-full bg-[var(--epa-green)] px-2 py-0.5 text-xs font-medium text-white">
+                  Presenta
+                </span>
+              )}
+              {author.user_id === null && (
+                <span className="rounded-full bg-[var(--accent)] px-2 py-0.5 text-xs text-[var(--muted)]">
+                  Externo
+                </span>
+              )}
+            </div>
+            <p className="mt-1 text-xs text-[var(--muted)]">
+              {author.email}
+              {institution && ` · ${institution}`}
             </p>
-            {author.is_corresponding && (
-              <span className="rounded-full bg-[var(--epa-blue)] px-2 py-0.5 text-xs font-medium text-white">
-                Principal
-              </span>
-            )}
-            {author.is_presenter && (
-              <span className="rounded-full bg-[var(--epa-green)] px-2 py-0.5 text-xs font-medium text-white">
-                Presenta
-              </span>
-            )}
-            {author.user_id === null && (
-              <span className="rounded-full bg-[var(--accent)] px-2 py-0.5 text-xs text-[var(--muted)]">
-                Externo
-              </span>
+            {error && (
+              <p className="mt-2 text-sm text-red-600" role="alert">
+                {error}
+              </p>
             )}
           </div>
-          <p className="mt-1 text-xs text-[var(--muted)]">
-            {author.email}
-            {institution !== '—' && ` · ${institution}`}
-          </p>
-          {error && (
-            <p className="mt-2 text-sm text-red-600" role="alert">
-              {error}
-            </p>
-          )}
         </div>
         {!readOnly && (
           <div className="flex flex-wrap gap-2">

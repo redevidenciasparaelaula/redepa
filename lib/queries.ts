@@ -687,8 +687,15 @@ export async function listMySubmissionsForCongress(
   }));
 }
 
+// Autor de una postulación enriquecido con el nombre de la institución
+// resuelto (por si tiene institution_id). Para el editor, así el postulante
+// no ve "En directorio" abstracto sino el nombre real.
+export type SubmissionAuthorEnriched = SubmissionAuthor & {
+  institution_name: string | null;
+};
+
 export interface FullSubmission extends Submission {
-  authors: SubmissionAuthor[];
+  authors: SubmissionAuthorEnriched[];
 }
 
 export async function getSubmission(
@@ -708,11 +715,22 @@ export async function getSubmission(
 
   const { data: authors } = await supabase
     .from('submission_authors')
-    .select('*')
+    .select('*, institutions(name)')
     .eq('submission_id', id)
     .order('display_order', { ascending: true });
 
-  return { ...(s as Submission), authors: (authors as SubmissionAuthor[]) ?? [] };
+  const enriched: SubmissionAuthorEnriched[] = (authors ?? []).map((a) => {
+    const inst = (a as unknown as { institutions: { name: string } | null })
+      .institutions;
+    return {
+      ...(a as unknown as SubmissionAuthor),
+      institution_name:
+        (a as { external_institution_name?: string | null })
+          .external_institution_name ?? inst?.name ?? null,
+    };
+  });
+
+  return { ...(s as Submission), authors: enriched };
 }
 
 // ---------------------------------------------------------------------

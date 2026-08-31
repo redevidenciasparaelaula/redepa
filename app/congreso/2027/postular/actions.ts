@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCongressBySlug } from '@/lib/queries';
+import { sendEmail } from '@/lib/email';
+import { submissionReceivedTemplate } from '@/lib/email-templates';
 
 type R<T = undefined> = (T extends undefined
   ? { ok: true }
@@ -124,7 +126,17 @@ const SUBMIT_ERRORS: Record<string, string> = {
   few_methodologies: 'Elige al menos 1 metodología.',
 };
 
-export async function submitSubmissionAction(id: string): Promise<R> {
+export interface SubmissionSubmitData {
+  notificationDate: string | null; // ISO
+  congressName: string;
+}
+
+export async function submitSubmissionAction(
+  id: string
+): Promise<
+  | { ok: true; data: SubmissionSubmitData }
+  | { ok: false; error: string }
+> {
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: 'No autenticado.' };
 
@@ -140,9 +152,89 @@ export async function submitSubmissionAction(id: string): Promise<R> {
     };
   }
 
+  // Side-effect: email de confirmación al autor/a principal (y a los demás).
+  // No bloquea si falla el envío.
+  void notifySubmitters(id);
+
+  // Trae info del congreso para mostrar en el banner de confirmación
+  let notificationDate: string | null = null;
+  let congressName = 'Congreso EPA 2027';
+  {
+    const { data: subInfo } = await supabase
+      .from('submissions')
+      .select('congress_id')
+      .eq('id', id)
+      .maybeSingle();
+    if (subInfo) {
+      const { data: cInfo } = await supabase
+        .from('congresses')
+        .select('name, notification_at')
+        .eq('id', subInfo.congress_id)
+        .maybeSingle();
+      if (cInfo) {
+        congressName = cInfo.name;
+        notificationDate = cInfo.notification_at;
+      }
+    }
+  }
+
   revalidatePath(`/congreso/${CONGRESS_YEAR}/postular`);
   revalidatePath(`/congreso/${CONGRESS_YEAR}/postular/${id}`);
-  return { ok: true };
+  return { ok: true, data: { notificationDate, congressName } };
+}
+
+async function notifySubmitters(submissionId: string): Promise<void> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data: sub } = await supabase
+      .from('submissions')
+      .select(
+        'title, type, keywords, congresses(name, year, notification_at), congress_tracks(name)'
+      )
+      .eq('id', submissionId)
+      .maybeSingle();
+    if (!sub) return;
+
+    const congress = sub.congresses as {
+      name: string;
+      year: number;
+      notification_at: string | null;
+    } | null;
+    const track = sub.congress_tracks as { name: string } | null;
+
+    const { data: authors } = await supabase
+      .from('submission_authors')
+      .select('email, full_name, display_order')
+      .eq('submission_id', submissionId)
+      .order('display_order', { ascending: true });
+    if (!authors || authors.length === 0) return;
+
+    const authorsNames = authors.map((a) => a.full_name);
+
+    await Promise.allSettled(
+      authors.map(async (a) => {
+        const tpl = submissionReceivedTemplate({
+          congressName: congress?.name ?? 'Congreso EPA',
+          year: congress?.year ?? new Date().getFullYear(),
+          authorName: a.full_name,
+          submissionId,
+          submissionTitle: sub.title,
+          trackName: track?.name ?? null,
+          type: sub.type,
+          keywords: sub.keywords ?? [],
+          authorsNames,
+          notificationDate: congress?.notification_at ?? null,
+        });
+        await sendEmail({
+          to: { email: a.email, name: a.full_name },
+          subject: tpl.subject,
+          html: tpl.html,
+        });
+      })
+    );
+  } catch (err) {
+    console.error('notifySubmitters failed', err);
+  }
 }
 
 // =====================================================================
