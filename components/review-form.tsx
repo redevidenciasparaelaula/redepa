@@ -40,10 +40,10 @@ const SCORE_FIELDS: {
   },
 ];
 
+// Solo 2 alternativas para el revisor: aceptar o rechazar.
+// (Se dejó de mostrar minor_revision / major_revision — decisión de producto.)
 const RECO_OPTIONS = [
   { value: 'accept', label: 'Aceptar' },
-  { value: 'minor_revision', label: 'Aceptar con revisión menor' },
-  { value: 'major_revision', label: 'Pedir revisión mayor' },
   { value: 'reject', label: 'Rechazar' },
 ];
 

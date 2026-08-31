@@ -803,6 +803,317 @@ export async function listAssignmentsForSubmission(
 }
 
 // ---------------------------------------------------------------------
+// Review Overview: query unificado que alimenta las dos vistas admin
+// (por postulación y por revisor). Corre en un solo trip: 4 queries
+// paralelas + joins en JS. Devuelve estructuras enriquecidas listas
+// para renderizar y filtrar sin más DB roundtrips.
+// ---------------------------------------------------------------------
+
+export interface AssignmentDetail {
+  submission_id: string; // referencia al submission (útil al agrupar por revisor)
+  assignment_id: string;
+  reviewer_user_id: string;
+  reviewer_email: string;
+  reviewer_name: string;
+  assignment_status: 'pending' | 'in_progress' | 'submitted' | 'declined';
+  review_submitted: boolean;
+  recommendation: string | null;
+  deadline_at: string | null;
+  assigned_at: string;
+  reviewed_at: string | null; // reviews.submitted_at
+}
+
+export interface SubmissionOverview {
+  id: string;
+  title: string;
+  status: Submission['status'];
+  type: Submission['type'];
+  track_id: string | null;
+  track_name: string | null;
+  authors_count: number;
+  authors_names: string; // "Ana Pérez, Luis Fuentes"
+  updated_at: string;
+  submitted_at: string | null;
+  decision_at: string | null;
+  decision_note: string | null;
+  assignments: AssignmentDetail[];
+  reviews_completed: number;
+}
+
+export interface ReviewerAssignmentDetail {
+  submission_id: string;
+  submission_title: string;
+  submission_status: Submission['status'];
+  track_name: string | null;
+  assignment_status: 'pending' | 'in_progress' | 'submitted' | 'declined';
+  review_submitted: boolean;
+  recommendation: string | null;
+  deadline_at: string | null;
+  assigned_at: string;
+  reviewed_at: string | null;
+}
+
+export interface PoolMemberOverview {
+  user_id: string;
+  email: string;
+  full_name: string;
+  institution_name: string | null;
+  active: boolean;
+  max_load: number;
+  topics: string[]; // líneas temáticas que puede revisar
+  assignments: ReviewerAssignmentDetail[];
+  assignments_count: number;
+  reviews_completed: number;
+  last_activity_at: string | null; // último assigned_at o reviewed_at
+}
+
+export async function getReviewOverviewForCongress(
+  congressId: string
+): Promise<{
+  submissions: SubmissionOverview[];
+  poolMembers: PoolMemberOverview[];
+}> {
+  const supabase = await createSupabaseServerClient();
+
+  // Traemos primero submissions del congreso (que después usamos para
+  // filtrar assignments y reviews porque esas tablas no tienen congress_id
+  // directo — el vínculo es siempre vía submission_id).
+  const submissionsRes = await supabase
+    .from('submissions')
+    .select(
+      'id, title, status, type, track_id, updated_at, submitted_at, decision_at, decision_note, congress_tracks(name)'
+    )
+    .eq('congress_id', congressId);
+
+  const submissionIds = ((submissionsRes.data ?? []) as { id: string }[]).map(
+    (s) => s.id
+  );
+
+  // 4 en paralelo ahora que sabemos qué submissions filtrar.
+  const [poolMembers, authorsRes, assignmentsRes, reviewsRes] =
+    await Promise.all([
+      getReviewerPoolForCongress(congressId),
+      submissionIds.length === 0
+        ? Promise.resolve({ data: [] as unknown[] })
+        : supabase
+            .from('submission_authors')
+            .select('submission_id, full_name, display_order')
+            .in('submission_id', submissionIds)
+            .order('display_order', { ascending: true }),
+      submissionIds.length === 0
+        ? Promise.resolve({ data: [] as unknown[] })
+        : supabase
+            .from('review_assignments')
+            .select(
+              'id, submission_id, reviewer_user_id, status, deadline_at, assigned_at'
+            )
+            .in('submission_id', submissionIds),
+      // Reviews viven joineadas por assignment_id → traemos también el
+      // assignment para saber submission + reviewer.
+      submissionIds.length === 0
+        ? Promise.resolve({ data: [] as unknown[] })
+        : supabase
+            .from('reviews')
+            .select(
+              'assignment_id, recommendation, submitted_at, review_assignments!inner(submission_id, reviewer_user_id)'
+            )
+            .in('review_assignments.submission_id', submissionIds),
+    ]);
+
+  const submissionRows = (submissionsRes.data ??
+    []) as unknown as {
+    id: string;
+    title: string;
+    status: Submission['status'];
+    type: Submission['type'];
+    track_id: string | null;
+    updated_at: string;
+    submitted_at: string | null;
+    decision_at: string | null;
+    decision_note: string | null;
+    congress_tracks: { name: string } | null;
+  }[];
+
+  // Autores agrupados por submission_id (ya ordenados por display_order).
+  // Filtramos localmente a solo los submissions de este congreso.
+  const validSubIds = new Set(submissionRows.map((s) => s.id));
+  const authorsBySub = new Map<string, string[]>();
+  const authorCountBySub = new Map<string, number>();
+  for (const a of (authorsRes.data ?? []) as {
+    submission_id: string;
+    full_name: string;
+    display_order: number;
+  }[]) {
+    if (!validSubIds.has(a.submission_id)) continue;
+    const list = authorsBySub.get(a.submission_id) ?? [];
+    list.push(a.full_name);
+    authorsBySub.set(a.submission_id, list);
+    authorCountBySub.set(
+      a.submission_id,
+      (authorCountBySub.get(a.submission_id) ?? 0) + 1
+    );
+  }
+
+  // Reviews agrupadas por (submission, reviewer) para poder cruzar con
+  // assignments y saber si ya está entregada + recomendación + fecha.
+  // La forma de la fila viene del join implícito (!inner) con
+  // review_assignments.
+  type ReviewJoinRow = {
+    assignment_id: string;
+    recommendation: string | null;
+    submitted_at: string | null;
+    review_assignments: {
+      submission_id: string;
+      reviewer_user_id: string;
+    } | null;
+  };
+  const reviewByKey = new Map<
+    string,
+    { recommendation: string | null; submitted_at: string | null }
+  >();
+  for (const r of (reviewsRes.data ?? []) as unknown as ReviewJoinRow[]) {
+    const ra = r.review_assignments;
+    if (!ra) continue;
+    reviewByKey.set(`${ra.submission_id}::${ra.reviewer_user_id}`, {
+      recommendation: r.recommendation,
+      submitted_at: r.submitted_at,
+    });
+  }
+
+  // Índice de revisores por user_id (para nombre y email).
+  const reviewerById = new Map<
+    string,
+    { name: string; email: string }
+  >();
+  for (const m of poolMembers) {
+    reviewerById.set(m.user_id, {
+      name: m.researcher?.full_name ?? m.email.split('@')[0] ?? m.email,
+      email: m.email,
+    });
+  }
+
+  // Construimos AssignmentDetail por submission.
+  type AssignmentRow = {
+    id: string;
+    submission_id: string;
+    reviewer_user_id: string;
+    status: 'pending' | 'in_progress' | 'submitted' | 'declined';
+    deadline_at: string | null;
+    assigned_at: string;
+  };
+  const assignmentsBySub = new Map<string, AssignmentDetail[]>();
+  const assignmentsByReviewer = new Map<string, AssignmentDetail[]>();
+  for (const a of (assignmentsRes.data ?? []) as unknown as AssignmentRow[]) {
+    const key = `${a.submission_id}::${a.reviewer_user_id}`;
+    const review = reviewByKey.get(key);
+    const revInfo = reviewerById.get(a.reviewer_user_id);
+    const detail: AssignmentDetail = {
+      submission_id: a.submission_id,
+      assignment_id: a.id,
+      reviewer_user_id: a.reviewer_user_id,
+      reviewer_email: revInfo?.email ?? 'desconocido',
+      reviewer_name: revInfo?.name ?? 'Sin nombre',
+      assignment_status: a.status,
+      review_submitted: !!review?.submitted_at,
+      recommendation: review?.recommendation ?? null,
+      deadline_at: a.deadline_at,
+      assigned_at: a.assigned_at,
+      reviewed_at: review?.submitted_at ?? null,
+    };
+
+    const listA = assignmentsBySub.get(a.submission_id) ?? [];
+    listA.push(detail);
+    assignmentsBySub.set(a.submission_id, listA);
+
+    const listR = assignmentsByReviewer.get(a.reviewer_user_id) ?? [];
+    listR.push(detail);
+    assignmentsByReviewer.set(a.reviewer_user_id, listR);
+  }
+
+  // Ensamblar SubmissionOverview[].
+  const submissions: SubmissionOverview[] = submissionRows.map((s) => {
+    const assigns = assignmentsBySub.get(s.id) ?? [];
+    const reviewsCompleted = assigns.filter((a) => a.review_submitted).length;
+    return {
+      id: s.id,
+      title: s.title,
+      status: s.status,
+      type: s.type,
+      track_id: s.track_id,
+      track_name: s.congress_tracks?.name ?? null,
+      authors_count: authorCountBySub.get(s.id) ?? 0,
+      authors_names: (authorsBySub.get(s.id) ?? []).join(', '),
+      updated_at: s.updated_at,
+      submitted_at: s.submitted_at,
+      decision_at: s.decision_at,
+      decision_note: s.decision_note,
+      assignments: assigns,
+      reviews_completed: reviewsCompleted,
+    };
+  });
+
+  // Ensamblar PoolMemberOverview[]: usamos poolMembers + assignmentsByReviewer.
+  // Necesitamos, por assignment del revisor, el título / línea de la
+  // postulación, que ya tenemos en el mapa de submissionRows.
+  const subById = new Map<
+    string,
+    { title: string; status: Submission['status']; track_name: string | null }
+  >();
+  for (const s of submissionRows) {
+    subById.set(s.id, {
+      title: s.title,
+      status: s.status,
+      track_name: s.congress_tracks?.name ?? null,
+    });
+  }
+
+  const poolOverview: PoolMemberOverview[] = poolMembers.map((m) => {
+    const raw = assignmentsByReviewer.get(m.user_id) ?? [];
+    const enriched: ReviewerAssignmentDetail[] = raw.map((a) => {
+      const sub = subById.get(a.submission_id);
+      return {
+        submission_id: a.submission_id,
+        submission_title: sub?.title ?? '—',
+        submission_status: sub?.status ?? 'submitted',
+        track_name: sub?.track_name ?? null,
+        assignment_status: a.assignment_status,
+        review_submitted: a.review_submitted,
+        recommendation: a.recommendation,
+        deadline_at: a.deadline_at,
+        assigned_at: a.assigned_at,
+        reviewed_at: a.reviewed_at,
+      };
+    });
+    const reviewsCompleted = enriched.filter((a) => a.review_submitted).length;
+    // "Última actividad": max(assigned_at, reviewed_at) sobre todas sus asignaciones
+    let lastActivity: string | null = null;
+    for (const a of enriched) {
+      const stamps = [a.assigned_at, a.reviewed_at].filter(
+        (x): x is string => !!x
+      );
+      for (const s of stamps) {
+        if (!lastActivity || s > lastActivity) lastActivity = s;
+      }
+    }
+    return {
+      user_id: m.user_id,
+      email: m.email,
+      full_name: m.researcher?.full_name ?? m.email.split('@')[0] ?? m.email,
+      institution_name: m.researcher?.institution_name ?? null,
+      active: m.active,
+      max_load: m.max_load,
+      topics: m.topics,
+      assignments: enriched,
+      assignments_count: enriched.length,
+      reviews_completed: reviewsCompleted,
+      last_activity_at: lastActivity,
+    };
+  });
+
+  return { submissions, poolMembers: poolOverview };
+}
+
+// ---------------------------------------------------------------------
 // loadAutoAssignData: carga en un solo llamado todo lo necesario para
 // correr el algoritmo de auto-asignación (lib/auto-assign.ts).
 // ---------------------------------------------------------------------
