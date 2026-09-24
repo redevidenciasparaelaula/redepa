@@ -363,6 +363,10 @@ function formatDate(value: string | null): string {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
+    // Sin esto, un timestamp tipo '2027-03-15 23:59:00-03' se renderiza
+    // en UTC como '16 de marzo'. Con timeZone: 'America/Santiago' el
+    // display coincide con la fecha real vista desde Chile.
+    timeZone: 'America/Santiago',
   });
 }
 

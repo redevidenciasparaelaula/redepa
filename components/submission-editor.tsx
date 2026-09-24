@@ -474,6 +474,7 @@ function SubmittedBanner({
         year: 'numeric',
         month: 'long',
         day: 'numeric',
+        timeZone: 'America/Santiago',
       })
     : null;
 

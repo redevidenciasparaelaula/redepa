@@ -74,6 +74,7 @@ export function cfpOpenedTemplate(args: {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
+        timeZone: 'America/Santiago',
       })
     : null;
 
@@ -171,6 +172,7 @@ export function submissionReceivedTemplate(args: {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
+        timeZone: 'America/Santiago',
       })
     : null;
 
