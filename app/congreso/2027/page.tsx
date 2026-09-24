@@ -326,6 +326,16 @@ function FinalCta({ year }: { year: number }) {
           >
             Postular un trabajo →
           </Link>
+          <p className="mt-6 text-sm text-white/80">
+            ¿Tienes dudas o necesitas ayuda con tu postulación? Escríbenos a{' '}
+            <a
+              href="mailto:contacto@redepa.net"
+              className="font-semibold underline hover:text-white"
+            >
+              contacto@redepa.net
+            </a>
+            .
+          </p>
         </div>
       </div>
     </section>

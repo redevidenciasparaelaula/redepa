@@ -70,6 +70,16 @@ export default async function PostularPage() {
           Acá ves los abstracts que estás escribiendo para esta edición. Puedes
           guardar borradores y editarlos hasta el deadline del CFP.
         </p>
+        <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+          ¿Tienes dudas o necesitas ayuda? Escríbenos a{' '}
+          <a
+            href="mailto:contacto@redepa.net"
+            className="text-[var(--epa-blue)] underline hover:no-underline"
+          >
+            contacto@redepa.net
+          </a>
+          .
+        </p>
       </header>
 
       {!cfpOpen && (

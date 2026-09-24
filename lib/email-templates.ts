@@ -27,7 +27,8 @@ function shell(title: string, bodyHtml: string): string {
               <p style="margin:0;font-size:12px;color:#78716c;line-height:1.5">
                 Red Latinoamericana Evidencias Para el Aula —
                 <a href="${BASE_URL}" style="color:#0e7c66">redepa.net</a><br>
-                Si tienes preguntas, respondé a este correo y te respondemos.
+                Si tienes preguntas, escríbenos a
+                <a href="mailto:contacto@redepa.net" style="color:#0e7c66">contacto@redepa.net</a>.
               </p>
             </td>
           </tr>
@@ -197,8 +198,12 @@ export function submissionReceivedTemplate(args: {
       Mientras la convocatoria siga abierta puedes editar tu postulación las veces que necesites.
     </p>
     ${ctaButton('Ver mi postulación', url)}
+    <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">
+      ¿Tienes dudas o necesitas ayuda con tu postulación? Escríbenos a
+      <a href="mailto:contacto@redepa.net" style="color:#0e7c66">contacto@redepa.net</a>.
+    </p>
     <p style="margin:0;font-size:13px;color:#78716c;line-height:1.5">
-      Este correo es una confirmación automática de recepción. Guardalo como comprobante.
+      Este correo es una confirmación automática de recepción. Guárdalo como comprobante.
     </p>`;
 
   return {
