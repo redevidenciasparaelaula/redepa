@@ -74,7 +74,7 @@ export function cfpOpenedTemplate(args: {
   subscriberName: string | null;
 }): { subject: string; html: string } {
   const url = `${BASE_URL}/congreso/${args.year}`;
-  const greeting = args.subscriberName ? `Hola ${args.subscriberName}` : 'Hola';
+  const greeting = args.subscriberName ? `Hola, ${args.subscriberName}` : 'Hola';
   const deadline = args.cfpCloseAt
     ? new Date(args.cfpCloseAt).toLocaleDateString('es', {
         year: 'numeric',
@@ -85,7 +85,7 @@ export function cfpOpenedTemplate(args: {
     : null;
 
   const body = `
-    <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">${escapeHtml(greeting)},</p>
+    <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">${escapeHtml(greeting)}:</p>
     <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">
       Acaba de abrir la convocatoria del <strong>${escapeHtml(args.congressName)}</strong>.
       ${args.theme ? `Tema central: <em>${escapeHtml(args.theme)}</em>.` : ''}
@@ -117,7 +117,7 @@ export function reviewerAssignedTemplate(args: {
   deadlineAt: string | null;
 }): { subject: string; html: string } {
   const url = `${BASE_URL}/me/revisiones`;
-  const greeting = args.reviewerName ? `Hola ${args.reviewerName}` : 'Hola';
+  const greeting = args.reviewerName ? `Hola, ${args.reviewerName}` : 'Hola';
   const deadline = args.deadlineAt
     ? new Date(args.deadlineAt).toLocaleDateString('es', {
         year: 'numeric',
@@ -127,7 +127,7 @@ export function reviewerAssignedTemplate(args: {
     : null;
 
   const body = `
-    <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">${escapeHtml(greeting)},</p>
+    <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">${escapeHtml(greeting)}:</p>
     <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">
       Te asignamos una nueva postulación para revisar en el <strong>${escapeHtml(args.congressName)}</strong>.
     </p>
@@ -166,7 +166,7 @@ export function submissionReceivedTemplate(args: {
   notificationDate: string | null; // ISO string
 }): { subject: string; html: string } {
   const url = `${BASE_URL}/congreso/${args.year}/postular/${args.submissionId}`;
-  const greeting = args.authorName ? `Hola ${args.authorName}` : 'Hola';
+  const greeting = args.authorName ? `Hola, ${args.authorName}` : 'Hola';
   const typeLabel =
     args.type === 'oral'
       ? 'Ponencia oral'
@@ -183,7 +183,7 @@ export function submissionReceivedTemplate(args: {
     : null;
 
   const body = `
-    <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">${escapeHtml(greeting)},</p>
+    <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">${escapeHtml(greeting)}:</p>
     <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">
       Recibimos tu postulación al <strong>${escapeHtml(args.congressName)}</strong>. Gracias por participar.
     </p>
@@ -234,7 +234,7 @@ export function incompleteProfileReminderTemplate(args: {
     html: shell(
       'Tu perfil en Red EPA está casi listo',
       `
-      <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">Hola ${escapeHtml(args.researcherName)},</p>
+      <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">Hola, ${escapeHtml(args.researcherName)}:</p>
       <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">
         Gracias por ser parte de la Red Latinoamericana Evidencias Para el
         Aula. Notamos que a tu perfil le faltan algunos campos que ayudan a
@@ -272,13 +272,13 @@ export function decisionEmittedTemplate(args: {
   decisionNote: string | null;
 }): { subject: string; html: string } {
   const url = `${BASE_URL}/congreso/${args.year}/postular/${args.submissionId}`;
-  const greeting = args.authorName ? `Hola ${args.authorName}` : 'Hola';
+  const greeting = args.authorName ? `Hola, ${args.authorName}` : 'Hola';
   const accepted = args.decision === 'accepted';
   const verdict = accepted ? 'Aceptada' : 'No aceptada para esta edición';
   const verdictColor = accepted ? '#739600' : '#b91c1c';
 
   const body = `
-    <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">${escapeHtml(greeting)},</p>
+    <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">${escapeHtml(greeting)}:</p>
     <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">
       El comité del <strong>${escapeHtml(args.congressName)}</strong> ya emitió decisión sobre tu postulación:
     </p>
