@@ -10,25 +10,31 @@ const BASE_URL =
 function shell(title: string, bodyHtml: string): string {
   return `<!doctype html>
 <html lang="es">
-<body style="margin:0;padding:0;background:#f5f5f4;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#1c1917">
+<body style="margin:0;padding:0;background:#f5f5f4;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#000000">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f4">
     <tr>
       <td align="center" style="padding:32px 16px">
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:12px;border:1px solid #e7e5e4">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:12px;border:1px solid #e7e5e4;border-top:4px solid #739600">
           <tr>
-            <td style="padding:32px">
-              <p style="margin:0 0 24px 0;font-size:14px;color:#0e7c66;font-weight:600;letter-spacing:.06em;text-transform:uppercase">Red EPA</p>
-              <h1 style="margin:0 0 16px 0;font-size:22px;line-height:1.3;color:#1c1917">${escapeHtml(title)}</h1>
+            <td align="left" style="padding:28px 32px 0 32px">
+              <a href="${BASE_URL}" style="text-decoration:none;display:inline-block">
+                <img src="${BASE_URL}/logos/epa.png" alt="Red EPA — Evidencias para el Aula" width="140" style="display:block;border:0;outline:none;max-width:140px;height:auto">
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px 32px 32px 32px">
+              <h1 style="margin:0 0 16px 0;font-size:24px;line-height:1.3;color:#000000;font-weight:700">${escapeHtml(title)}</h1>
               ${bodyHtml}
             </td>
           </tr>
           <tr>
             <td style="padding:24px 32px;border-top:1px solid #e7e5e4;background:#fafaf9;border-bottom-left-radius:12px;border-bottom-right-radius:12px">
-              <p style="margin:0;font-size:12px;color:#78716c;line-height:1.5">
+              <p style="margin:0;font-size:12px;color:#636363;line-height:1.5">
                 Red Latinoamericana Evidencias Para el Aula —
-                <a href="${BASE_URL}" style="color:#0e7c66">redepa.net</a><br>
+                <a href="${BASE_URL}" style="color:#739600;text-decoration:underline">redepa.net</a><br>
                 Si tienes preguntas, escríbenos a
-                <a href="mailto:contacto@redepa.net" style="color:#0e7c66">contacto@redepa.net</a>.
+                <a href="mailto:contacto@redepa.net" style="color:#739600;text-decoration:underline">contacto@redepa.net</a>.
               </p>
             </td>
           </tr>
@@ -51,7 +57,7 @@ function escapeHtml(s: string): string {
 
 function ctaButton(label: string, href: string): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0">
-    <tr><td style="background:#0e7c66;border-radius:8px">
+    <tr><td style="background:#739600;border-radius:8px">
       <a href="${href}" style="display:inline-block;padding:12px 24px;color:#ffffff;font-weight:600;text-decoration:none;font-size:14px">${escapeHtml(label)} →</a>
     </td></tr>
   </table>`;
@@ -202,7 +208,7 @@ export function submissionReceivedTemplate(args: {
     ${ctaButton('Ver mi postulación', url)}
     <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">
       ¿Tienes dudas o necesitas ayuda con tu postulación? Escríbenos a
-      <a href="mailto:contacto@redepa.net" style="color:#0e7c66">contacto@redepa.net</a>.
+      <a href="mailto:contacto@redepa.net" style="color:#739600">contacto@redepa.net</a>.
     </p>
     <p style="margin:0;font-size:13px;color:#78716c;line-height:1.5">
       Este correo es una confirmación automática de recepción. Guárdalo como comprobante.
@@ -269,7 +275,7 @@ export function decisionEmittedTemplate(args: {
   const greeting = args.authorName ? `Hola ${args.authorName}` : 'Hola';
   const accepted = args.decision === 'accepted';
   const verdict = accepted ? 'Aceptada' : 'No aceptada para esta edición';
-  const verdictColor = accepted ? '#0e7c66' : '#b91c1c';
+  const verdictColor = accepted ? '#739600' : '#b91c1c';
 
   const body = `
     <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">${escapeHtml(greeting)},</p>
@@ -296,7 +302,7 @@ export function decisionEmittedTemplate(args: {
     ${ctaButton('Ver detalles y comentarios', url)}
     ${
       accepted
-        ? `<p style="margin:0;font-size:14px;color:#0e7c66;line-height:1.6">¡Felicitaciones! Pronto te enviaremos información sobre el programa y la inscripción.</p>`
+        ? `<p style="margin:0;font-size:14px;color:#739600;line-height:1.6">¡Felicitaciones! Pronto te enviaremos información sobre el programa y la inscripción.</p>`
         : `<p style="margin:0;font-size:14px;color:#78716c;line-height:1.6">Sabemos que estos procesos son exigentes. Esperamos verte en próximas ediciones de los Congresos EPA.</p>`
     }`;
 
