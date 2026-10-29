@@ -39,10 +39,8 @@ export default async function PostularPage() {
           Postular al congreso
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
-          Completa este formulario y envía tu propuesta. No necesitas crear
-          cuenta. El envío es por única vez: una vez enviada, la postulación
-          no se puede editar — asegúrate de dejarla como la quieres antes de
-          enviar.
+          Completa este formulario con tu propuesta. Revísala bien antes de
+          enviar: una vez enviada, la postulación no se puede editar.
         </p>
         <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
           ¿Tienes dudas o necesitas ayuda? Escríbenos a{' '}
