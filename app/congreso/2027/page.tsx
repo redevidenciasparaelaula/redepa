@@ -229,38 +229,6 @@ export default async function CongressEpa2027Page() {
         </div>
       </section>
 
-      {/* Preguntas frecuentes */}
-      <section className="bg-white">
-        <div className="mx-auto max-w-4xl px-4 py-20 sm:px-6 sm:py-24">
-          <p className="eyebrow">Preguntas frecuentes</p>
-          <h2 className="mt-2 text-2xl font-bold tracking-tight text-[var(--epa-green)] sm:text-3xl">
-            Antes de postular
-          </h2>
-
-          <div className="mt-10 divide-y divide-[var(--border)] border-y border-[var(--border)]">
-            {FAQ.map((item, i) => (
-              <details
-                key={i}
-                className="group py-5 [&_summary::-webkit-details-marker]:hidden"
-              >
-                <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-base font-semibold text-[var(--foreground)]">
-                  <span>{item.q}</span>
-                  <span
-                    aria-hidden="true"
-                    className="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[var(--border)] text-[var(--epa-blue)] transition-transform group-open:rotate-45"
-                  >
-                    +
-                  </span>
-                </summary>
-                <div className="mt-3 text-sm leading-relaxed text-[var(--muted)]">
-                  {item.a}
-                </div>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* CTA final si CFP abierto */}
       {canSubmit && <FinalCta year={c.year} />}
     </div>
@@ -388,42 +356,11 @@ function formatDateRange(start: string, end: string): string {
 }
 
 const STEPS: string[] = [
-  'Crea tu cuenta en redepa.net si aún no la tienes (o inicia sesión).',
-  'Llena el formulario con los 5 campos del abstract: contexto y problema, marco teórico, metodología, resultados o hallazgos, y discusión / aporte al aula. Solo en español, máximo aproximado de 500 caracteres por campo.',
-  'Elige la línea temática y la metodología principal de tu trabajo.',
-  'Agrega co-autores: los del directorio se autocompletan; los externos solo necesitan nombre, institución y correo.',
+  'Entra al formulario de postulación en línea.',
+  'Llena los 5 campos del abstract: contexto y problema, marco teórico, metodología, resultados o hallazgos, y discusión / aporte al aula. Solo en español, máximo aproximado de 500 caracteres por campo.',
+  'Elige la línea temática y las metodologías principales de tu trabajo.',
+  'Agrega a tus coautoras y coautores con nombre, apellido, correo e institución.',
   'Importante: no menciones tu nombre ni tu institución dentro del texto del abstract. El proceso es de revisión doble ciega.',
-  'Antes del deadline puedes editar tu envío cuantas veces necesites. El plazo es estricto: después del cierre no se aceptan modificaciones ni envíos nuevos.',
-];
-
-const FAQ: { q: string; a: string }[] = [
-  {
-    q: '¿Quién puede postular?',
-    a: 'Cualquier persona que investigue en educación en América Latina, sin importar etapa de carrera ni filiación institucional. Para presentarse como autor o autora principal hay que tener cuenta en redepa.net. Los co-autores externos se agregan solo con nombre, institución y correo.',
-  },
-  {
-    q: '¿En qué idioma se postula?',
-    a: 'Solo en español. La edición 2027 no recibe trabajos en otros idiomas.',
-  },
-  {
-    q: '¿Qué formato tiene el abstract?',
-    a: 'Se llena directamente en el formulario, en 5 campos estructurados: contexto y problema, marco teórico, metodología, resultados o hallazgos, y discusión / aporte al aula. Cada campo tiene un máximo aproximado de 500 caracteres. No se suben PDFs.',
-  },
-  {
-    q: '¿Cómo funciona la revisión doble ciega?',
-    a: 'Las evaluadoras y evaluadores ven solo el contenido del abstract, sin saber quién lo escribió. Por eso es importante no mencionar tu nombre ni tu institución dentro del texto. Los datos de autoría se ingresan en una sección separada y no son visibles para los pares revisores.',
-  },
-  {
-    q: '¿Cuántos trabajos puedo presentar?',
-    a: 'Puedes presentar más de un trabajo como autor o co-autor, pero te recomendamos concentrarte en los que aporten un avance real. Cada envío pasa por revisión independiente.',
-  },
-  {
-    q: '¿Puedo editar mi envío después de enviarlo?',
-    a: 'Sí, mientras el CFP esté abierto puedes editar tu envío cuantas veces necesites. Después del cierre del plazo no se aceptan modificaciones ni envíos nuevos: el deadline es estricto.',
-  },
-  {
-    q: '¿La asistencia al congreso es paga?',
-    a: 'Sí, la asistencia presencial al congreso tiene un valor de inscripción. Los detalles se anunciarán cuando se abra la inscripción.',
-  },
+  'Revisa bien antes de enviar: una vez enviada, la postulación no se puede editar. El plazo es estricto.',
 ];
 
