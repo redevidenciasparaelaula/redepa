@@ -5,9 +5,20 @@ import { SubmitForm } from '@/components/submit-form';
 // Página intencionalmente solo en español: el público objetivo del envío
 // son investigadores latinoamericanos.
 
-export default async function SubmitPage() {
+interface Props {
+  // Se aceptan dos query params opcionales:
+  //  - email: pre-rellena el email del formulario (viene de /gracias
+  //    después de postular).
+  //  - evaluador=1: pre-tilda el checkbox 'Estaría dispuesta/o a ser
+  //    evaluador/a en un Congreso EPA' para flujos que vienen con esa
+  //    intención explícita.
+  searchParams: Promise<{ email?: string; evaluador?: string }>;
+}
+
+export default async function SubmitPage({ searchParams }: Props) {
   const institutions = await listInstitutions();
   const countries = countriesByGroup('es');
+  const { email, evaluador } = await searchParams;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
@@ -19,7 +30,12 @@ export default async function SubmitPage() {
           Completa este formulario para crear tu perfil.
         </p>
       </header>
-      <SubmitForm institutions={institutions} countries={countries} />
+      <SubmitForm
+        institutions={institutions}
+        countries={countries}
+        initialEmail={email ?? undefined}
+        initialAvailableForReview={evaluador === '1'}
+      />
     </div>
   );
 }

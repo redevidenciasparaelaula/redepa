@@ -15,6 +15,7 @@ export default async function GraciasPage({ searchParams }: Props) {
   // decidir si mostramos CTA al directorio o aviso de "ya eres parte".
   let primaryEmail: string | null = null;
   let isInDirectory = false;
+  let isAvailableForReview = false;
   if (id) {
     const supabase = await createSupabaseServerClient();
     const { data: author } = await supabase
@@ -29,10 +30,11 @@ export default async function GraciasPage({ searchParams }: Props) {
       primaryEmail = author.email.toLowerCase();
       const { data: existing } = await supabase
         .from('researchers')
-        .select('id')
+        .select('id, available_for_review')
         .eq('email', primaryEmail)
         .maybeSingle();
       isInDirectory = !!existing;
+      isAvailableForReview = !!existing?.available_for_review;
     }
   }
   if (id && primaryEmail === null) notFound();
@@ -162,6 +164,51 @@ export default async function GraciasPage({ searchParams }: Props) {
               className="text-sm text-[var(--muted)] hover:underline"
             >
               Ahora no, gracias
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {/* Oferta explícita para sumarse como par evaluador */}
+      {isAvailableForReview ? (
+        <section className="mt-6 rounded-2xl border border-[var(--epa-green)] bg-white p-6 sm:p-8">
+          <p className="eyebrow !text-[var(--epa-green-dark)]">Par evaluador</p>
+          <h2 className="mt-2 text-xl font-bold tracking-tight sm:text-2xl">
+            Ya ofreciste tu disponibilidad para evaluar
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-[var(--foreground)]">
+            El equipo del congreso te considerará para el pool de evaluadores de
+            las próximas ediciones. ¡Gracias!
+          </p>
+        </section>
+      ) : (
+        <section className="mt-6 rounded-2xl border border-[var(--epa-blue)] bg-white p-6 sm:p-8">
+          <p className="eyebrow !text-[var(--epa-blue)]">Par evaluador</p>
+          <h2 className="mt-2 text-xl font-bold tracking-tight sm:text-2xl">
+            ¿Quisieras ser par evaluador?
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-[var(--foreground)]">
+            La Red EPA siempre necesita investigadoras e investigadores con
+            experiencia en educación para revisar propuestas en sus congresos.
+            Si te gustaría sumarte al pool de pares evaluadores de futuras
+            ediciones, {isInDirectory
+              ? 'activa tu disponibilidad desde tu perfil.'
+              : 'inscríbete al directorio marcando la casilla de disponibilidad.'}
+          </p>
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <Link
+              href={
+                isInDirectory
+                  ? '/me'
+                  : primaryEmail
+                    ? `/submit?email=${encodeURIComponent(primaryEmail)}&evaluador=1`
+                    : '/submit?evaluador=1'
+              }
+              className="rounded-md bg-[var(--epa-blue)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[var(--epa-blue-dark)]"
+            >
+              {isInDirectory
+                ? 'Ir a mi perfil →'
+                : 'Ofrecerme como evaluador/a →'}
             </Link>
           </div>
         </section>

@@ -21,9 +21,16 @@ import { InstitutionCombobox } from './institution-combobox';
 interface Props {
   institutions: Institution[];
   countries: CountryGroups;
+  initialEmail?: string;
+  initialAvailableForReview?: boolean;
 }
 
-export function SubmitForm({ institutions, countries }: Props) {
+export function SubmitForm({
+  institutions,
+  countries,
+  initialEmail,
+  initialAvailableForReview,
+}: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +40,7 @@ export function SubmitForm({ institutions, countries }: Props) {
 
   const [form, setForm] = useState({
     full_name: '',
-    email: '',
+    email: initialEmail ?? '',
     password: '',
     password_confirm: '',
     institution_id: '',
@@ -54,7 +61,7 @@ export function SubmitForm({ institutions, countries }: Props) {
     doi_1: '',
     doi_2: '',
     doi_3: '',
-    available_for_review: false,
+    available_for_review: initialAvailableForReview ?? false,
   });
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
