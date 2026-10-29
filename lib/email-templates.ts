@@ -165,7 +165,6 @@ export function submissionReceivedTemplate(args: {
   authorsNames: string[];       // en orden de display_order
   notificationDate: string | null; // ISO string
 }): { subject: string; html: string } {
-  const url = `${BASE_URL}/congreso/${args.year}/postular/${args.submissionId}`;
   const greeting = args.authorName ? `Hola, ${args.authorName}` : 'Hola';
   const typeLabel =
     args.type === 'oral'
@@ -202,10 +201,10 @@ export function submissionReceivedTemplate(args: {
       A partir de ahora tu propuesta entra a revisión doble ciega por pares.
       ${notif ? `Te avisaremos por este correo la decisión del comité el <strong>${escapeHtml(notif)}</strong>.` : 'Te avisaremos por este correo cuando el comité emita la decisión.'}
     </p>
-    <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">
-      Mientras la convocatoria siga abierta puedes editar tu postulación las veces que necesites.
+    <p style="margin:16px 0;font-size:13px;color:#78716c;line-height:1.6;padding:12px;border:1px solid #e7e5e4;border-radius:8px;background:#fafaf9">
+      <strong style="color:#444;font-size:13px">Comprobante de recepción</strong><br>
+      ID interno: <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:#444">${escapeHtml(args.submissionId)}</span>
     </p>
-    ${ctaButton('Ver mi postulación', url)}
     <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">
       ¿Tienes dudas o necesitas ayuda con tu postulación? Escríbenos a
       <a href="mailto:contacto@redepa.net" style="color:#739600">contacto@redepa.net</a>.

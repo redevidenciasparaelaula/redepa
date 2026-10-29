@@ -200,7 +200,7 @@ export function SubmissionEditor({
     startTransition(async () => {
       const res = await deleteSubmissionAction(submission.id);
       if (!res.ok) setError(res.error);
-      else router.push('/congreso/2027/postular');
+      else router.push('/admin/congresos/epa-2027/postulaciones');
     });
   }
 

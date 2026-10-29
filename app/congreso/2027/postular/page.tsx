@@ -1,54 +1,26 @@
 import Link from 'next/link';
-import { notFound, redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth';
-import {
-  getCongressBySlug,
-  listMySubmissionsForCongress,
-  type SubmissionListItem,
-} from '@/lib/queries';
-import { createDraftSubmissionAction } from './actions';
+import { notFound } from 'next/navigation';
+import { getCongressBySlug } from '@/lib/queries';
+import { methodologiesAlphabetical } from '@/lib/methodologies';
+import { PublicSubmissionForm } from '@/components/public-submission-form';
 
 const SLUG = 'epa-2027';
 
-const STATUS_LABEL: Record<SubmissionListItem['status'], string> = {
-  draft: 'Borrador',
-  submitted: 'Enviado',
-  under_review: 'En revisión',
-  accepted: 'Aceptado',
-  rejected: 'Rechazado',
-  withdrawn: 'Retirado',
-};
-
-const STATUS_COLOR: Record<SubmissionListItem['status'], string> = {
-  draft: 'bg-[var(--accent)] text-[var(--muted)]',
-  submitted: 'bg-[var(--epa-blue)] text-white',
-  under_review: 'bg-[var(--epa-blue)] text-white',
-  accepted: 'bg-[var(--epa-green)] text-white',
-  rejected: 'bg-red-100 text-red-800',
-  withdrawn: 'bg-[var(--accent)] text-[var(--muted)]',
-};
-
-const TYPE_LABEL: Record<SubmissionListItem['type'], string> = {
-  oral: 'Oral',
-  poster: 'Póster',
-  symposium: 'Simposio',
-};
+// La página es pública (sin auth). Fuerza dinámico para que el estado del
+// congreso (abierto/cerrado) se refleje de inmediato.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function PostularPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect('/sign-in?next=/congreso/2027/postular');
-
   const c = await getCongressBySlug(SLUG);
   if (!c) notFound();
 
   const cfpOpen = c.status === 'cfp_open';
   const deadlinePassed =
     !!c.cfp_close_at && new Date(c.cfp_close_at) < new Date();
-  const canCreate = cfpOpen && !deadlinePassed;
-  // Super-admin puede crear postulaciones de prueba aunque el CFP esté cerrado
-  const isAdminTestMode = user.isSuperAdmin && !canCreate;
+  const canSubmit = cfpOpen && !deadlinePassed;
 
-  const submissions = await listMySubmissionsForCongress(c.id, user.id);
+  const methodologies = methodologiesAlphabetical('es');
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
@@ -64,11 +36,13 @@ export default async function PostularPage() {
       <header className="mb-8">
         <p className="eyebrow">Congreso EPA · {c.year}</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight">
-          Mis postulaciones
+          Postular al congreso
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
-          Acá ves los abstracts que estás escribiendo para esta edición. Puedes
-          guardar borradores y editarlos hasta el deadline del CFP.
+          Completa este formulario y envía tu propuesta. No necesitas crear
+          cuenta. El envío es por única vez: una vez enviada, la postulación
+          no se puede editar — asegúrate de dejarla como la quieres antes de
+          enviar.
         </p>
         <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
           ¿Tienes dudas o necesitas ayuda? Escríbenos a{' '}
@@ -82,138 +56,51 @@ export default async function PostularPage() {
         </p>
       </header>
 
-      {!cfpOpen && (
-        <div className="mb-6 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 text-sm">
-          {c.status === 'draft' ? (
+      {!canSubmit ? (
+        <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6 text-sm">
+          {!cfpOpen ? (
             <p>
-              La convocatoria aún no abre. Te avisaremos cuando esté abierta.
+              La convocatoria no está abierta. Vuelve en la fecha de apertura.
             </p>
           ) : (
             <p>
-              El CFP ya no está abierto (estado:{' '}
-              <span className="font-semibold">{c.status}</span>). No se pueden
-              crear nuevas postulaciones.
+              El plazo de postulación ya pasó. No se pueden recibir más
+              propuestas para este congreso.
             </p>
           )}
         </div>
-      )}
-
-      {cfpOpen && deadlinePassed && (
-        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-5 text-sm text-red-800">
-          El plazo de postulación ya pasó. No se pueden crear ni modificar
-          postulaciones.
-        </div>
-      )}
-
-      {isAdminTestMode && (
-        <div className="mb-6 rounded-lg border border-[var(--epa-blue)] bg-[var(--card)] p-4 text-sm">
-          <p className="font-semibold text-[var(--epa-blue)]">
-            🔧 Modo prueba (super-admin)
-          </p>
-          <p className="mt-1 text-[var(--muted)]">
-            Como super-admin puedes crear postulaciones aunque el CFP no esté
-            abierto. Sirve para ver cómo se verá el formulario. Recuerda
-            eliminar los borradores de prueba cuando termines.
-          </p>
-        </div>
-      )}
-
-      <section className="mb-6 flex flex-wrap items-start gap-4">
-        {(canCreate || isAdminTestMode) && (
-          <form action={createDraftSubmissionAction}>
-            <button
-              type="submit"
-              className={
-                'rounded-md px-5 py-2.5 text-sm font-semibold text-white shadow-sm ' +
-                (isAdminTestMode
-                  ? 'bg-[var(--epa-blue)] hover:opacity-90'
-                  : 'bg-[var(--epa-green)] hover:bg-[var(--epa-green-dark)]')
-              }
-            >
-              {isAdminTestMode
-                ? '+ Nueva postulación de prueba'
-                : '+ Nueva postulación'}
-            </button>
-          </form>
-        )}
-      </section>
-
-      {/* Plantilla Word descargable para trabajar el texto antes de enviarlo */}
-      <section className="mb-8 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 text-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <p className="max-w-2xl text-[var(--foreground)]">
-            Si te ayuda, puedes descargar la plantilla en Word para trabajar el
-            texto de tu postulación con calma. Después vas a tener que copiar y
-            pegar el contenido de cada sección en este formulario:{' '}
-            <strong>
-              no se aceptan envíos por correo, PDF ni archivos Word — solo a
-              través del formulario en línea.
-            </strong>
-          </p>
-          <a
-            href="/plantilla-postulacion-epa-2027"
-            download
-            className="shrink-0 self-start rounded-md border border-[var(--epa-blue)] bg-white px-4 py-2 text-sm font-semibold text-[var(--epa-blue)] hover:bg-[var(--epa-blue)] hover:text-white"
-          >
-            ↓ Descargar plantilla (Word)
-          </a>
-        </div>
-      </section>
-
-      {submissions.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-[var(--border)] p-10 text-center text-sm text-[var(--muted)]">
-          Aún no tienes postulaciones para este congreso.
-        </div>
       ) : (
-        <ul className="space-y-3">
-          {submissions.map((s) => (
-            <li
-              key={s.id}
-              className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-5"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-base font-semibold text-[var(--foreground)]">
-                      {s.title || 'Sin título'}
-                    </h3>
-                    <span
-                      className={
-                        'rounded-full px-2 py-0.5 text-xs font-medium ' +
-                        STATUS_COLOR[s.status]
-                      }
-                    >
-                      {STATUS_LABEL[s.status]}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-[var(--muted)]">
-                    {TYPE_LABEL[s.type]}
-                    {s.track_name && ` · ${s.track_name}`}
-                    {' · Actualizado '}
-                    {formatDate(s.updated_at)}
-                  </p>
-                </div>
-                <Link
-                  href={`/congreso/2027/postular/${s.id}`}
-                  className="rounded-md border border-[var(--border)] bg-white px-3 py-1.5 text-sm hover:bg-[var(--accent)]"
-                >
-                  {s.status === 'draft' ? 'Continuar editando' : 'Ver / editar'}
-                </Link>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <>
+          {/* Plantilla Word descargable para trabajar el texto antes de enviarlo */}
+          <section className="mb-8 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 text-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <p className="max-w-2xl text-[var(--foreground)]">
+                Si te ayuda, puedes descargar la plantilla en Word para
+                trabajar el texto con calma. Después copias y pegas el
+                contenido en este formulario:{' '}
+                <strong>
+                  no se aceptan envíos por correo, PDF ni archivos Word — solo
+                  a través del formulario en línea.
+                </strong>
+              </p>
+              <a
+                href="/plantilla-postulacion-epa-2027"
+                download
+                className="shrink-0 self-start rounded-md border border-[var(--epa-blue)] bg-white px-4 py-2 text-sm font-semibold text-[var(--epa-blue)] hover:bg-[var(--epa-blue)] hover:text-white"
+              >
+                ↓ Descargar plantilla (Word)
+              </a>
+            </div>
+          </section>
+
+          <PublicSubmissionForm
+            tracks={c.tracks}
+            methodologies={methodologies}
+            submissionIntro={c.submission_intro}
+            submissionMaxChars={c.submission_max_chars}
+          />
+        </>
       )}
     </div>
   );
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('es', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 }

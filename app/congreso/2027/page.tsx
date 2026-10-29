@@ -317,8 +317,8 @@ function FinalCta({ year }: { year: number }) {
             Envía tu trabajo
           </h2>
           <p className="mt-4 max-w-xl text-base leading-relaxed text-white/90">
-            El proceso toma 15–20 minutos. Necesitas tener cuenta en el
-            directorio para presentar como autor o autora.
+            El proceso toma 15–20 minutos. No necesitas crear cuenta: completas el
+            formulario y envías. La postulación es por única vez.
           </p>
           <Link
             href={`/congreso/${year}/postular`}
