@@ -147,10 +147,10 @@ export default async function AdminCongresoPage({ params }: Props) {
           Ver suscriptores pre-CFP →
         </Link>
         <Link
-          href={`/admin/congresos/${c.slug}/exportes`}
+          href={`/admin/congresos/${c.slug}/postulaciones/descargar`}
           className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-white px-4 py-2 text-sm font-medium hover:bg-[var(--accent)]"
         >
-          Descargar exportes →
+          Descargar postulaciones →
         </Link>
       </section>
 

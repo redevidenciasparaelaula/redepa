@@ -9,16 +9,16 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-export default async function ExportesPage({ params }: Props) {
+export default async function DescargarPostulacionesPage({ params }: Props) {
   const { slug } = await params;
   const user = await getCurrentUser();
-  if (!user) redirect(`/sign-in?next=/admin/congresos/${slug}/exportes`);
+  if (!user) redirect(`/sign-in?next=/admin/congresos/${slug}/postulaciones/descargar`);
   if (!user.isSuperAdmin) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 text-center">
         <h1 className="text-3xl font-bold tracking-tight">Acceso restringido</h1>
         <p className="mt-3 text-sm text-[var(--muted)]">
-          Solo super-administradores pueden descargar exportes.
+          Solo super-administradores pueden descargar las postulaciones.
         </p>
       </div>
     );
@@ -30,17 +30,17 @@ export default async function ExportesPage({ params }: Props) {
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <div className="mb-6">
         <Link
-          href={`/admin/congresos/${slug}`}
+          href={`/admin/congresos/${slug}/postulaciones`}
           className="text-sm text-[var(--muted)] hover:underline"
         >
-          ← Volver al congreso
+          ← Volver a postulaciones
         </Link>
       </div>
 
       <header className="mb-8">
         <p className="eyebrow">Congreso EPA · {c.year}</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight">
-          Exportes
+          Descargar postulaciones
         </h1>
         <p className="mt-2 text-sm text-[var(--muted)]">
           Descarga offline de todas las postulaciones y sus autores. Útil para
@@ -52,19 +52,19 @@ export default async function ExportesPage({ params }: Props) {
         <ExportCard
           title="Base de postulantes (contactos)"
           description="CSV con una fila por autor: nombre, apellido, email, institución, rol y la postulación a la que pertenece. Útil para armar comunicaciones."
-          href={`/admin/congresos/${slug}/exportes/postulantes.csv`}
+          href={`/admin/congresos/${slug}/postulaciones/descargar/postulantes.csv`}
           filename="postulantes.csv"
         />
         <ExportCard
           title="Base de postulaciones"
           description="CSV con una fila por postulación: todos los campos del abstract, autores concatenados, línea temática, tipo, estado, fechas. Útil para análisis en Excel/R/Python."
-          href={`/admin/congresos/${slug}/exportes/postulaciones.csv`}
+          href={`/admin/congresos/${slug}/postulaciones/descargar/postulaciones.csv`}
           filename="postulaciones.csv"
         />
         <ExportCard
           title="Carpeta de postulaciones (ZIP de archivos .txt)"
           description="ZIP con un archivo de texto por postulación. Cada .txt tiene título, autores, línea, abstract completo. Útil para enviar a revisores humanos o imprimir."
-          href={`/admin/congresos/${slug}/exportes/postulaciones.zip`}
+          href={`/admin/congresos/${slug}/postulaciones/descargar/postulaciones.zip`}
           filename="postulaciones.zip"
         />
       </ul>
