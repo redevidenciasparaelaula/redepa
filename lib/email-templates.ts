@@ -55,6 +55,17 @@ function escapeHtml(s: string): string {
     .replace(/'/g, '&#39;');
 }
 
+// Renderiza un campo del abstract con su label para incluir en emails.
+function abstractField(label: string, value: string): string {
+  if (!value || !value.trim()) return '';
+  // Convierte saltos de línea en <br> para preservar formato.
+  const escaped = escapeHtml(value).replace(/\n/g, '<br>');
+  return `<div style="margin:0 0 14px 0">
+    <p style="margin:0 0 4px 0;font-size:12px;color:#78716c;font-weight:600;text-transform:uppercase;letter-spacing:.03em">${escapeHtml(label)}</p>
+    <p style="margin:0;font-size:14px;line-height:1.6;color:#1c1917;white-space:pre-wrap">${escaped}</p>
+  </div>`;
+}
+
 function ctaButton(label: string, href: string): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0">
     <tr><td style="background:#739600;border-radius:8px">
@@ -164,6 +175,14 @@ export function submissionReceivedTemplate(args: {
   keywords: string[];
   authorsNames: string[];       // en orden de display_order
   notificationDate: string | null; // ISO string
+  // Texto completo del abstract (5 campos) — se incluye en el cuerpo
+  // del email para que el postulante tenga un comprobante del contenido
+  // que envió, sin depender de poder volver a entrar a su cuenta.
+  absContext: string;
+  absFramework: string;
+  absMethods: string;
+  absResults: string;
+  absDiscussion: string;
 }): { subject: string; html: string } {
   const greeting = args.authorName ? `Hola, ${args.authorName}` : 'Hola';
   const typeLabel =
@@ -197,9 +216,25 @@ export function submissionReceivedTemplate(args: {
         ${args.keywords.length > 0 ? `<p style="margin:0 0 6px 0;font-size:13px;color:#78716c">Palabras clave</p><p style="margin:0;font-size:14px">${escapeHtml(args.keywords.join(', '))}</p>` : ''}
       </td></tr>
     </table>
-    <p style="margin:0 0 12px 0;font-size:15px;line-height:1.6">
-      A partir de ahora tu propuesta entra a revisión doble ciega por pares.
+    <h2 style="margin:24px 0 8px 0;font-size:16px;color:#000;font-weight:700">Texto enviado</h2>
+    <p style="margin:0 0 16px 0;font-size:13px;color:#78716c;line-height:1.5">
+      Guarda este correo como respaldo: contiene el contenido exacto de tu postulación.
+    </p>
+    ${abstractField('Contexto y problema', args.absContext)}
+    ${abstractField('Marco teórico', args.absFramework)}
+    ${abstractField('Metodología', args.absMethods)}
+    ${abstractField('Resultados principales', args.absResults)}
+    ${abstractField('Discusión / aporte al aula', args.absDiscussion)}
+
+    <p style="margin:20px 0 12px 0;font-size:15px;line-height:1.6">
+      A partir de ahora tu propuesta entra a revisión doble ciega por pares, con investigadores en educación de la Red EPA.
       ${notif ? `Te avisaremos por este correo la decisión del comité el <strong>${escapeHtml(notif)}</strong>.` : 'Te avisaremos por este correo cuando el comité emita la decisión.'}
+    </p>
+    <p style="margin:0 0 16px 0;font-size:14px;line-height:1.6;padding:12px;border-left:4px solid #739600;background:#f5f7eb;color:#2d3b00">
+      <strong>Esta postulación ya fue enviada y no se puede editar.</strong>
+      Si detectaste un error importante en el texto, escríbenos a
+      <a href="mailto:contacto@redepa.net" style="color:#739600">contacto@redepa.net</a>
+      lo antes posible.
     </p>
     <p style="margin:16px 0;font-size:13px;color:#78716c;line-height:1.6;padding:12px;border:1px solid #e7e5e4;border-radius:8px;background:#fafaf9">
       <strong style="color:#444;font-size:13px">Comprobante de recepción</strong><br>

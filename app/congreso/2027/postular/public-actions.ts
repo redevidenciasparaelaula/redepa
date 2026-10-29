@@ -95,6 +95,11 @@ async function notifyPublicSubmitters(
           keywords: input.keywords,
           authorsNames,
           notificationDate: congress?.notification_at ?? null,
+          absContext: input.abs_context,
+          absFramework: input.abs_framework,
+          absMethods: input.abs_methods,
+          absResults: input.abs_results,
+          absDiscussion: input.abs_discussion,
         });
         await sendEmail({
           to: { email: a.email, name: fullName },

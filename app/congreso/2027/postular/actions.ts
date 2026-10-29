@@ -189,7 +189,7 @@ async function notifySubmitters(submissionId: string): Promise<void> {
     const { data: sub } = await supabase
       .from('submissions')
       .select(
-        'title, type, keywords, congresses(name, year, notification_at), congress_tracks(name)'
+        'title, type, keywords, abs_context, abs_framework, abs_methods, abs_results, abs_discussion, congresses(name, year, notification_at), congress_tracks(name)'
       )
       .eq('id', submissionId)
       .maybeSingle();
@@ -224,6 +224,11 @@ async function notifySubmitters(submissionId: string): Promise<void> {
           keywords: sub.keywords ?? [],
           authorsNames,
           notificationDate: congress?.notification_at ?? null,
+          absContext: sub.abs_context ?? '',
+          absFramework: sub.abs_framework ?? '',
+          absMethods: sub.abs_methods ?? '',
+          absResults: sub.abs_results ?? '',
+          absDiscussion: sub.abs_discussion ?? '',
         });
         await sendEmail({
           to: { email: a.email, name: a.full_name },

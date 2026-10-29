@@ -42,7 +42,33 @@ export default async function PostularPage() {
           Completa este formulario con tu propuesta. Revísala bien antes de
           enviar: una vez enviada, la postulación no se puede editar.
         </p>
-        <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+      </header>
+
+      {/* Aviso importante antes de empezar + recomendación de plantilla Word */}
+      <section className="mb-6 rounded-lg border-l-4 border-[var(--epa-blue)] bg-[var(--accent)] p-5 text-sm leading-relaxed">
+        <p className="font-semibold text-[var(--foreground)]">Antes de empezar</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-[var(--foreground)]">
+          <li>
+            <strong>No hay guardado parcial</strong>: si cierras esta página
+            antes de enviar, pierdes lo que escribiste.
+          </li>
+          <li>
+            <strong>Una vez enviada, la postulación no se puede editar.</strong>
+          </li>
+          <li>
+            Te recomendamos{' '}
+            <a
+              href="/plantilla-postulacion-epa-2027"
+              download
+              className="font-semibold text-[var(--epa-blue)] underline hover:no-underline"
+            >
+              descargar la plantilla en Word
+            </a>{' '}
+            y preparar tu texto con calma. Cuando esté listo, abres este
+            formulario y pegas el contenido de cada campo.
+          </li>
+        </ul>
+        <p className="mt-3 text-xs text-[var(--muted)]">
           ¿Tienes dudas o necesitas ayuda? Escríbenos a{' '}
           <a
             href="mailto:contacto@redepa.net"
@@ -52,7 +78,7 @@ export default async function PostularPage() {
           </a>
           .
         </p>
-      </header>
+      </section>
 
       {!canSubmit ? (
         <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6 text-sm">
@@ -69,28 +95,6 @@ export default async function PostularPage() {
         </div>
       ) : (
         <>
-          {/* Plantilla Word descargable para trabajar el texto antes de enviarlo */}
-          <section className="mb-8 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 text-sm">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <p className="max-w-2xl text-[var(--foreground)]">
-                Si te ayuda, puedes descargar la plantilla en Word para
-                trabajar el texto con calma. Después copias y pegas el
-                contenido en este formulario:{' '}
-                <strong>
-                  no se aceptan envíos por correo, PDF ni archivos Word — solo
-                  a través del formulario en línea.
-                </strong>
-              </p>
-              <a
-                href="/plantilla-postulacion-epa-2027"
-                download
-                className="shrink-0 self-start rounded-md border border-[var(--epa-blue)] bg-white px-4 py-2 text-sm font-semibold text-[var(--epa-blue)] hover:bg-[var(--epa-blue)] hover:text-white"
-              >
-                ↓ Descargar plantilla (Word)
-              </a>
-            </div>
-          </section>
-
           <PublicSubmissionForm
             tracks={c.tracks}
             methodologies={methodologies}
